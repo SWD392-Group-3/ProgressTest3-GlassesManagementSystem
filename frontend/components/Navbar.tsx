@@ -1,0 +1,159 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
+
+const navLinks = [
+  { name: "Home", href: "/" },
+  { name: "Collection", href: "/products" },
+  { name: "Sunglasses", href: "/products?category=sunglasses" },
+  { name: "Optical", href: "/products?category=optical" },
+  { name: "Blue-Light", href: "/products?category=blue-light" },
+];
+
+export default function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        scrolled ? "glass shadow-sm" : "bg-transparent"
+      }`}
+    >
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 sm:h-20 items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <span
+              className="text-xl sm:text-2xl font-bold tracking-tight"
+              style={{ fontFamily: "var(--font-heading)" }}
+            >
+              ELITE
+              <span className="text-[#D4AF37]"> LENS</span>
+            </span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="relative text-sm font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors duration-300 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-[#D4AF37] after:transition-all after:duration-300 hover:after:w-full"
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Search */}
+            <button
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+              aria-label="Search"
+            >
+              <Search className="w-5 h-5 text-[#1A1A1A]" />
+            </button>
+
+            {/* Cart */}
+            <Link
+              href="#"
+              className="relative p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+              aria-label="Cart"
+            >
+              <ShoppingBag className="w-5 h-5 text-[#1A1A1A]" />
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#D4AF37] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                0
+              </span>
+            </Link>
+
+            {/* User */}
+            <Link
+              href="/login"
+              className="hidden sm:flex p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+              aria-label="Account"
+            >
+              <User className="w-5 h-5 text-[#1A1A1A]" />
+            </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="w-5 h-5 text-[#1A1A1A]" />
+              ) : (
+                <Menu className="w-5 h-5 text-[#1A1A1A]" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ${
+            searchOpen ? "max-h-16 opacity-100 pb-4" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280]" />
+            <input
+              type="text"
+              placeholder="Search eyewear..."
+              className="w-full h-10 pl-11 pr-4 rounded-full border border-[#E5E7EB] bg-white/80 text-sm focus:outline-none focus:border-[#D4AF37] transition-colors"
+            />
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Menu */}
+      <div
+        className={`lg:hidden fixed inset-0 top-16 bg-white transition-all duration-300 ${
+          mobileMenuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="flex flex-col items-center gap-6 pt-12">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              href={link.href}
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+            >
+              {link.name}
+            </Link>
+          ))}
+          <Link
+            href="/login"
+            onClick={() => setMobileMenuOpen(false)}
+            className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+          >
+            Sign In
+          </Link>
+          <Link
+            href="/register"
+            onClick={() => setMobileMenuOpen(false)}
+            className="inline-flex items-center justify-center h-11 px-8 rounded-full bg-[#D4AF37] text-white font-medium text-base tracking-wide hover:bg-[#C9A030] transition-colors"
+          >
+            Create Account
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
