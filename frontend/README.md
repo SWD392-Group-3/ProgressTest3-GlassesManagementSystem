@@ -14,6 +14,56 @@ pnpm dev
 bun dev
 ```
 
+### Structure Project
+
+frontend/
+├── app/
+│ ├── (auth)/ # Nhóm đăng nhập/đăng ký
+│ │ ├── login/page.tsx
+│ │ └── register/page.tsx
+│ ├── (customer)/ # Luồng cho khách hàng (Bán kính)
+│ │ ├── products/ # Danh sách & Chi tiết sản phẩm
+│ │ │ ├── [id]/page.tsx # Trang chi tiết kính cụ thể
+│ │ │ └── page.tsx
+│ │ ├── cart/page.tsx # Giỏ hàng
+│ │ ├── checkout/page.tsx # Thanh toán
+│ │ └── page.tsx # Landing page
+│ ├── (sales)/ # Quản lý đơn hàng, khách hàng cho Sales
+│ ├── (operation)/ # Quản lý kho kính, vận chuyển
+│ ├── (management)/ # Dashboard báo cáo doanh thu
+│ ├── (admin)/ # Quản lý nhân viên, cấu hình hệ thống
+│ ├── api/ # Route Handlers (nếu cần xử lý backend riêng)
+│ ├── globals.css
+│ ├── layout.tsx # Root layout (Font, Provider chung)
+│ └── page.tsx # Trang điều hướng gốc
+├── components/
+│ ├── ui/ # Components nguyên tử (Button, Input, Modal)
+│ ├── shared/ # Navbar, Footer dùng chung
+│ ├── customer/ # Components riêng cho khách (ProductCard, Filter)
+│ └── admin/ # Components riêng cho quản trị (AdminSidebar, Charts)
+├── services/ # MỚI: Nơi chứa logic gọi dữ liệu
+│ ├── auth.service.ts # Xử lý login/logout với Supabase
+│ ├── product.service.ts # Fetch danh sách kính, lọc theo dáng mặt
+│ ├── order.service.ts # Tạo đơn hàng, cập nhật trạng thái
+│ └── user.service.ts # Quản lý thông tin cá nhân
+├── types/ # MỚI: Định nghĩa kiểu dữ liệu (TypeScript)
+│ ├── product.ts # Interface: Lens, Frame, Brand
+│ ├── order.ts # Interface: Order, OrderItem, PaymentStatus
+│ ├── user.ts # Interface: Role (Admin, Sales, Customer)
+│ └── common.ts # Các type chung như APIResponse, Pagination
+├── lib/ # Thư viện & Cấu hình
+│ ├── supabase.ts # Khởi tạo Supabase client
+│ └── utils.ts # Hàm bổ trợ (format tiền tệ, xử lý chuỗi)
+├── hooks/ # MỚI: Custom hooks (useCart, useAuth, useDebounce)
+├── constants/ # Menu items, định nghĩa các hằng số
+│ ├── menu.ts # Cấu hình sidebar cho từng Role
+│ └── config.ts # Các cấu hình tĩnh khác
+├── public/ # Images, Icons, SVG
+├── middleware.ts # MỚI: Kiểm tra quyền truy cập (RBAC)
+├── next.config.ts
+├── tailwind.config.ts
+└── tsconfig.json
+
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
