@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlassesManagementSystem", "GlassesManagementSystem\GlassesManagementSystem.csproj", "{5F0DC871-91B8-4648-9490-906A431CC491}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusinessLogicLayer", "BusinessLogicLayer\BusinessLogicLayer.csproj", "{AD5DC7FE-311F-4123-BD2B-08686E5A8319}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessLayer", "DataAccessLayer\DataAccessLayer.csproj", "{33C7311F-53DE-46D4-93C5-D1124E470228}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{5F0DC871-91B8-4648-9490-906A431CC491}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F0DC871-91B8-4648-9490-906A431CC491}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F0DC871-91B8-4648-9490-906A431CC491}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD5DC7FE-311F-4123-BD2B-08686E5A8319}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD5DC7FE-311F-4123-BD2B-08686E5A8319}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD5DC7FE-311F-4123-BD2B-08686E5A8319}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD5DC7FE-311F-4123-BD2B-08686E5A8319}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33C7311F-53DE-46D4-93C5-D1124E470228}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33C7311F-53DE-46D4-93C5-D1124E470228}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33C7311F-53DE-46D4-93C5-D1124E470228}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33C7311F-53DE-46D4-93C5-D1124E470228}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
