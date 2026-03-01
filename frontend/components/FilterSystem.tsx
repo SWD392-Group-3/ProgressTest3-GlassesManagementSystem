@@ -25,7 +25,7 @@ const priceRanges: { label: string; value: [number, number] }[] = [
   { label: "Over $300", value: [300, 9999] },
 ];
 
-const sortOptions = [
+export const sortOptions = [
   { label: "Featured", value: "featured" },
   { label: "Price: Low → High", value: "price-asc" },
   { label: "Price: High → Low", value: "price-desc" },
@@ -33,38 +33,20 @@ const sortOptions = [
   { label: "Newest", value: "newest" },
 ];
 
-export default function FilterSystem({
+interface FilterContentProps {
+  filters: Filters;
+  updateFilter: (key: keyof Filters, value: string | [number, number]) => void;
+  activeCount: number;
+  clearAll: () => void;
+}
+
+function FilterContent({
   filters,
-  onFilterChange,
-}: FilterSystemProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const updateFilter = (
-    key: keyof Filters,
-    value: string | [number, number],
-  ) => {
-    onFilterChange({ ...filters, [key]: value });
-  };
-
-  const activeCount = [
-    filters.faceShape !== "",
-    filters.material !== "",
-    filters.style !== "",
-    filters.priceRange[0] !== 0 || filters.priceRange[1] !== 9999,
-  ].filter(Boolean).length;
-
-  const clearAll = () => {
-    onFilterChange({
-      category: filters.category,
-      faceShape: "",
-      material: "",
-      style: "",
-      priceRange: [0, 9999],
-      sortBy: "featured",
-    });
-  };
-
-  const FilterContent = () => (
+  updateFilter,
+  activeCount,
+  clearAll,
+}: FilterContentProps) {
+  return (
     <div className="space-y-6">
       {/* Face Shape */}
       <div>
@@ -178,6 +160,38 @@ export default function FilterSystem({
       )}
     </div>
   );
+}
+
+export default function FilterSystem({
+  filters,
+  onFilterChange,
+}: FilterSystemProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const updateFilter = (
+    key: keyof Filters,
+    value: string | [number, number],
+  ) => {
+    onFilterChange({ ...filters, [key]: value });
+  };
+
+  const activeCount = [
+    filters.faceShape !== "",
+    filters.material !== "",
+    filters.style !== "",
+    filters.priceRange[0] !== 0 || filters.priceRange[1] !== 9999,
+  ].filter(Boolean).length;
+
+  const clearAll = () => {
+    onFilterChange({
+      category: filters.category,
+      faceShape: "",
+      material: "",
+      style: "",
+      priceRange: [0, 9999],
+      sortBy: "featured",
+    });
+  };
 
   return (
     <>
@@ -190,7 +204,12 @@ export default function FilterSystem({
             </h3>
             <SlidersHorizontal className="w-4 h-4 text-[#6B7280]" />
           </div>
-          <FilterContent />
+          <FilterContent
+            filters={filters}
+            updateFilter={updateFilter}
+            activeCount={activeCount}
+            clearAll={clearAll}
+          />
         </div>
       </aside>
 
@@ -241,7 +260,12 @@ export default function FilterSystem({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <FilterContent />
+            <FilterContent
+              filters={filters}
+              updateFilter={updateFilter}
+              activeCount={activeCount}
+              clearAll={clearAll}
+            />
             <button
               onClick={() => setMobileOpen(false)}
               className="w-full mt-6 h-12 rounded-full bg-[#1A1A1A] text-white font-medium text-sm tracking-wide hover:bg-[#333] transition-colors"
@@ -251,26 +275,6 @@ export default function FilterSystem({
           </div>
         </div>
       )}
-
-      {/* Desktop Sort */}
-      <div className="hidden lg:flex items-center gap-3 mb-6">
-        <span className="text-xs font-semibold tracking-[0.1em] uppercase text-[#6B7280]">
-          Sort:
-        </span>
-        {sortOptions.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => updateFilter("sortBy", opt.value)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-              filters.sortBy === opt.value
-                ? "bg-[#1A1A1A] text-white"
-                : "text-[#6B7280] hover:text-[#1A1A1A]"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
     </>
   );
 }
