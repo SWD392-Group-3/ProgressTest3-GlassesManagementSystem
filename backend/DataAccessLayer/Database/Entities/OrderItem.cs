@@ -21,6 +21,9 @@ namespace DataAccessLayer.Database.Entities
 
         public string? Note { get; set; }
 
+        // Navigation
         public virtual Order Order { get; set; } = null!;
+        public virtual ICollection<ReturnExchangeItem> ReturnExchangeItems { get; set; } =
+            new List<ReturnExchangeItem>();
     }
 }
