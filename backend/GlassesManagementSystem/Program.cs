@@ -1,10 +1,10 @@
 using System.Text;
 using BusinessLogicLayer.Services;
 using BusinessLogicLayer.Settings;
+using DataAccessLayer.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using DataAccessLayer.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +14,8 @@ builder.WebHost.UseUrls("http://localhost:5000");
 // JWT (cấu hình từ appsettings, class JwtSettings ở BLL)
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -25,7 +26,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings?.Issuer,
             ValidAudience = jwtSettings?.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.Secret ?? ""))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings?.Secret ?? "")
+            ),
         };
     });
 
@@ -36,9 +39,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod();
     });
 });
 
@@ -50,11 +51,20 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("DataAccessLayer")));
+        b => b.MigrationsAssembly("DataAccessLayer")
+    )
+);
 builder.Services.AddScoped<IApplicationDbContext>(sp =>
-    sp.GetRequiredService<ApplicationDbContext>());
-builder.Services.AddScoped<DataAccessLayer.Repositories.Interfaces.IUnitOfWork, DataAccessLayer.Repositories.UnitOfWork>();
-builder.Services.AddScoped<DataAccessLayer.Repositories.Interfaces.IUserRepository, DataAccessLayer.Repositories.Implementations.UserRepository>();
+    sp.GetRequiredService<ApplicationDbContext>()
+);
+builder.Services.AddScoped<
+    DataAccessLayer.Repositories.Interfaces.IUnitOfWork,
+    DataAccessLayer.Repositories.UnitOfWork
+>();
+builder.Services.AddScoped<
+    DataAccessLayer.Repositories.Interfaces.IUserRepository,
+    DataAccessLayer.Repositories.Implementations.UserRepository
+>();
 
 var app = builder.Build();
 
