@@ -3,12 +3,12 @@ using BusinessLogicLayer.Services;
 using BusinessLogicLayer.Services.Implementations;
 using BusinessLogicLayer.Services.Interfaces;
 using BusinessLogicLayer.Settings;
-using DataAccessLayer.Database;
-using DataAccessLayer.Repositories.Implementations;
-using DataAccessLayer.Repositories.Interfaces;
+using GlassesManagementSystem.Extensions;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,17 +40,14 @@ builder
         };
     });
 
-builder.Services.AddScoped<IAuthService, AuthService>();
+// Business Logic Layer
+builder.Services.AddBusinessLogic();
 
 // Cloudinary Service
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
-// Return Exchange Services
+// Return Exchange Service
 builder.Services.AddScoped<IReturnExchangeService, ReturnExchangeService>();
-builder.Services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();
-builder.Services.AddScoped<IReturnExchangeItemRepository, ReturnExchangeItemRepository>();
-builder.Services.AddScoped<IReturnExchangeImageRepository, ReturnExchangeImageRepository>();
-builder.Services.AddScoped<IReturnExchangeHistoryRepository, ReturnExchangeHistoryRepository>();
 
 // CORS (cho frontend Next.js)
 builder.Services.AddCors(options =>
@@ -63,26 +60,54 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer(
+        async (document, context, cancellationToken) =>
+        {
+            var schemeProvider =
+                context.ApplicationServices.GetRequiredService<IAuthenticationSchemeProvider>();
+            var schemes = await schemeProvider.GetAllSchemesAsync();
+            if (!schemes.Any(s => s.Name == "Bearer"))
+                return;
 
-// DbContext & Unit of Work (một context cho mỗi request)
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        b => b.MigrationsAssembly("DataAccessLayer")
-    )
-);
-builder.Services.AddScoped<IApplicationDbContext>(sp =>
-    sp.GetRequiredService<ApplicationDbContext>()
-);
-builder.Services.AddScoped<
-    DataAccessLayer.Repositories.Interfaces.IUnitOfWork,
-    DataAccessLayer.Repositories.UnitOfWork
->();
-builder.Services.AddScoped<
-    DataAccessLayer.Repositories.Interfaces.IUserRepository,
-    DataAccessLayer.Repositories.Implementations.UserRepository
->();
+            document.Components ??= new OpenApiComponents();
+            document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Nhập JWT từ API login/register.",
+            };
+
+            foreach (var pathItem in document.Paths.Values)
+            {
+                foreach (var operation in pathItem.Operations.Values)
+                {
+                    operation.Security ??= [];
+                    operation.Security.Add(
+                        new OpenApiSecurityRequirement
+                        {
+                            [
+                                new OpenApiSecurityScheme
+                                {
+                                    Reference = new OpenApiReference
+                                    {
+                                        Id = "Bearer",
+                                        Type = ReferenceType.SecurityScheme,
+                                    },
+                                }
+                            ] = [],
+                        }
+                    );
+                }
+            }
+        }
+    );
+});
+
+// Data Access (DbContext, UnitOfWork, Repositories)
+builder.Services.AddDataAccess(builder.Configuration);
 
 var app = builder.Build();
 
@@ -93,10 +118,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/openapi/v1.json", "Glasses API v1");
+        options.EnablePersistAuthorization(); // Lưu token sau khi Authorize (không mất khi refresh)
     });
 }
 
-app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
