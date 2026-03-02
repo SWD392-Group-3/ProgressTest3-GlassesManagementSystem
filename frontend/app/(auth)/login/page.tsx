@@ -3,9 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Mail, Lock } from "lucide-react";
+import { login } from "@/lib/api";
+import { saveAuth } from "@/lib/auth-storage";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -17,10 +21,22 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    // TODO: Integrate with backend auth API
+    try {
+      const res = await login({ email: email.trim(), password });
+      saveAuth(res.token, {
+        userId: res.userId,
+        email: res.email,
+        fullName: res.fullName ?? null,
+        role: res.role ?? null,
+        expiresAt: res.expiresAt,
+      });
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Đăng nhập thất bại.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

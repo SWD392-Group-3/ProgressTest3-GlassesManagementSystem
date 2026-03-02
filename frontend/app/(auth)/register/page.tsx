@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -13,8 +14,11 @@ import {
   Phone,
   Check,
 } from "lucide-react";
+import { register } from "@/lib/api";
+import { saveAuth } from "@/lib/auth-storage";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -59,22 +63,40 @@ export default function RegisterPage() {
     setError("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Mật khẩu xác nhận không khớp.");
       return;
     }
     if (form.password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("Mật khẩu phải có ít nhất 8 ký tự.");
       return;
     }
     if (!agreed) {
-      setError("Please agree to the Terms & Conditions.");
+      setError("Vui lòng đồng ý với Điều khoản & Chính sách bảo mật.");
       return;
     }
 
     setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    // TODO: Integrate with backend auth API
+    try {
+      const res = await register({
+        email: form.email.trim(),
+        password: form.password,
+        fullName: form.fullName.trim() || null,
+        phone: form.phone.trim() || null,
+      });
+      saveAuth(res.token, {
+        userId: res.userId,
+        email: res.email,
+        fullName: res.fullName ?? null,
+        role: res.role ?? null,
+        expiresAt: res.expiresAt,
+      });
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Đăng ký thất bại.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
