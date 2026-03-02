@@ -19,17 +19,27 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddDataAccess(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration
+    )
     {
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly("DataAccessLayer")));
+                b => b.MigrationsAssembly("DataAccessLayer")
+            )
+        );
 
         services.AddScoped<IApplicationDbContext>(sp =>
-            sp.GetRequiredService<ApplicationDbContext>());
+            sp.GetRequiredService<ApplicationDbContext>()
+        );
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+
+        // Return Exchange Repositories
+        services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();
+        services.AddScoped<IReturnExchangeItemRepository, ReturnExchangeItemRepository>();
+        services.AddScoped<IReturnExchangeImageRepository, ReturnExchangeImageRepository>();
+        services.AddScoped<IReturnExchangeHistoryRepository, ReturnExchangeHistoryRepository>();
 
         return services;
     }
