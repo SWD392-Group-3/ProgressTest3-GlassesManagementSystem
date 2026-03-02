@@ -44,6 +44,11 @@ namespace DataAccessLayer.Database.Configurations
                 .WithMany()
                 .HasForeignKey(x => x.ServiceId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(x => x.Slot)
+                   .WithMany()   // không cần navigation bên Slot
+                   .HasForeignKey(x => x.SlotId)
+                   .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

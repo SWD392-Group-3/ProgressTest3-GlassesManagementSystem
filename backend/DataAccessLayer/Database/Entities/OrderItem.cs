@@ -25,7 +25,14 @@ namespace DataAccessLayer.Database.Entities
 
         // Navigation
         public virtual Order Order { get; set; } = null!;
+
         public virtual ICollection<ReturnExchangeItem> ReturnExchangeItems { get; set; } =
             new List<ReturnExchangeItem>();
+
+        public virtual ProductVariant? ProductVariant { get; set; }
+        public virtual LensVariant? LensesVariant { get; set; }
+        public virtual ComboItem? ComboItem { get; set; }
+        public virtual Service? Service { get; set; }
+        public virtual Slot? Slot { get; set; }
     }
 }

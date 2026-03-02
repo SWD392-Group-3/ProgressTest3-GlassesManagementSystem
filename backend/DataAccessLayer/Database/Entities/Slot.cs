@@ -16,7 +16,7 @@ namespace DataAccessLayer.Database.Entities
         public string? Status { get; set; }
         public string? Note { get; set; }
 
-        public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
-        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+        public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+        public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }
