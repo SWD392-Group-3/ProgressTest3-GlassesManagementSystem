@@ -93,6 +93,9 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Entity Framework Migrations
+**/Migrations/
+
 # Files built by Visual Studio
 *_i.c
 *_p.c
