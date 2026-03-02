@@ -17,12 +17,29 @@ namespace DataAccessLayer.Database.Configurations
 
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.StartTime).HasColumnType("timestamptz");
-            builder.Property(x => x.EndTime).HasColumnType("timestamptz");
+            // Date
+            builder.Property(x => x.Date)
+                   .HasColumnType("date")
+                   .IsRequired();
 
-            builder.Property(x => x.Status).HasMaxLength(50);
+            // Time
+            builder.Property(x => x.StartTime)
+                   .HasColumnType("time")
+                   .IsRequired();
 
-            builder.HasIndex(x => new { x.StartTime, x.EndTime });
+            builder.Property(x => x.EndTime)
+                   .HasColumnType("time")
+                   .IsRequired();
+
+            builder.Property(x => x.Status)
+                   .HasMaxLength(50);
+
+            builder.Property(x => x.Note)
+                   .HasMaxLength(500);
+
+            // Index để tránh trùng slot trong 1 ngày
+            builder.HasIndex(x => new { x.Date, x.StartTime, x.EndTime })
+                   .IsUnique();
         }
     }
 }

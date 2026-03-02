@@ -1,20 +1,20 @@
-using DataAccessLayer.Database.Configurations;
-using DataAccessLayer.Database.Entities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataAccessLayer.Database.Configurations;
+using DataAccessLayer.Database.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Database
 {
-    public class ApplicationDbContext : DbContext , IApplicationDbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-        }
-        public DbSet<Category> Categories { get; set; } 
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options) { }
+
+        public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<WarrantyPolicy> WarrantyPolicies { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
@@ -30,18 +30,22 @@ namespace DataAccessLayer.Database
         public DbSet<Payment> Payment { get; set; }
         public DbSet<Promotion> Promotion { get; set; }
         public DbSet<ReturnExchange> ReturnExchange { get; set; }
+        public DbSet<ReturnExchangeItem> ReturnExchangeItem { get; set; }
+        public DbSet<ReturnExchangeImage> ReturnExchangeImage { get; set; }
+        public DbSet<ReturnExchangeHistory> ReturnExchangeHistory { get; set; }
         public DbSet<Slot> Slot { get; set; }
         public DbSet<EyeResult> EyeResult { get; set; }
 
         public DbSet<Brand> Brand { get; set; }
 
-        public DbSet<ComboItem> ComboItem { get; set; } 
+        public DbSet<ComboItem> ComboItem { get; set; }
 
-        public DbSet<ProductVariant> ProductVariant { get; set; }   
+        public DbSet<ProductVariant> ProductVariant { get; set; }
 
         public DbSet<Notification> Notification { get; set; }
 
-        public new DbSet<T> Set<T>() where T : class => base.Set<T>();
+        public new DbSet<T> Set<T>()
+            where T : class => base.Set<T>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +68,15 @@ namespace DataAccessLayer.Database
             modelBuilder.ApplyConfiguration<Payment>(new PaymentConfiguration());
             modelBuilder.ApplyConfiguration<Promotion>(new PromotionConfiguration());
             modelBuilder.ApplyConfiguration<ReturnExchange>(new ReturnExchangeConfiguration());
+            modelBuilder.ApplyConfiguration<ReturnExchangeItem>(
+                new ReturnExchangeItemConfiguration()
+            );
+            modelBuilder.ApplyConfiguration<ReturnExchangeImage>(
+                new ReturnExchangeImageConfiguration()
+            );
+            modelBuilder.ApplyConfiguration<ReturnExchangeHistory>(
+                new ReturnExchangeHistoryConfiguration()
+            );
             modelBuilder.ApplyConfiguration<Slot>(new SlotConfiguration());
             modelBuilder.ApplyConfiguration<EyeResult>(new EyeResultConfiguration());
             modelBuilder.ApplyConfiguration<Brand>(new BrandConfiguration());

@@ -4,18 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccessLayer.Database.Entities
+namespace BusinessLogicLayer.DTOs.Response
 {
-    public class Cart
+    public class CartDto
     {
         public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
-
         public decimal TotalAmount { get; set; }
         public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        public virtual Customer Customer { get; set; } = null!;
-        public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+        public IEnumerable<CartItemDto> CartItems { get; set; } = new List<CartItemDto>();
     }
 }

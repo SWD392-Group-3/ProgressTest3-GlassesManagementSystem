@@ -1,10 +1,10 @@
-using DataAccessLayer.Database.Entities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DataAccessLayer.Database.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Database
 {
@@ -26,6 +26,9 @@ namespace DataAccessLayer.Database
         public DbSet<Payment> Payment { get; set; }
         public DbSet<Promotion> Promotion { get; set; }
         public DbSet<ReturnExchange> ReturnExchange { get; set; }
+        public DbSet<ReturnExchangeItem> ReturnExchangeItem { get; set; }
+        public DbSet<ReturnExchangeImage> ReturnExchangeImage { get; set; }
+        public DbSet<ReturnExchangeHistory> ReturnExchangeHistory { get; set; }
         public DbSet<Slot> Slot { get; set; }
         public DbSet<EyeResult> EyeResult { get; set; }
 
@@ -37,7 +40,8 @@ namespace DataAccessLayer.Database
 
         public DbSet<Notification> Notification { get; set; }
 
-        DbSet<T> Set<T>() where T : class;
+        DbSet<T> Set<T>()
+            where T : class;
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
