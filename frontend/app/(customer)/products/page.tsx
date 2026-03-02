@@ -3,7 +3,10 @@
 import { useState, useMemo } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import FilterSystem, { type Filters } from "@/components/FilterSystem";
+import FilterSystem, {
+  type Filters,
+  sortOptions,
+} from "@/components/FilterSystem";
 import ProductCard from "@/components/ProductCard";
 import { products } from "@/constants/products";
 
@@ -85,11 +88,31 @@ export default function ProductsPage() {
           </div>
 
           {/* Layout */}
-          <div className="flex gap-10">
+          <div className="flex flex-col lg:flex-row gap-10">
             <FilterSystem filters={filters} onFilterChange={setFilters} />
 
             <div className="flex-1">
-              {/* Desktop sort is rendered inside FilterSystem */}
+              {/* Desktop Sort */}
+              <div className="hidden lg:flex items-center gap-3 mb-6">
+                <span className="text-xs font-semibold tracking-[0.1em] uppercase text-[#6B7280]">
+                  Sort:
+                </span>
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() =>
+                      setFilters((f) => ({ ...f, sortBy: opt.value }))
+                    }
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                      filters.sortBy === opt.value
+                        ? "bg-[#1A1A1A] text-white"
+                        : "text-[#6B7280] hover:text-[#1A1A1A]"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
 
               {/* Product Grid */}
               {filteredProducts.length > 0 ? (

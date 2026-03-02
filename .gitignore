@@ -288,3 +288,5 @@ Temporary Items
 *.swp
 *.swo
 *~
+
+.fake
