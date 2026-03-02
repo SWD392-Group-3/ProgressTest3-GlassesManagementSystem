@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccessLayer.Database.Entities
+namespace BusinessLogicLayer.DTOs.Response
 {
-    public class CartItem
+    public class CartItemDto
     {
         public Guid Id { get; set; }
         public Guid CartId { get; set; }
@@ -21,11 +21,5 @@ namespace DataAccessLayer.Database.Entities
         public decimal UnitPrice { get; set; }
 
         public string? Note { get; set; }
-
-        public virtual Cart Cart { get; set; } = null!;
-        public virtual ProductVariant? ProductVariant { get; set; }
-        public virtual LensVariant? LensesVariant { get; set; }
-        public virtual ComboItem? ComboItem { get; set; }
-        public virtual Service? Service { get; set; }
     }
 }
