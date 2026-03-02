@@ -24,6 +24,26 @@ namespace DataAccessLayer.Database.Configurations
                 .WithMany(x => x.CartItems)
                 .HasForeignKey(x => x.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.ProductVariant)
+                .WithMany()
+                .HasForeignKey(x => x.ProductVariantId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(x => x.LensesVariant)
+                .WithMany()
+                .HasForeignKey(x => x.LensesVariantId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(x => x.ComboItem)
+                .WithMany()
+                .HasForeignKey(x => x.ComboItemId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(x => x.Service)
+                .WithMany()
+                .HasForeignKey(x => x.ServiceId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

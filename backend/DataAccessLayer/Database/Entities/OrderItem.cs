@@ -14,6 +14,8 @@ namespace DataAccessLayer.Database.Entities
         public Guid? ProductVariantId { get; set; }
         public Guid? LensesVariantId { get; set; }
         public Guid? ComboItemId { get; set; }
+        public Guid? ServiceId { get; set; }
+        public Guid? SlotId { get; set; }
 
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }

@@ -9,5 +9,7 @@ namespace DataAccessLayer.Repositories.Interfaces
 {
     public interface ICartRepository : IGenericRepository<Cart>
     {
+        Task<Cart?> GetCartByCustomerIdAsync(Guid customerId);
+        Task<Cart?> GetCartByCartItemIdAsync(Guid cartItemId);
     }
 }
