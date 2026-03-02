@@ -12,8 +12,7 @@ namespace DataAccessLayer.Database.Entities
 
         public Guid CustomerId { get; set; }
         public Guid? PromotionId { get; set; }
-        public Guid? ServiceId { get; set; }
-        public Guid? SlotId { get; set; }
+        
 
         public string? Status { get; set; }
 

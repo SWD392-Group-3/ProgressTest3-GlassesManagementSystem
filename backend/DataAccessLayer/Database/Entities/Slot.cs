@@ -10,9 +10,9 @@ namespace DataAccessLayer.Database.Entities
     {
         public Guid Id { get; set; }
 
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-
+        public TimeOnly StartTime { get; set; }
+        public TimeOnly EndTime { get; set; }
+        public DateOnly Date { get; set; }
         public string? Status { get; set; }
         public string? Note { get; set; }
 
