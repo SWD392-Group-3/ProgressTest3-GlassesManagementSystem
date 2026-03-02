@@ -5,10 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
-using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.Repositories.Implementations
 {
     public class EyeResultRepository : GenericRepository<EyeResult>, IEyeResultRepository
     {

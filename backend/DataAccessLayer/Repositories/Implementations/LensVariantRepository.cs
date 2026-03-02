@@ -5,14 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
-using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.Repositories.Implementations
 {
-    public class NotificationRepository : GenericRepository<Notification>, INotificationRepository
+    public class LensVariantRepository : GenericRepository<LensVariant>, ILensVariantRepository
     {
-        public NotificationRepository(IApplicationDbContext context) : base(context)
+        public LensVariantRepository(IApplicationDbContext context) : base(context)
         {
         }
     }

@@ -5,14 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
-using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.Repositories.Implementations
 {
-    public class ComboRepository : GenericRepository<Combo>, IComboRepository
+    public class CartItemRepository : GenericRepository<CartItem>, ICartItemRepository
     {
-        public ComboRepository(IApplicationDbContext context) : base(context)
+        public CartItemRepository(IApplicationDbContext context) : base(context)
         {
         }
     }

@@ -5,14 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
-using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.Repositories.Implementations
 {
-    public class CategoryRepository : GenericRepository<Category>, ICategoryRepository
+    public class PromotionRepository : GenericRepository<Promotion>, IPromotionRepository
     {
-        public CategoryRepository(IApplicationDbContext context) : base(context)
+        public PromotionRepository(IApplicationDbContext context) : base(context)
         {
         }
     }

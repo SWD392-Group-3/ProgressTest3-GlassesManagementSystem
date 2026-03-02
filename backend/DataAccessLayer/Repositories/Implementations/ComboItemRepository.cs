@@ -5,14 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
-using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.Repositories.Implementations
 {
-    public class CustomerRepository : GenericRepository<Customer>, ICustomerRepository
+    public class ComboItemRepository : GenericRepository<ComboItem>, IComboItemRepository
     {
-        public CustomerRepository(IApplicationDbContext context) : base(context)
+        public ComboItemRepository(IApplicationDbContext context) : base(context)
         {
         }
     }

@@ -5,14 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
-using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 
-namespace DataAccessLayer.Repositories
+namespace DataAccessLayer.Repositories.Implementations
 {
-    public class PaymentRepository : GenericRepository<Payment>, IPaymentRepository
+    public class OrderItemRepository : GenericRepository<OrderItem>, IOrderItemRepository
     {
-        public PaymentRepository(IApplicationDbContext context) : base(context)
+        public OrderItemRepository(IApplicationDbContext context) : base(context)
         {
         }
     }
