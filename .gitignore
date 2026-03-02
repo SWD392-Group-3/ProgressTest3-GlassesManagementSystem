@@ -276,6 +276,7 @@ Temporary Items
 # ============================================
 *.log
 *.sql
+!**/seeddata.sql
 *.sqlite
 *.db
 
