@@ -19,8 +19,16 @@ namespace DataAccessLayer.Repositories.Implementations
         public async Task<Cart?> GetCartByCartItemIdAsync(Guid cartItemId)
         {
             return await _context.Cart
+                .Include(c => c.CartItems)
                 .Where(c => c.CartItems.Any(ci => ci.Id == cartItemId))
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<Cart?> GetCartWithItemsAsync(Guid cartId)
+        {
+            return await _context.Cart
+                .Include(c => c.CartItems)
+                .FirstOrDefaultAsync(c => c.Id == cartId);
         }
 
         public async Task<Cart?> GetCartByCustomerIdAsync(Guid customerId)

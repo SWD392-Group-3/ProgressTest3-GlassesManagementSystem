@@ -9,5 +9,6 @@ namespace DataAccessLayer.Repositories.Interfaces
 {
     public interface ICartItemRepository : IGenericRepository<CartItem>
     {
+        void RemoveRange(IEnumerable<CartItem> items);
     }
 }

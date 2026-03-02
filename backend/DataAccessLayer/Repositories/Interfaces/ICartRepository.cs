@@ -11,5 +11,6 @@ namespace DataAccessLayer.Repositories.Interfaces
     {
         Task<Cart?> GetCartByCustomerIdAsync(Guid customerId);
         Task<Cart?> GetCartByCartItemIdAsync(Guid cartItemId);
+        Task<Cart?> GetCartWithItemsAsync(Guid cartId);
     }
 }
