@@ -1,4 +1,7 @@
 using System.Text;
+using BusinessLogicLayer.Services;
+using BusinessLogicLayer.Services.Implementations;
+using BusinessLogicLayer.Services.Interfaces;
 using BusinessLogicLayer.Settings;
 using GlassesManagementSystem.Extensions;
 using Microsoft.AspNetCore.Authentication;
@@ -14,8 +17,13 @@ builder.WebHost.UseUrls("http://localhost:5000");
 
 // JWT (cấu hình từ appsettings, class JwtSettings ở BLL)
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection(CloudinarySettings.SectionName)
+);
+
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -26,21 +34,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwtSettings?.Issuer,
             ValidAudience = jwtSettings?.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings?.Secret ?? ""))
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSettings?.Secret ?? "")
+            ),
         };
     });
 
 // Business Logic Layer
 builder.Services.AddBusinessLogic();
 
+// Cloudinary Service
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+// Return Exchange Service
+builder.Services.AddScoped<IReturnExchangeService, ReturnExchangeService>();
+
 // CORS (cho frontend Next.js)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod();
     });
 });
 
@@ -48,37 +62,48 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddOpenApi(options =>
 {
-    options.AddDocumentTransformer(async (document, context, cancellationToken) =>
-    {
-        var schemeProvider = context.ApplicationServices.GetRequiredService<IAuthenticationSchemeProvider>();
-        var schemes = await schemeProvider.GetAllSchemesAsync();
-        if (!schemes.Any(s => s.Name == "Bearer"))
-            return;
-
-        document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+    options.AddDocumentTransformer(
+        async (document, context, cancellationToken) =>
         {
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "Nhập JWT từ API login/register."
-        };
+            var schemeProvider =
+                context.ApplicationServices.GetRequiredService<IAuthenticationSchemeProvider>();
+            var schemes = await schemeProvider.GetAllSchemesAsync();
+            if (!schemes.Any(s => s.Name == "Bearer"))
+                return;
 
-        foreach (var pathItem in document.Paths.Values)
-        {
-            foreach (var operation in pathItem.Operations.Values)
+            document.Components ??= new OpenApiComponents();
+            document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
             {
-                operation.Security ??= [];
-                operation.Security.Add(new OpenApiSecurityRequirement
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Description = "Nhập JWT từ API login/register.",
+            };
+
+            foreach (var pathItem in document.Paths.Values)
+            {
+                foreach (var operation in pathItem.Operations.Values)
                 {
-                    [new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference { Id = "Bearer", Type = ReferenceType.SecurityScheme }
-                    }] = []
-                });
+                    operation.Security ??= [];
+                    operation.Security.Add(
+                        new OpenApiSecurityRequirement
+                        {
+                            [
+                                new OpenApiSecurityScheme
+                                {
+                                    Reference = new OpenApiReference
+                                    {
+                                        Id = "Bearer",
+                                        Type = ReferenceType.SecurityScheme,
+                                    },
+                                }
+                            ] = [],
+                        }
+                    );
+                }
             }
         }
-    });
+    );
 });
 
 // Data Access (DbContext, UnitOfWork, Repositories)

@@ -14,7 +14,8 @@ namespace DataAccessLayer.Repositories
             _context = context;
         }
 
-        public IGenericRepository<T> GetRepository<T>() where T : class
+        public IGenericRepository<T> GetRepository<T>()
+            where T : class
         {
             var type = typeof(T);
             if (_repositories.TryGetValue(type, out var repo))
