@@ -284,6 +284,18 @@ export async function cancelOrder(orderId: string): Promise<void> {
   );
 }
 
+/** PATCH /api/order/{orderId}/status — Staff/Admin cập nhật trạng thái đơn hàng */
+export async function updateOrderStatus(
+  orderId: string,
+  status: string,
+): Promise<void> {
+  await apiRequest<void>(
+    API.order.updateStatus(orderId),
+    { method: "PATCH", body: JSON.stringify({ status }) },
+    { auth: true },
+  );
+}
+
 // ─── Payment API ──────────────────────────────────────────────────────────────
 
 /** POST /api/payment/momo */
