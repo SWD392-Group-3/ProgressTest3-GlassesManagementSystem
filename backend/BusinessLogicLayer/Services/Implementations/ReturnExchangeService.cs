@@ -52,6 +52,49 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (order.CustomerId != customerId)
                     return (null, "Đơn hàng không thuộc về khách hàng này");
 
+                // Chỉ được hoàn hàng khi đơn đã giao
+                if (order.Status != "Delivered")
+                    return (null, "Chỉ có thể hoàn hàng khi đơn hàng đã được giao");
+
+                // Lấy tất cả OrderItem thuộc order này để validate
+                var orderItemRepo = _unitOfWork.GetRepository<OrderItem>();
+                var orderItems = await orderItemRepo.FindAsync(
+                    oi => oi.OrderId == request.OrderId,
+                    cancellationToken
+                );
+                var orderItemDict = orderItems.ToDictionary(oi => oi.Id);
+
+                // Validate từng item trong request
+                foreach (var item in request.Items)
+                {
+                    if (!orderItemDict.TryGetValue(item.OrderItemId, out var orderItem))
+                        return (null, $"Sản phẩm {item.OrderItemId} không thuộc đơn hàng này");
+
+                    if (item.Quantity <= 0)
+                        return (null, $"Số lượng hoàn phải lớn hơn 0");
+
+                    if (item.Quantity > orderItem.Quantity)
+                        return (
+                            null,
+                            $"Số lượng hoàn ({item.Quantity}) vượt quá số lượng đã mua ({orderItem.Quantity})"
+                        );
+
+                    // Kiểm tra OrderItem này đã có trong yêu cầu hoàn hàng Pending/ApprovedBySales chưa
+                    var existingItems = await _returnExchangeItemRepository.GetByOrderItemIdAsync(
+                        item.OrderItemId
+                    );
+                    var activeReturn = existingItems.FirstOrDefault(ri =>
+                        ri.ReturnExchange != null
+                        && ri.ReturnExchange.Status != "Rejected"
+                        && ri.ReturnExchange.Status != "Completed"
+                    );
+                    if (activeReturn != null)
+                        return (
+                            null,
+                            $"Sản phẩm {item.OrderItemId} đang có yêu cầu hoàn hàng chưa được xử lý"
+                        );
+                }
+
                 // Create return exchange
                 var returnExchange = new ReturnExchange
                 {
@@ -357,23 +400,28 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 await _returnExchangeHistoryRepository.AddAsync(history, cancellationToken);
 
-                // Hoàn tất đơn đổi trả nếu mọi item đã Received
+                // Nếu tất cả items đã được xử lý (Received hoặc Rejected), cập nhật status Completed
                 var allItems = await _returnExchangeItemRepository.GetByReturnExchangeIdAsync(
                     returnExchange.Id
                 );
-                if (allItems.All(i => i.Status == "Received"))
+                var allProcessed = allItems.All(i =>
+                    i.Status == "Received" || i.Status == "Rejected"
+                );
+                if (allProcessed && allItems.Any())
                 {
+                    var prevStatus = returnExchange.Status;
                     returnExchange.Status = "Completed";
                     returnExchange.ResolvedAt = DateTime.UtcNow;
                     _returnExchangeRepository.Update(returnExchange);
+
                     var completedHistory = new ReturnExchangeHistory
                     {
                         Id = Guid.NewGuid(),
                         ReturnExchangeId = returnExchange.Id,
                         Action = "Completed",
-                        OldStatus = "ReceivedByOperation",
+                        OldStatus = prevStatus,
                         NewStatus = "Completed",
-                        Comment = "Đã xử lý xong toàn bộ sản phẩm",
+                        Comment = "Tất cả sản phẩm đã được xử lý, yêu cầu hoàn hàng hoàn tất",
                         PerformedByUserId = operationUserId,
                         PerformedByRole = "Operation",
                         PerformedAt = DateTime.UtcNow,

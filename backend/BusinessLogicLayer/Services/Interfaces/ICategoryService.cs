@@ -12,8 +12,15 @@ namespace BusinessLogicLayer.Services.Interfaces
     {
         Task<IEnumerable<CategoryDto>> GetAllAsync();
         Task<CategoryDto?> GetByIdAsync(Guid id);
-        Task<CategoryDto> CreateAsync(CreateCategoryDto dto, CancellationToken cancellationToken = default);
-        Task<CategoryDto?> UpdateAsync(Guid id, UpdateCategoryDto dto, CancellationToken cancellationToken = default);
+        Task<CategoryDto> CreateAsync(
+            CreateCategoryDto dto,
+            CancellationToken cancellationToken = default
+        );
+        Task<CategoryDto?> UpdateAsync(
+            Guid id,
+            UpdateCategoryDto dto,
+            CancellationToken cancellationToken = default
+        );
         Task<bool> DeleteAsync(Guid id);
     }
 }
