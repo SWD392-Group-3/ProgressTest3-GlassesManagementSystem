@@ -19,7 +19,6 @@ namespace DataAccessLayer.Database.Configurations
 
             builder.Property(x => x.TotalAmount).HasColumnType("numeric(18,2)");
             builder.Property(x => x.DiscountAmount).HasColumnType("numeric(18,2)");
-            builder.Property(x => x.FinalAmount).HasColumnType("numeric(18,2)");
             builder.Property(x => x.OrderDate).HasColumnType("timestamptz");
 
             builder.Property(x => x.Status).HasMaxLength(50);

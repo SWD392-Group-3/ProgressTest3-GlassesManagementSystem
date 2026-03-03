@@ -14,5 +14,10 @@ namespace DataAccessLayer.Repositories.Implementations
         public CartItemRepository(IApplicationDbContext context) : base(context)
         {
         }
+
+        public void RemoveRange(IEnumerable<CartItem> items)
+        {
+            _context.CartItem.RemoveRange(items);
+        }
     }
 }

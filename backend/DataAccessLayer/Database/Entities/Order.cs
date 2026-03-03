@@ -12,13 +12,10 @@ namespace DataAccessLayer.Database.Entities
 
         public Guid CustomerId { get; set; }
         public Guid? PromotionId { get; set; }
-        
-
         public string? Status { get; set; }
 
         public decimal TotalAmount { get; set; }
         public decimal DiscountAmount { get; set; }
-        public decimal FinalAmount { get; set; }
 
         public DateTime OrderDate { get; set; }
 
@@ -30,7 +27,6 @@ namespace DataAccessLayer.Database.Entities
         public virtual Customer Customer { get; set; } = null!;
         public virtual Promotion? Promotion { get; set; }
         public virtual Service? Service { get; set; }
-        public virtual Slot? Slot { get; set; }
 
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();

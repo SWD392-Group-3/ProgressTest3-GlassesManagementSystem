@@ -15,23 +15,35 @@ export const API = {
     login: "/api/auth/login",
     register: "/api/auth/register",
   },
-  // Thêm endpoint khác khi có, ví dụ:
-  // products: "/api/products",
-  // user: "/api/user/profile",
+  cart: {
+    get: (customerId: string) => `/api/cart/${customerId}`,
+    create: (customerId: string) => `/api/cart/${customerId}/create`,
+    addItem: (customerId: string) => `/api/cart/${customerId}/items`,
+    updateItem: (cartItemId: string) => `/api/cart/items/${cartItemId}`,
+    removeItem: (cartItemId: string) => `/api/cart/items/${cartItemId}`,
+  },
+  order: {
+    getById: (orderId: string) => `/api/order/${orderId}`,
+    getByCustomer: "/api/order/customer",
+    fromCart: "/api/order/from-cart",
+    manual: "/api/order/manual",
+    updateStatus: (orderId: string) => `/api/order/${orderId}/status`,
+    cancel: (orderId: string) => `/api/order/${orderId}/cancel`,
+  },
+  payment: {
+    momoCreate: "/api/payment/momo",
+  },
 } as const;
 
-export type ApiEndpoint = (typeof API)["auth"][keyof (typeof API)["auth"]];
+export type ApiEndpoint = string;
 
 /**
  * Gọi API backend. Tự gắn base URL, Content-Type JSON, và (nếu auth: true) Bearer token.
- * @param path - Đường dẫn API (dùng từ API.auth.login, API.auth.register, ...)
- * @param init - Fetch options (method, body, headers bổ sung, ...)
- * @param options.auth - true thì gắn header Authorization: Bearer <token>
  */
 export async function apiRequest<T = unknown>(
   path: string,
   init: RequestInit = {},
-  options: { auth?: boolean } = {}
+  options: { auth?: boolean } = {},
 ): Promise<T> {
   const base = getApiUrl();
   const url = path.startsWith("http") ? path : `${base}${path}`;
@@ -43,21 +55,23 @@ export async function apiRequest<T = unknown>(
 
   if (options.auth) {
     const token = getToken();
-    if (token) (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+    if (token)
+      (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(url, { ...init, headers });
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const message = (data as { message?: string })?.message ?? `Lỗi ${res.status}`;
+    const message =
+      (data as { message?: string })?.message ?? `Lỗi ${res.status}`;
     throw new Error(message);
   }
 
   return data as T;
 }
 
-// ─── Types (khớp backend DTOs) ──────────────────────────────────────────────
+// ─── Auth Types ─────────────────────────────────────────────────────────────
 
 export interface LoginResponse {
   token: string;
@@ -80,7 +94,85 @@ export interface RegisterRequest {
   phone?: string | null;
 }
 
-// ─── Auth API (mapping với backend AuthController) ────────────────────────────
+// ─── Cart Types ──────────────────────────────────────────────────────────────
+
+export interface CartItemDto {
+  cartItemId: string;
+  productVariantId: string | null;
+  lensesVariantId: string | null;
+  comboItemId: string | null;
+  serviceId: string | null;
+  slotId: string | null;
+  quantity: number;
+  unitPrice: number;
+  note: string | null;
+}
+
+export interface CartDto {
+  cartId: string;
+  customerId: string;
+  items: CartItemDto[];
+  totalAmount: number;
+}
+
+export interface AddCartItemRequest {
+  productVariantId?: string | null;
+  lensesVariantId?: string | null;
+  comboItemId?: string | null;
+  serviceId?: string | null;
+  slotId?: string | null;
+  quantity: number;
+  note?: string | null;
+}
+
+// ─── Order Types ─────────────────────────────────────────────────────────────
+
+export interface OrderItemDto {
+  orderItemId: string;
+  productVariantId: string | null;
+  lensesVariantId: string | null;
+  comboItemId: string | null;
+  serviceId: string | null;
+  slotId: string | null;
+  quantity: number;
+  unitPrice: number;
+  note: string | null;
+}
+
+export interface OrderDto {
+  orderId: string;
+  customerId: string;
+  status: string;
+  totalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+  shippingAddress: string;
+  shippingPhone: string;
+  note: string | null;
+  orderDate: string;
+  items: OrderItemDto[];
+}
+
+export interface CreateOrderRequest {
+  cartId: string;
+  promotionId?: string | null;
+  shippingAddress: string;
+  shippingPhone: string;
+  note?: string | null;
+}
+
+// ─── Payment Types ────────────────────────────────────────────────────────────
+
+export interface MomoCreatePaymentResponse {
+  payUrl: string;
+  orderId: string;
+  requestId: string;
+  amount: number;
+  message: string;
+  resultCode: number;
+}
+
+// ─── Auth API ────────────────────────────────────────────────────────────────
 
 /** POST /api/auth/login */
 export async function login(body: LoginRequest): Promise<LoginResponse> {
@@ -90,9 +182,9 @@ export async function login(body: LoginRequest): Promise<LoginResponse> {
       body: JSON.stringify(body),
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Đăng nhập thất bại.";
-    if (message === "Lỗi 401") throw new Error("Email hoặc mật khẩu không đúng.");
+    const message = err instanceof Error ? err.message : "Đăng nhập thất bại.";
+    if (message === "Lỗi 401")
+      throw new Error("Email hoặc mật khẩu không đúng.");
     throw err;
   }
 }
@@ -109,4 +201,100 @@ export async function register(body: RegisterRequest): Promise<LoginResponse> {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+// ─── Cart API ────────────────────────────────────────────────────────────────
+
+/** GET /api/cart/{customerId} */
+export async function getCart(customerId: string): Promise<CartDto> {
+  return apiRequest<CartDto>(API.cart.get(customerId), {}, { auth: true });
+}
+
+/** POST /api/cart/{customerId}/create */
+export async function createCart(customerId: string): Promise<CartDto> {
+  return apiRequest<CartDto>(
+    API.cart.create(customerId),
+    { method: "POST" },
+    { auth: true },
+  );
+}
+
+/** POST /api/cart/{customerId}/items */
+export async function addCartItem(
+  customerId: string,
+  body: AddCartItemRequest,
+): Promise<CartDto> {
+  return apiRequest<CartDto>(
+    API.cart.addItem(customerId),
+    { method: "POST", body: JSON.stringify(body) },
+    { auth: true },
+  );
+}
+
+/** PUT /api/cart/items/{cartItemId} */
+export async function updateCartItem(
+  cartItemId: string,
+  quantity: number,
+): Promise<CartDto> {
+  return apiRequest<CartDto>(
+    API.cart.updateItem(cartItemId),
+    { method: "PUT", body: JSON.stringify({ quantity }) },
+    { auth: true },
+  );
+}
+
+/** DELETE /api/cart/items/{cartItemId} */
+export async function removeCartItem(cartItemId: string): Promise<void> {
+  await apiRequest<void>(
+    API.cart.removeItem(cartItemId),
+    { method: "DELETE" },
+    { auth: true },
+  );
+}
+
+// ─── Order API ────────────────────────────────────────────────────────────────
+
+/** GET /api/order/{orderId} */
+export async function getOrderById(orderId: string): Promise<OrderDto> {
+  return apiRequest<OrderDto>(API.order.getById(orderId), {}, { auth: true });
+}
+
+/** GET /api/order/customer */
+export async function getMyOrders(): Promise<OrderDto[]> {
+  return apiRequest<OrderDto[]>(API.order.getByCustomer, {}, { auth: true });
+}
+
+/** POST /api/order/from-cart */
+export async function createOrderFromCart(
+  body: CreateOrderRequest,
+): Promise<OrderDto> {
+  return apiRequest<OrderDto>(
+    API.order.fromCart,
+    { method: "POST", body: JSON.stringify(body) },
+    { auth: true },
+  );
+}
+
+/** PATCH /api/order/{orderId}/cancel */
+export async function cancelOrder(orderId: string): Promise<void> {
+  await apiRequest<void>(
+    API.order.cancel(orderId),
+    { method: "PATCH" },
+    { auth: true },
+  );
+}
+
+// ─── Payment API ──────────────────────────────────────────────────────────────
+
+/** POST /api/payment/momo */
+export async function createMomoPayment(
+  orderId: string,
+  amount: number,
+  orderInfo?: string,
+): Promise<MomoCreatePaymentResponse> {
+  return apiRequest<MomoCreatePaymentResponse>(
+    API.payment.momoCreate,
+    { method: "POST", body: JSON.stringify({ orderId, amount, orderInfo }) },
+    { auth: true },
+  );
 }
