@@ -38,5 +38,24 @@ namespace BusinessLogicLayer.DTOs.Manager
         public DateTime? PaidAt { get; set; }
         public string? Note { get; set; }
     }
+
+    /// <summary>Return/Exchange Impact Analysis — business regulation view for manager.</summary>
+    public class ReturnExchangeImpactDto
+    {
+        public int TotalRequests { get; set; }
+        public int PendingRequests { get; set; }
+        public int ApprovedRequests { get; set; }
+        public int RejectedRequests { get; set; }
+        public int CompletedRequests { get; set; }
+        /// <summary>Total refunded / financial impact amount (from completed returns).</summary>
+        public decimal TotalFinancialImpact { get; set; }
+        public List<TopReturnedProductDto> TopReturnedProducts { get; set; } = new();
+    }
+
+    public class TopReturnedProductDto
+    {
+        public string? ProductName { get; set; }
+        public int ReturnCount { get; set; }
+    }
 }
 

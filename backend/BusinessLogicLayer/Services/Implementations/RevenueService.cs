@@ -105,5 +105,44 @@ namespace BusinessLogicLayer.Services.Implementations
                 Note      = p.Note
             }).ToList();
         }
+
+        public async Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync()
+        {
+            var allRe = await _unitOfWork.GetRepository<ReturnExchange>().GetAllAsync();
+            var list  = allRe.ToList();
+
+            // Financial impact = sum of order TotalAmount for Completed returns
+            var completedOrders = list
+                .Where(r => r.Status == "Completed")
+                .Select(r => r.Order)
+                .Where(o => o != null)
+                .ToList();
+
+            var financialImpact = completedOrders.Sum(o => o?.TotalAmount ?? 0);
+
+            // Top returned products: aggregate through ReturnExchangeItems → OrderItem → Product
+            var topProducts = list
+                .SelectMany(r => r.ReturnExchangeItems)
+                .GroupBy(ri => ri.OrderItem?.Order?.Id) // group by order for now
+                .Select(g => new TopReturnedProductDto
+                {
+                    ProductName = g.FirstOrDefault()?.OrderItem?.ProductVariantId.ToString() ?? "Unknown",
+                    ReturnCount = g.Count()
+                })
+                .OrderByDescending(x => x.ReturnCount)
+                .Take(5)
+                .ToList();
+
+            return new ReturnExchangeImpactDto
+            {
+                TotalRequests     = list.Count,
+                PendingRequests   = list.Count(r => r.Status == "Pending"),
+                ApprovedRequests  = list.Count(r => r.Status == "ApprovedBySales"),
+                RejectedRequests  = list.Count(r => r.Status == "Rejected"),
+                CompletedRequests = list.Count(r => r.Status == "Completed"),
+                TotalFinancialImpact = financialImpact,
+                TopReturnedProducts  = topProducts
+            };
+        }
     }
 }

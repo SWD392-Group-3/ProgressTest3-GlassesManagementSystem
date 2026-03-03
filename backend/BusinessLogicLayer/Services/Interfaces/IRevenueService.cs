@@ -14,5 +14,8 @@ namespace BusinessLogicLayer.Services.Interfaces
 
         // Payment Reconciliation (<<includes>> Revenue Monitoring)
         Task<IEnumerable<PaymentReconciliationDto>> GetPaymentReconciliationAsync(DateTime? from, DateTime? to);
+
+        // Return/Exchange Impact Analysis (<<includes>> Business Regulation Management)
+        Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync();
     }
 }

@@ -10,11 +10,13 @@ namespace BusinessLogicLayer.Services.Interfaces
         // Promotions (Business Regulation)
         Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync();
         Task<PromotionDto> CreatePromotionAsync(CreatePromotionRequest request);
+        Task<PromotionDto> UpdatePromotionAsync(Guid id, UpdatePromotionRequest request);
         Task<bool> DeletePromotionAsync(Guid id);
 
         // Services
         Task<IEnumerable<ServiceDto>> GetAllServicesAsync();
         Task<ServiceDto> CreateServiceAsync(CreateServiceRequest request);
+        Task<ServiceDto> UpdateServiceAsync(Guid id, UpdateServiceRequest request);
         Task<bool> DeleteServiceAsync(Guid id);
 
         // Combo Management (Frame + Lens)

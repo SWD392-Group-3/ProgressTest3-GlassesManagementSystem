@@ -63,3 +63,97 @@ Cung cấp dữ liệu tổng quan cho trang Dashboard của Manager để theo 
   - *Lưu ý: Chỉ tính những đơn hàng có trạng thái là "Completed" (Đã hoàn thành) hoặc "Paid" (Đã thanh toán).*
 - **`GetMonthlyRevenue(int year)` (`GET /api/manager/revenue/monthly/{year}`)**: Trả về dữ liệu doanh thu chi tiết từng tháng (từ tháng 1 tới tháng 12) của một năm cụ thể. Dữ liệu này rất thuận tiện để vẽ biểu đồ dạng cột (Bar Chart) hoặc đường (Line Chart) trên Frontend.
 - **`GetRecentOrders(int count)` (`GET /api/manager/revenue/recent-orders?count=5`)**: Lấy danh sách N đơn hàng mới nhất vừa được đặt để hiển thị lên bảng tin hoạt động gần đây của Dashboard.
+
+---
+
+## [CẬP NHẬT] Bổ sung API theo Use-Case Diagram (Sprint 2)
+
+Các API dưới đây được bổ sung để bám sát hoàn toàn với Use-Case Diagram của Manager.
+
+---
+
+### A. Category & Brand Management — CRUD đầy đủ
+**Controller:** `ProductManagerController.cs` | **Service:** `ProductManagerService.cs`
+
+Trước đây chỉ có `GET`. Đã bổ sung Create / Update / Delete:
+- **`POST /api/manager/products/categories`** — Tạo mới danh mục sản phẩm (Category). Body: `{ name, description, status }`.
+- **`PUT /api/manager/products/categories/{id}`** — Cập nhật tên, mô tả, trạng thái của danh mục.
+- **`DELETE /api/manager/products/categories/{id}`** — Xóa danh mục.
+- **`POST /api/manager/products/brands`** — Tạo mới thương hiệu (Brand). Body: `{ name, description, country, status }`.
+- **`PUT /api/manager/products/brands/{id}`** — Cập nhật thương hiệu.
+- **`DELETE /api/manager/products/brands/{id}`** — Xóa thương hiệu.
+
+---
+
+### B. Frame Variant Management (Quản lý Biến thể Gọng kính) — CRUD mới
+**Controller:** `ProductManagerController.cs` | **Service:** `ProductManagerService.cs`
+
+Quản lý các biến thể gọng kính (`ProductVariant`) theo màu sắc, kích cỡ, chất liệu và **giá bán** (tương ứng với use-case "Frame Variant Management" và "Product Pricing Setup - Frames"):
+- **`GET /api/manager/products/frame-variants?productId={id}`** — Lấy tất cả biến thể gọng của một sản phẩm.
+- **`GET /api/manager/products/frame-variants/{id}`** — Lấy chi tiết một biến thể gọng cụ thể.
+- **`POST /api/manager/products/frame-variants`** — Thêm biến thể gọng mới. Body: `{ productId, color, size, material, price, status, imageUrl }`.
+- **`PUT /api/manager/products/frame-variants/{id}`** — Cập nhật thông tin và giá của biến thể gọng.
+- **`DELETE /api/manager/products/frame-variants/{id}`** — Xóa biến thể gọng.
+
+---
+
+### C. Lens Variant Management (Quản lý Biến thể Tròng kính) — CRUD mới
+**Controller:** `ProductManagerController.cs` | **Service:** `ProductManagerService.cs`
+
+Quản lý biến thể tròng kính (`LensVariant`) theo độ cầu, độ trụ, chỉ số khúc xạ và **giá bán** (use-case "Lens Variant Management" và "Product Pricing Setup - Lenses"):
+- **`GET /api/manager/products/lens-variants?productId={id}`** — Lấy tất cả biến thể tròng của một sản phẩm.
+- **`GET /api/manager/products/lens-variants/{id}`** — Lấy chi tiết một biến thể tròng.
+- **`POST /api/manager/products/lens-variants`** — Thêm biến thể tròng mới. Body: `{ productId, doCau, doTru, chiSoKhucXa, price, status, imageUrl }`.
+- **`PUT /api/manager/products/lens-variants/{id}`** — Cập nhật thông số và giá tròng.
+- **`DELETE /api/manager/products/lens-variants/{id}`** — Xóa biến thể tròng.
+
+---
+
+### D. Combo Management — Update + ComboItem CRUD (Quản lý Combo Frame + Lens)
+**Controller:** `PricingPromotionController.cs` | **Service:** `PricingPromotionService.cs`
+
+Trước đây Combo chỉ có Get / Create / Delete. Đã bổ sung Update và quản lý các item bên trong Combo:
+- **`PUT /api/manager/pricing-promotions/combos/{id}`** — Cập nhật tên, mô tả, giá cơ sở, thời gian hiệu lực của Combo.
+- **`GET /api/manager/pricing-promotions/combos/{comboId}/items`** — Lấy danh sách các item (gọng + tròng) trong Combo.
+- **`POST /api/manager/pricing-promotions/combos/{comboId}/items`** — Thêm một sản phẩm vào Combo. Body: `{ productVariantId, lensesVariantId, quantity }` (cung cấp một trong hai ID).
+- **`DELETE /api/manager/pricing-promotions/combos/{comboId}/items/{itemId}`** — Gỡ sản phẩm khỏi Combo.
+
+---
+
+### E. Promotion & Service — Update bổ sung
+**Controller:** `PricingPromotionController.cs` | **Service:** `PricingPromotionService.cs`
+
+Trước chỉ có Create + Delete. Đã bổ sung:
+- **`PUT /api/manager/pricing-promotions/promotions/{id}`** — Cập nhật mã, tên, mô tả, giá trị giảm, thời gian hiệu lực của khuyến mãi.
+- **`PUT /api/manager/pricing-promotions/services/{id}`** — Cập nhật tên, mô tả, giá của dịch vụ.
+
+---
+
+### F. Account Status Control — Lock / Unlock (Khóa / Mở tài khoản)
+**Controller:** `UserStaffController.cs` | **Service:** `UserStaffService.cs`
+
+API riêng để thay đổi trạng thái tài khoản nhân viên mà không cần chỉnh sửa toàn bộ profile (tương ứng use-case "Account Status Control (Lock/Unlock)"):
+- **`PATCH /api/manager/users/{id}/status`** — Khóa hoặc mở khóa tài khoản. Body: `{ "status": "Locked" }` hoặc `{ "status": "Active" }`. Chỉ cập nhật trường `Status`, không ảnh hưởng các thông tin khác.
+
+---
+
+### G. Payment Reconciliation (Đối soát Thanh toán)
+**Controller:** `RevenueController.cs` | **Service:** `RevenueService.cs`
+
+Use-case "Payment Reconciliation" trong diagram là nhánh `<<includes>>` của Revenue Monitoring. API này cho phép Manager xem danh sách giao dịch thanh toán, đối chiếu với đơn hàng:
+- **`GET /api/manager/revenue/payments?from={date}&to={date}`** — Lấy danh sách Payment trong khoảng thời gian. Response mỗi item có: `paymentId`, `orderId`, `amount`, `method`, `status`, `paidAt`, `note`.
+
+---
+
+### H. Return/Exchange Impact Analysis (Phân tích Tác động Đổi/Trả)
+**Controller:** `RevenueController.cs` | **Service:** `RevenueService.cs`
+
+Use-case "Return/Exchange Impact Analysis" `<<includes>>` trong Business Regulation Management. Cung cấp cái nhìn tổng quan để Manager đánh giá mức độ ảnh hưởng của đơn đổi trả lên hoạt động kinh doanh:
+- **`GET /api/manager/revenue/return-exchange-impact`** — Trả về:
+  - `totalRequests` — Tổng số yêu cầu đổi/trả.
+  - `pendingRequests` — Số yêu cầu đang chờ xử lý.
+  - `approvedRequests` — Số yêu cầu đã được duyệt bởi Sales.
+  - `rejectedRequests` — Số yêu cầu bị từ chối.
+  - `completedRequests` — Số yêu cầu đã hoàn thành.
+  - `totalFinancialImpact` — Tổng giá trị tài chính bị ảnh hưởng (tổng giá trị đơn hàng của các yêu cầu đã hoàn thành).
+  - `topReturnedProducts` — Top 5 sản phẩm bị trả nhiều nhất.

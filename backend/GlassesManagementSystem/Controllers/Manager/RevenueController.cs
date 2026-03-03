@@ -49,5 +49,14 @@ namespace GlassesManagementSystem.Controllers.Manager
             var payments = await _revenueService.GetPaymentReconciliationAsync(from, to);
             return Ok(payments);
         }
+
+        // ─── RETURN/EXCHANGE IMPACT ANALYSIS (<<includes>> Business Regulation Mgmt) ──
+
+        [HttpGet("return-exchange-impact")]
+        public async Task<IActionResult> GetReturnExchangeImpact()
+        {
+            var impact = await _revenueService.GetReturnExchangeImpactAsync();
+            return Ok(impact);
+        }
     }
 }

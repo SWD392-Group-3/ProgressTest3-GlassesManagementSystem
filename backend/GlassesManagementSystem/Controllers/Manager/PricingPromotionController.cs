@@ -34,6 +34,17 @@ namespace GlassesManagementSystem.Controllers.Manager
             return Ok(result);
         }
 
+        [HttpPut("promotions/{id}")]
+        public async Task<IActionResult> UpdatePromotion(Guid id, [FromBody] UpdatePromotionRequest request)
+        {
+            try
+            {
+                var result = await _pricingPromotionService.UpdatePromotionAsync(id, request);
+                return Ok(result);
+            }
+            catch (Exception ex) { return NotFound(ex.Message); }
+        }
+
         [HttpDelete("promotions/{id}")]
         public async Task<IActionResult> DeletePromotion(Guid id)
         {
@@ -57,6 +68,17 @@ namespace GlassesManagementSystem.Controllers.Manager
         {
             var result = await _pricingPromotionService.CreateServiceAsync(request);
             return Ok(result);
+        }
+
+        [HttpPut("services/{id}")]
+        public async Task<IActionResult> UpdateService(Guid id, [FromBody] UpdateServiceRequest request)
+        {
+            try
+            {
+                var result = await _pricingPromotionService.UpdateServiceAsync(id, request);
+                return Ok(result);
+            }
+            catch (Exception ex) { return NotFound(ex.Message); }
         }
 
         [HttpDelete("services/{id}")]

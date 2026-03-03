@@ -55,6 +55,24 @@ namespace BusinessLogicLayer.Services.Implementations
             return true;
         }
 
+        public async Task<PromotionDto> UpdatePromotionAsync(Guid id, UpdatePromotionRequest request)
+        {
+            var promotion = await _unitOfWork.GetRepository<Promotion>().GetByIdAsync(id);
+            if (promotion == null) throw new Exception("Promotion not found");
+
+            promotion.Code = request.Code;
+            promotion.Name = request.Name;
+            promotion.Description = request.Description;
+            promotion.DiscountValue = request.DiscountValue;
+            promotion.StartDate = request.StartDate;
+            promotion.EndDate = request.EndDate;
+            if (request.Status != null) promotion.Status = request.Status;
+
+            _unitOfWork.GetRepository<Promotion>().Update(promotion);
+            await _unitOfWork.SaveChangesAsync();
+            return MapToPromotionDto(promotion);
+        }
+
         // ─── SERVICES ─────────────────────────────────────────────────────────
 
         public async Task<IEnumerable<ServiceDto>> GetAllServicesAsync()
@@ -95,6 +113,21 @@ namespace BusinessLogicLayer.Services.Implementations
             _unitOfWork.GetRepository<Service>().Delete(service);
             await _unitOfWork.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<ServiceDto> UpdateServiceAsync(Guid id, UpdateServiceRequest request)
+        {
+            var service = await _unitOfWork.GetRepository<Service>().GetByIdAsync(id);
+            if (service == null) throw new Exception("Service not found");
+
+            service.Name = request.Name;
+            service.Description = request.Description;
+            service.Price = request.Price;
+            if (request.Status != null) service.Status = request.Status;
+
+            _unitOfWork.GetRepository<Service>().Update(service);
+            await _unitOfWork.SaveChangesAsync();
+            return new ServiceDto { Id = service.Id, Name = service.Name, Description = service.Description, Price = service.Price, Status = service.Status };
         }
 
         // ─── COMBO MANAGEMENT (Frame + Lens) ──────────────────────────────────
