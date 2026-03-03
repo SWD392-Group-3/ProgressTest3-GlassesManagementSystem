@@ -51,9 +51,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     if (!product) return;
     setAddingToCart(true);
     try {
-      // productVariantId hiện tại dùng product.id làm placeholder
-      // (thực tế sẽ map sang UUID khi backend trả về product list)
-      await addItem({ productVariantId: product.id, quantity });
+      await addItem({ productVariantId: product.variantId, quantity });
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2500);
     } catch (e) {
@@ -71,7 +69,7 @@ export default function ProductDetailPage({ params }: PageProps) {
     if (!product) return;
     // Truyền thông tin sang trang buy-now qua query params
     router.push(
-      `/checkout/buy-now?productId=${product.id}&qty=${quantity}&price=${product.price}&name=${encodeURIComponent(product.name)}`,
+      `/checkout/buy-now?productId=${product.variantId}&qty=${quantity}&price=${product.price}&name=${encodeURIComponent(product.name)}`,
     );
   }
 

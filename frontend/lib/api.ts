@@ -97,7 +97,8 @@ export interface RegisterRequest {
 // ─── Cart Types ──────────────────────────────────────────────────────────────
 
 export interface CartItemDto {
-  cartItemId: string;
+  id: string;
+  cartId: string;
   productVariantId: string | null;
   lensesVariantId: string | null;
   comboItemId: string | null;
@@ -109,10 +110,12 @@ export interface CartItemDto {
 }
 
 export interface CartDto {
-  cartId: string;
+  id: string;
   customerId: string;
-  items: CartItemDto[];
+  cartItems: CartItemDto[];
   totalAmount: number;
+  status: string | null;
+  createdAt: string;
 }
 
 export interface AddCartItemRequest {

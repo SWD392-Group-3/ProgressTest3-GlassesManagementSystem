@@ -1,5 +1,7 @@
 export interface Product {
   id: string;
+  /** UUID của ProductVariant trong database — dùng khi gọi API */
+  variantId: string;
   name: string;
   brand: string;
   price: number;
@@ -28,6 +30,7 @@ export interface Product {
 export const products: Product[] = [
   {
     id: "el-001",
+    variantId: "ee200001-0000-0000-0000-000000000001",
     name: "Aurora Titanium",
     brand: "Elite Lens",
     price: 289,
@@ -58,6 +61,7 @@ export const products: Product[] = [
   },
   {
     id: "el-002",
+    variantId: "ee200002-0000-0000-0000-000000000002",
     name: "Noir Classic",
     brand: "Elite Lens",
     price: 219,
@@ -87,6 +91,7 @@ export const products: Product[] = [
   },
   {
     id: "el-003",
+    variantId: "ee200003-0000-0000-0000-000000000003",
     name: "Crystal Blue Shield",
     brand: "Elite Lens",
     price: 199,
@@ -115,6 +120,7 @@ export const products: Product[] = [
   },
   {
     id: "el-004",
+    variantId: "ee200004-0000-0000-0000-000000000004",
     name: "Riviera Aviator",
     brand: "Elite Lens",
     price: 329,
@@ -143,6 +149,7 @@ export const products: Product[] = [
   },
   {
     id: "el-005",
+    variantId: "ee200005-0000-0000-0000-000000000005",
     name: "Vogue Cat-Eye",
     brand: "Elite Lens",
     price: 259,
@@ -170,6 +177,7 @@ export const products: Product[] = [
   },
   {
     id: "el-006",
+    variantId: "ee200006-0000-0000-0000-000000000006",
     name: "Zen Round",
     brand: "Elite Lens",
     price: 239,
@@ -197,6 +205,7 @@ export const products: Product[] = [
   },
   {
     id: "el-007",
+    variantId: "ee200007-0000-0000-0000-000000000007",
     name: "Sport Flex Pro",
     brand: "Elite Lens",
     price: 179,
@@ -224,6 +233,7 @@ export const products: Product[] = [
   },
   {
     id: "el-008",
+    variantId: "ee200008-0000-0000-0000-000000000008",
     name: "Milano Square",
     brand: "Elite Lens",
     price: 299,
@@ -254,6 +264,7 @@ export const products: Product[] = [
   },
   {
     id: "el-009",
+    variantId: "ee200009-0000-0000-0000-000000000009",
     name: "Aero Lite",
     brand: "Elite Lens",
     price: 269,
@@ -281,6 +292,7 @@ export const products: Product[] = [
   },
   {
     id: "el-010",
+    variantId: "ee200010-0000-0000-0000-000000000010",
     name: "Shadow Stealth",
     brand: "Elite Lens",
     price: 349,

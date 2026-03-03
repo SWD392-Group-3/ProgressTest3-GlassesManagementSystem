@@ -15,19 +15,54 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly ICartRepository _cartRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICartItemRepository _cartItemRepository;
+        private readonly ICustomerRepository _customerRepository;
 
-        public CartService(ICartRepository cartRepository, IUnitOfWork unitOfWork, ICartItemRepository cartItemRepository)
+        public CartService(ICartRepository cartRepository, IUnitOfWork unitOfWork, ICartItemRepository cartItemRepository, ICustomerRepository customerRepository)
         {
             _cartRepository = cartRepository;
             _unitOfWork = unitOfWork;
             _cartItemRepository = cartItemRepository;
+            _customerRepository = customerRepository;
         }
-        public async Task<CartDto> AddItemAsync(Guid customerId, Guid? productVariantId, Guid? lensesVariantId, Guid? comboItemId, Guid? serviceId, Guid? slotId, int quantity, string? note)
+
+        /// <summary>
+        /// Nhận vào userId (từ JWT), trả về Customer.Id thực trong DB.
+        /// Nếu không tìm thấy Customer tương ứng, throw exception.
+        /// </summary>
+        private async Task<Guid> ResolveCustomerIdAsync(Guid userId)
         {
+            // Thử tìm theo Customer.Id trực tiếp trước
+            var byId = await _customerRepository.GetByIdAsync(userId);
+            if (byId != null)
+                return byId.Id;
+
+            // Nếu không tìm thấy theo Id, tìm theo UserId (FK)
+            var byUserId = await _customerRepository.GetByUserIdAsync(userId);
+            if (byUserId != null)
+                return byUserId.Id;
+
+            throw new Exception("Không tìm thấy thông tin khách hàng.");
+        }
+
+        public async Task<CartDto> AddItemAsync(Guid userId, Guid? productVariantId, Guid? lensesVariantId, Guid? comboItemId, Guid? serviceId, Guid? slotId, int quantity, string? note)
+        {
+            var customerId = await ResolveCustomerIdAsync(userId);
+
+            // Tự tạo cart nếu chưa có
             var cart = await _cartRepository.GetCartByCustomerIdAsync(customerId);
             if (cart == null)
             {
-                throw new Exception("Bạn chưa có giỏ hàng.");
+                cart = new Cart
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = customerId,
+                    TotalAmount = 0,
+                    Status = "Pending",
+                    CreatedAt = DateTime.UtcNow,
+                    CartItems = new List<CartItem>()
+                };
+                await _cartRepository.AddAsync(cart);
+                await _unitOfWork.SaveChangesAsync();
             }
 
             // Tính UnitPrice dựa theo loại item được chọn
@@ -51,7 +86,6 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 var comboItem = await _unitOfWork.GetRepository<ComboItem>()
                     .GetByIdAsync(comboItemId.Value);
-                // Lấy giá BasePrice từ Combo cha
                 var combo = comboItem != null
                     ? await _unitOfWork.GetRepository<Combo>()
                         .GetByIdAsync(comboItem.ComboId)
@@ -82,63 +116,22 @@ namespace BusinessLogicLayer.Services.Implementations
 
             cart.CartItems.Add(cartItem);
 
-            // Cập nhật TotalAmount của Cart
+            await _cartItemRepository.AddAsync(cartItem);
             cart.TotalAmount = cart.CartItems.Sum(x => x.UnitPrice * x.Quantity);
             _cartRepository.Update(cart);
 
-            await _cartItemRepository.AddAsync(cartItem);
             await _unitOfWork.SaveChangesAsync();
 
-            return new CartDto
-            {
-                Id = cart.Id,
-                CustomerId = customerId,
-                TotalAmount = cart.TotalAmount,
-                Status = cart.Status,
-                CreatedAt = cart.CreatedAt,
-                CartItems = cart.CartItems.Select(x => new CartItemDto
-                {
-                    Id = x.Id,
-                    CartId = x.CartId,
-                    ProductVariantId = x.ProductVariantId,
-                    LensesVariantId = x.LensesVariantId,
-                    ComboItemId = x.ComboItemId,
-                    ServiceId = x.ServiceId,
-                    SlotId = x.SlotId,
-                    Quantity = x.Quantity,
-                    UnitPrice = x.UnitPrice,
-                    Note = x.Note
-                }).ToList()
-            };
+            return MapToDto(cart, customerId);
         }
 
-        public async Task<CartDto> CreateCartIfNotExistsAsync(Guid customerId)
+        public async Task<CartDto> CreateCartIfNotExistsAsync(Guid userId)
         {
+            var customerId = await ResolveCustomerIdAsync(userId);
+
             var cart = await _cartRepository.GetCartByCustomerIdAsync(customerId);
             if (cart != null)
-            {
-                return new CartDto
-                {
-                    Id = cart.Id,
-                    CustomerId = cart.CustomerId,
-                    TotalAmount = cart.TotalAmount,
-                    Status = cart.Status,
-                    CreatedAt= cart.CreatedAt,
-                    CartItems = cart.CartItems.Select(x => new CartItemDto
-                    {
-                        Id = x.Id,
-                        CartId= x.CartId,
-                        ProductVariantId = x.ProductVariantId,
-                        LensesVariantId= x.LensesVariantId,
-                        ComboItemId = x.ComboItemId,
-                        ServiceId = x.ServiceId,
-                        SlotId = x.SlotId,
-                        Quantity = x.Quantity,
-                        UnitPrice = x.UnitPrice,
-                        Note = x.Note
-                    }).ToList()
-                };
-            }
+                return MapToDto(cart, customerId);
 
             var newCart = new Cart
             {
@@ -146,74 +139,34 @@ namespace BusinessLogicLayer.Services.Implementations
                 CustomerId = customerId,
                 TotalAmount = 0,
                 Status = "Pending",
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 CartItems = new List<CartItem>()
             };
 
             await _cartRepository.AddAsync(newCart);
             await _unitOfWork.SaveChangesAsync();
 
-            return new CartDto
-            {
-                Id = newCart.Id,
-                CustomerId = newCart.CustomerId,
-                TotalAmount = newCart.TotalAmount,
-                Status = newCart.Status,
-                CreatedAt = newCart.CreatedAt,
-                CartItems = newCart.CartItems.Select(x => new CartItemDto
-                {
-                    Id = x.Id,
-                    CartId = x.CartId,
-                    ProductVariantId = x.ProductVariantId,
-                    LensesVariantId = x.LensesVariantId,
-                    ComboItemId = x.ComboItemId,
-                    ServiceId = x.ServiceId,
-                    SlotId = x.SlotId,
-                    Quantity = x.Quantity,
-                    UnitPrice = x.UnitPrice,
-                    Note = x.Note
-                }).ToList()
-            };
+            return MapToDto(newCart, customerId);
         }
 
-        public async Task<CartDto?> GetCartByCustomerIdAsync(Guid customerId)
+        public async Task<CartDto?> GetCartByCustomerIdAsync(Guid userId)
         {
+            var customerId = await ResolveCustomerIdAsync(userId);
+
             var cart = await _cartRepository.GetCartByCustomerIdAsync(customerId);
             if (cart == null)
             {
-                throw new Exception("Bạn chưa có giỏ hàng.");
+                return await CreateCartIfNotExistsAsync(userId);
             }
 
-            return new CartDto
-            {
-                Id = cart.Id,
-                CustomerId = cart.CustomerId,
-                TotalAmount = cart.TotalAmount,
-                Status = cart.Status,
-                CreatedAt = cart.CreatedAt,
-                CartItems = cart.CartItems.Select(x => new CartItemDto
-                {
-                    Id = x.Id,
-                    CartId = x.CartId,
-                    ProductVariantId = x.ProductVariantId,
-                    LensesVariantId = x.LensesVariantId,
-                    ComboItemId = x.ComboItemId,
-                    ServiceId = x.ServiceId,
-                    SlotId = x.SlotId,
-                    Quantity = x.Quantity,
-                    UnitPrice = x.UnitPrice,
-                    Note = x.Note
-                }).ToList()
-            };
+            return MapToDto(cart, customerId);
         }
 
         public async Task<bool> RemoveItemAsync(Guid cartItemId)
         {
             var cartItem = await _cartItemRepository.GetByIdAsync(cartItemId);
             if (cartItem == null)
-            {
                 return false;
-            }
 
             _cartItemRepository.Delete(cartItem);
             await _unitOfWork.SaveChangesAsync();
@@ -224,46 +177,42 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var cart = await _cartRepository.GetCartByCartItemIdAsync(cartItemId);
             if (cart == null)
-            {
                 throw new Exception("Bạn chưa có giỏ hàng.");
-            }
 
             var cartItem = await _cartItemRepository.GetByIdAsync(cartItemId);
             if (cartItem == null)
-            {
                 throw new Exception("Bạn không có sản phẩm này");
-            }
 
             if (quantity == 0)
-            {
                 throw new Exception("Số lượng không được bằng 0.");
-            }
 
             cartItem.Quantity = quantity;
             _cartItemRepository.Update(cartItem);
             await _unitOfWork.SaveChangesAsync();
 
-            return new CartDto
-            {
-                Id = cart.Id,
-                CustomerId = cart.CustomerId,
-                TotalAmount = cart.TotalAmount,
-                Status = cart.Status,
-                CreatedAt = cart.CreatedAt,
-                CartItems = cart.CartItems.Select(x => new CartItemDto
-                {
-                    Id = x.Id,
-                    CartId = x.CartId,
-                    ProductVariantId = x.ProductVariantId,
-                    LensesVariantId = x.LensesVariantId,
-                    ComboItemId = x.ComboItemId,
-                    ServiceId = x.ServiceId,
-                    SlotId = x.SlotId,
-                    Quantity = x.Quantity,
-                    UnitPrice = x.UnitPrice,
-                    Note = x.Note
-                }).ToList()
-            };
+            return MapToDto(cart, cart.CustomerId);
         }
+
+        private static CartDto MapToDto(Cart cart, Guid customerId) => new CartDto
+        {
+            Id = cart.Id,
+            CustomerId = customerId,
+            TotalAmount = cart.TotalAmount,
+            Status = cart.Status,
+            CreatedAt = cart.CreatedAt,
+            CartItems = cart.CartItems.Select(x => new CartItemDto
+            {
+                Id = x.Id,
+                CartId = x.CartId,
+                ProductVariantId = x.ProductVariantId,
+                LensesVariantId = x.LensesVariantId,
+                ComboItemId = x.ComboItemId,
+                ServiceId = x.ServiceId,
+                SlotId = x.SlotId,
+                Quantity = x.Quantity,
+                UnitPrice = x.UnitPrice,
+                Note = x.Note
+            }).ToList()
+        };
     }
 }

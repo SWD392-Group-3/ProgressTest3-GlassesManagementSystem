@@ -11,12 +11,12 @@ namespace BusinessLogicLayer.Services.Interfaces
     public interface IOrderService
     {
         // Create
-        Task<OrderDto> CreateFromCartAsync(Guid customerId, CreateOrderRequest request);
+        Task<OrderDto> CreateFromCartAsync(Guid userId, CreateOrderRequest request);
         Task<OrderDto> CreateManualOrderAsync(CreateManualOrderRequest request);
 
         // Read
         Task<OrderDto?> GetByIdAsync(Guid orderId);
-        Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid customerId);
+        Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid userId);
 
         // Status
         Task<bool> UpdateStatusAsync(Guid orderId, string newStatus);

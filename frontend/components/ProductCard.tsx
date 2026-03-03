@@ -29,7 +29,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
     setAdding(true);
     try {
-      await addItem({ productVariantId: product.id, quantity: 1 });
+      await addItem({ productVariantId: product.variantId, quantity: 1 });
       setAdded(true);
       // Sau khi thêm thành công → dẫn đến trang detail sản phẩm
       setTimeout(() => {

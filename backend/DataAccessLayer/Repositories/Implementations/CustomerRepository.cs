@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Repositories.Implementations
 {
@@ -13,6 +14,12 @@ namespace DataAccessLayer.Repositories.Implementations
     {
         public CustomerRepository(IApplicationDbContext context) : base(context)
         {
+        }
+
+        public async Task<Customer?> GetByUserIdAsync(Guid userId)
+        {
+            return await _context.Customer
+                .FirstOrDefaultAsync(c => c.UserId == userId);
         }
     }
 }
