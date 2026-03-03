@@ -6,7 +6,5 @@ using System.Threading.Tasks;
 
 namespace BusinessLogicLayer.Services.Interfaces
 {
-    public interface IOrderService
-    {
-    }
+    public interface IOrderService { }
 }

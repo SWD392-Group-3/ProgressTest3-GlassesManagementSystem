@@ -13,14 +13,16 @@ namespace BusinessLogicLayer.Services.Interfaces
         Task<CartDto> CreateCartIfNotExistsAsync(Guid customerId);
 
         // CartItem
-        Task<CartDto> AddItemAsync(Guid customerId,
-                                   Guid? productVariantId,
-                                   Guid? lensesVariantId,
-                                   Guid? comboItemId,
-                                   Guid? serviceId,
-                                   Guid? slotId,
-                                   int quantity,
-                                   string? note);
+        Task<CartDto> AddItemAsync(
+            Guid customerId,
+            Guid? productVariantId,
+            Guid? lensesVariantId,
+            Guid? comboItemId,
+            Guid? serviceId,
+            Guid? slotId,
+            int quantity,
+            string? note
+        );
 
         Task<CartDto> UpdateItemQuantityAsync(Guid cartItemId, int quantity);
         Task<bool> RemoveItemAsync(Guid cartItemId);

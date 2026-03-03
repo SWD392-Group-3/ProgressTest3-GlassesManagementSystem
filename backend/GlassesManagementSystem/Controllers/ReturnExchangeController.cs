@@ -22,6 +22,12 @@ namespace GlassesManagementSystem.Controllers
             _cloudinaryService = cloudinaryService;
         }
 
+        private Guid GetUserIdFromClaims()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
+        }
+
         /// <summary>
         /// Khách hàng tạo yêu cầu hoàn hàng
         /// </summary>
@@ -36,8 +42,7 @@ namespace GlassesManagementSystem.Controllers
             // TODO: Get customerId from authentication claims
             // var customerId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
 
-            // For now, using customerId from request or a placeholder
-            var customerId = Guid.NewGuid(); // Replace with actual customer ID from auth
+            var customerId = GetUserIdFromClaims();
 
             if (request.Items == null || !request.Items.Any())
                 return BadRequest(new { message = "Phải có ít nhất một sản phẩm để hoàn trả" });
@@ -151,7 +156,7 @@ namespace GlassesManagementSystem.Controllers
         )
         {
             // TODO: Get salesUserId from authentication claims
-            var salesUserId = Guid.NewGuid(); // Replace with actual sales user ID from auth
+            var salesUserId = GetUserIdFromClaims(); // Replace with actual sales user ID from auth
 
             var (response, error) = await _returnExchangeService.ReviewReturnExchangeAsync(
                 request,
@@ -177,7 +182,7 @@ namespace GlassesManagementSystem.Controllers
         )
         {
             // TODO: Get operationUserId from authentication claims
-            var operationUserId = Guid.NewGuid(); // Replace with actual operation user ID from auth
+            var operationUserId = GetUserIdFromClaims(); // Replace with actual operation user ID from auth
 
             var (response, error) = await _returnExchangeService.ReceiveReturnExchangeAsync(
                 request,
@@ -203,8 +208,13 @@ namespace GlassesManagementSystem.Controllers
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get userId from authentication claims
-            var userId = Guid.NewGuid(); // Replace with actual user ID from auth
+            var userId = GetUserIdFromClaims();
+
+            var allowedRoles = new[] { "Customer", "Sales", "Operation" };
+            if (!allowedRoles.Contains(role))
+                return BadRequest(
+                    new { message = "Role không hợp lệ. Chỉ chấp nhận: Customer, Sales, Operation" }
+                );
 
             if (request.ImageUrls == null || !request.ImageUrls.Any())
                 return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
@@ -242,8 +252,13 @@ namespace GlassesManagementSystem.Controllers
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get userId from authentication claims
-            var userId = Guid.NewGuid(); // Replace with actual user ID from auth
+            var userId = GetUserIdFromClaims();
+
+            var allowedRoles = new[] { "Customer", "Sales", "Operation" };
+            if (!allowedRoles.Contains(role))
+                return BadRequest(
+                    new { message = "Role không hợp lệ. Chỉ chấp nhận: Customer, Sales, Operation" }
+                );
 
             if (images == null || !images.Any())
                 return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
