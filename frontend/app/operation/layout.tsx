@@ -5,28 +5,27 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Package,
   RotateCcw,
   LogOut,
   Menu,
   X,
   ChevronRight,
+  Package,
 } from "lucide-react";
 import { getUser, clearAuth } from "@/lib/auth-storage";
 
-const STAFF_ROLES = ["Staff", "Admin"];
+const OPERATION_ROLES = ["Operation"];
 
-function isStaffRole(role: string | null): boolean {
-  return role != null && STAFF_ROLES.includes(role);
+function isOperationRole(role: string | null): boolean {
+  return role != null && OPERATION_ROLES.includes(role);
 }
 
 const navItems = [
-  { href: "/staff", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/staff/orders", label: "Quản lý đơn hàng", icon: Package },
-  { href: "/staff/returns", label: "Đổi trả hàng", icon: RotateCcw },
+  { href: "/operation", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/operation/returns", label: "Đổi trả hàng", icon: RotateCcw },
 ];
 
-export default function StaffLayout({
+export default function OperationLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -45,10 +44,10 @@ export default function StaffLayout({
   useEffect(() => {
     if (!mounted) return;
     if (!user) {
-      router.replace("/login?redirect=/staff");
+      router.replace("/login?redirect=/operation");
       return;
     }
-    if (!isStaffRole(user.role)) {
+    if (!isOperationRole(user.role)) {
       router.replace("/");
       return;
     }
@@ -59,7 +58,7 @@ export default function StaffLayout({
     router.push("/login");
   }
 
-  if (!mounted || !user || !isStaffRole(user.role)) {
+  if (!mounted || !user || !isOperationRole(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5]">
         <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
@@ -71,19 +70,19 @@ export default function StaffLayout({
     <div className="min-h-screen bg-[#F5F5F5] flex">
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-[#1A1A1A] text-white flex flex-col transition-transform duration-300 ease-out lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-[#111827] text-white flex flex-col transition-transform duration-300 ease-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between h-16 px-5 border-b border-white/10">
           <Link
-            href="/staff"
+            href="/operation"
             className="text-lg font-bold tracking-tight"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             ELITE<span className="text-[#D4AF37]"> LENS</span>
             <span className="block text-[10px] font-normal text-white/60 tracking-widest uppercase mt-0.5">
-              Khu vực nhân viên
+              Khu vực Operation
             </span>
           </Link>
           <button
@@ -98,7 +97,7 @@ export default function StaffLayout({
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/staff" && pathname.startsWith(item.href));
+              (item.href !== "/operation" && pathname.startsWith(item.href));
             const Icon = item.icon;
             return (
               <Link
@@ -107,7 +106,7 @@ export default function StaffLayout({
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-[#D4AF37] text-[#1A1A1A]"
+                    ? "bg-[#D4AF37] text-[#111827]"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 }`}
               >
@@ -115,7 +114,7 @@ export default function StaffLayout({
                 {item.label}
                 <ChevronRight
                   className={`w-4 h-4 ml-auto opacity-60 ${
-                    isActive ? "text-[#1A1A1A]" : ""
+                    isActive ? "text-[#111827]" : ""
                   }`}
                 />
               </Link>
@@ -126,7 +125,7 @@ export default function StaffLayout({
         <div className="p-3 border-t border-white/10">
           <div className="px-3 py-2 mb-2 rounded-lg bg-white/5">
             <p className="text-xs font-semibold text-white/90 truncate">
-              {user.fullName ?? "Nhân viên"}
+              {user.fullName ?? "Operations Staff"}
             </p>
             <p className="text-[10px] text-white/50 truncate">{user.email}</p>
             {user.role && (
@@ -170,9 +169,14 @@ export default function StaffLayout({
           >
             ← Về trang chủ
           </Link>
+          <div className="ml-auto hidden sm:flex items-center gap-2 text-xs text-[#6B7280]">
+            <Package className="w-4 h-4 text-[#D4AF37]" />
+            <span>Vai trò: Operations Staff</span>
+          </div>
         </header>
         <div className="p-4 lg:p-8">{children}</div>
       </main>
     </div>
   );
 }
+

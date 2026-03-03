@@ -31,7 +31,9 @@ export default function LoginPage() {
         expiresAt: res.expiresAt,
       });
       const role = (res.role ?? "").toLowerCase();
-      if (["staff", "admin", "operation"].includes(role)) {
+      if (role === "operation") {
+        router.push("/operation");
+      } else if (["staff", "admin"].includes(role)) {
         router.push("/staff");
       } else {
         router.push("/");

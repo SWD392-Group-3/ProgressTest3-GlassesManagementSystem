@@ -15,9 +15,10 @@ import {
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
 
-const STAFF_ROLES = ["Staff", "Admin", "Operation"];
+const STAFF_ROLES = ["Staff", "Admin"];
 const isStaffUser = (u: StoredUser | null) =>
   u?.role != null && STAFF_ROLES.includes(u.role);
+const isOperationUser = (u: StoredUser | null) => u?.role === "Operation";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -167,6 +168,15 @@ export default function Navbar() {
                           Khu vực nhân viên
                         </Link>
                       )}
+                      {!isStaffUser(user) && isOperationUser(user) && (
+                        <Link
+                          href="/operation"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
+                        >
+                          Khu vực Operation
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
@@ -255,6 +265,15 @@ export default function Navbar() {
                   className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                 >
                   Khu vực nhân viên
+                </Link>
+              )}
+              {!isStaffUser(user) && isOperationUser(user) && (
+                <Link
+                  href="/operation"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
+                >
+                  Khu vực Operation
                 </Link>
               )}
               <button
