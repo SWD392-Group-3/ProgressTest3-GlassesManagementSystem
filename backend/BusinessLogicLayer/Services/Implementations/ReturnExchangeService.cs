@@ -1,3 +1,4 @@
+using BusinessLogicLayer.Constants;
 using BusinessLogicLayer.DTOs;
 using BusinessLogicLayer.Services.Interfaces;
 using DataAccessLayer.Database.Entities;
@@ -247,16 +248,27 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (returnExchange.Status != "ApprovedBySales")
                     return (null, "Yêu cầu hoàn hàng chưa được phê duyệt bởi Sales");
 
+                var order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(
+                    returnExchange.OrderId,
+                    cancellationToken
+                );
+                if (order == null)
+                    return (null, "Đơn hàng không tồn tại");
+
                 var oldStatus = returnExchange.Status;
                 returnExchange.Status = "ReceivedByOperation";
                 returnExchange.ReceivedByOperationAt = DateTime.UtcNow;
 
                 _returnExchangeRepository.Update(returnExchange);
 
-                // Update items and add images
+                // Update items, InspectionResult, ProductVariant/Prescription, and add images
                 foreach (var item in request.Items)
                 {
-                    var returnItem = await _returnExchangeItemRepository.GetByIdAsync(
+                    if (!string.IsNullOrWhiteSpace(item.InspectionResult)
+                        && !InspectionResult.All.Contains(item.InspectionResult))
+                        return (null, $"Kết quả kiểm tra không hợp lệ. Cho phép: {string.Join(", ", InspectionResult.All)}");
+
+                    var returnItem = await _returnExchangeItemRepository.GetByIdWithOrderItemDetailsAsync(
                         item.ReturnExchangeItemId,
                         cancellationToken
                     );
@@ -266,8 +278,39 @@ namespace BusinessLogicLayer.Services.Implementations
 
                     returnItem.Status = item.Status;
                     returnItem.Note = item.Note;
+                    returnItem.InspectionResult = item.InspectionResult;
 
                     _returnExchangeItemRepository.Update(returnItem);
+
+                    // Cập nhật ProductVariant khi item là sản phẩm thường
+                    if (!string.IsNullOrWhiteSpace(item.InspectionResult)
+                        && returnItem.OrderItem?.ProductVariantId != null
+                        && returnItem.OrderItem.ProductVariant != null)
+                    {
+                        var pv = returnItem.OrderItem.ProductVariant;
+                        pv.Status = item.InspectionResult;
+                        _unitOfWork.GetRepository<ProductVariant>().Update(pv);
+                    }
+
+                    // Cập nhật Prescription khi item là kính custom (tra theo CustomerId + ServiceId)
+                    if (!string.IsNullOrWhiteSpace(item.InspectionResult)
+                        && returnItem.OrderItem?.ServiceId != null)
+                    {
+                        var prescription = await _unitOfWork
+                            .GetRepository<Prescription>()
+                            .FirstOrDefaultAsync(
+                                p =>
+                                    p.CustomerId == order.CustomerId
+                                    && p.ServiceId == returnItem.OrderItem.ServiceId,
+                                cancellationToken
+                            );
+                        if (prescription != null)
+                        {
+                            prescription.Status = item.InspectionResult;
+                            prescription.UpdatedAt = DateTime.UtcNow;
+                            _unitOfWork.GetRepository<Prescription>().Update(prescription);
+                        }
+                    }
 
                     // Add operation images
                     if (item.ImageUrls != null && item.ImageUrls.Any())
@@ -313,6 +356,33 @@ namespace BusinessLogicLayer.Services.Implementations
                 };
 
                 await _returnExchangeHistoryRepository.AddAsync(history, cancellationToken);
+
+                // Hoàn tất đơn đổi trả nếu mọi item đã Received
+                var allItems = await _returnExchangeItemRepository.GetByReturnExchangeIdAsync(
+                    returnExchange.Id
+                );
+                if (allItems.All(i => i.Status == "Received"))
+                {
+                    returnExchange.Status = "Completed";
+                    returnExchange.ResolvedAt = DateTime.UtcNow;
+                    _returnExchangeRepository.Update(returnExchange);
+                    var completedHistory = new ReturnExchangeHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        ReturnExchangeId = returnExchange.Id,
+                        Action = "Completed",
+                        OldStatus = "ReceivedByOperation",
+                        NewStatus = "Completed",
+                        Comment = "Đã xử lý xong toàn bộ sản phẩm",
+                        PerformedByUserId = operationUserId,
+                        PerformedByRole = "Operation",
+                        PerformedAt = DateTime.UtcNow,
+                    };
+                    await _returnExchangeHistoryRepository.AddAsync(
+                        completedHistory,
+                        cancellationToken
+                    );
+                }
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -370,6 +440,7 @@ namespace BusinessLogicLayer.Services.Implementations
                             Reason = i.Reason,
                             Status = i.Status,
                             Note = i.Note,
+                            InspectionResult = i.InspectionResult,
                             CreatedAt = i.CreatedAt,
                             Images = i
                                 .Images.Select(img => new ReturnExchangeImageResponse

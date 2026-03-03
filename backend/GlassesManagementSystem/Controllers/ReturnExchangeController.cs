@@ -8,6 +8,7 @@ namespace GlassesManagementSystem.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ReturnExchangeController : ControllerBase
     {
         private readonly IReturnExchangeService _returnExchangeService;
@@ -22,29 +23,36 @@ namespace GlassesManagementSystem.Controllers
             _cloudinaryService = cloudinaryService;
         }
 
+        private Guid? GetCurrentUserId()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+                return null;
+            return userId;
+        }
+
         /// <summary>
         /// Khách hàng tạo yêu cầu hoàn hàng
         /// </summary>
         [HttpPost]
         [ProducesResponseType(typeof(ReturnExchangeResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CreateReturnExchange(
             [FromBody] CreateReturnExchangeRequest request,
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get customerId from authentication claims
-            // var customerId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty);
-
-            // For now, using customerId from request or a placeholder
-            var customerId = Guid.NewGuid(); // Replace with actual customer ID from auth
+            var customerId = GetCurrentUserId();
+            if (customerId == null)
+                return Unauthorized();
 
             if (request.Items == null || !request.Items.Any())
                 return BadRequest(new { message = "Phải có ít nhất một sản phẩm để hoàn trả" });
 
             var (response, error) = await _returnExchangeService.CreateReturnExchangeAsync(
                 request,
-                customerId,
+                customerId.Value,
                 cancellationToken
             );
 
@@ -81,17 +89,19 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Khách hàng lấy danh sách yêu cầu hoàn hàng của mình
+        /// Khách hàng lấy danh sách yêu cầu hoàn hàng của mình (customerId lấy từ JWT).
         /// </summary>
-        [HttpGet("customer/{customerId}")]
+        [HttpGet("customer")]
         [ProducesResponseType(typeof(IEnumerable<ReturnExchangeResponse>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetCustomerReturnExchanges(
-            Guid customerId,
-            CancellationToken cancellationToken
-        )
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> GetCustomerReturnExchanges(CancellationToken cancellationToken)
         {
+            var customerId = GetCurrentUserId();
+            if (customerId == null)
+                return Unauthorized();
+
             var (response, error) = await _returnExchangeService.GetCustomerReturnExchangesAsync(
-                customerId,
+                customerId.Value,
                 cancellationToken
             );
 
@@ -105,6 +115,7 @@ namespace GlassesManagementSystem.Controllers
         /// Sales lấy danh sách yêu cầu hoàn hàng chờ xử lý
         /// </summary>
         [HttpGet("pending")]
+        [Authorize(Roles = "Sales")]
         [ProducesResponseType(typeof(IEnumerable<ReturnExchangeResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPendingReturnExchanges(
             CancellationToken cancellationToken
@@ -124,6 +135,7 @@ namespace GlassesManagementSystem.Controllers
         /// Operation lấy danh sách yêu cầu hoàn hàng đã được phê duyệt
         /// </summary>
         [HttpGet("approved")]
+        [Authorize(Roles = "Operation")]
         [ProducesResponseType(typeof(IEnumerable<ReturnExchangeResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetApprovedReturnExchanges(
             CancellationToken cancellationToken
@@ -143,19 +155,22 @@ namespace GlassesManagementSystem.Controllers
         /// Sales xem xét và phê duyệt/từ chối yêu cầu hoàn hàng
         /// </summary>
         [HttpPost("review")]
+        [Authorize(Roles = "Sales")]
         [ProducesResponseType(typeof(ReturnExchangeResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ReviewReturnExchange(
             [FromBody] ReviewReturnExchangeRequest request,
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get salesUserId from authentication claims
-            var salesUserId = Guid.NewGuid(); // Replace with actual sales user ID from auth
+            var salesUserId = GetCurrentUserId();
+            if (salesUserId == null)
+                return Unauthorized();
 
             var (response, error) = await _returnExchangeService.ReviewReturnExchangeAsync(
                 request,
-                salesUserId,
+                salesUserId.Value,
                 cancellationToken
             );
 
@@ -169,19 +184,22 @@ namespace GlassesManagementSystem.Controllers
         /// Operation nhận và xác nhận hàng hoàn
         /// </summary>
         [HttpPost("receive")]
+        [Authorize(Roles = "Operation")]
         [ProducesResponseType(typeof(ReturnExchangeResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> ReceiveReturnExchange(
             [FromBody] ReceiveReturnExchangeRequest request,
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get operationUserId from authentication claims
-            var operationUserId = Guid.NewGuid(); // Replace with actual operation user ID from auth
+            var operationUserId = GetCurrentUserId();
+            if (operationUserId == null)
+                return Unauthorized();
 
             var (response, error) = await _returnExchangeService.ReceiveReturnExchangeAsync(
                 request,
-                operationUserId,
+                operationUserId.Value,
                 cancellationToken
             );
 
@@ -197,14 +215,16 @@ namespace GlassesManagementSystem.Controllers
         [HttpPost("images")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> AddImages(
             [FromBody] AddImageRequest request,
             [FromQuery] string role,
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get userId from authentication claims
-            var userId = Guid.NewGuid(); // Replace with actual user ID from auth
+            var userId = GetCurrentUserId();
+            if (userId == null)
+                return Unauthorized();
 
             if (request.ImageUrls == null || !request.ImageUrls.Any())
                 return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
@@ -216,7 +236,7 @@ namespace GlassesManagementSystem.Controllers
                 request.ReturnExchangeItemId,
                 request.ImageUrls,
                 role,
-                userId,
+                userId.Value,
                 request.Description,
                 cancellationToken
             );
@@ -233,6 +253,7 @@ namespace GlassesManagementSystem.Controllers
         [HttpPost("upload-images")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImages(
             [FromForm] Guid returnExchangeItemId,
@@ -242,8 +263,9 @@ namespace GlassesManagementSystem.Controllers
             CancellationToken cancellationToken
         )
         {
-            // TODO: Get userId from authentication claims
-            var userId = Guid.NewGuid(); // Replace with actual user ID from auth
+            var userId = GetCurrentUserId();
+            if (userId == null)
+                return Unauthorized();
 
             if (images == null || !images.Any())
                 return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
@@ -266,7 +288,7 @@ namespace GlassesManagementSystem.Controllers
                 returnExchangeItemId,
                 urls,
                 role,
-                userId,
+                userId.Value,
                 description,
                 cancellationToken
             );
