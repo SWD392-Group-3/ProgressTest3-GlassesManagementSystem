@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
+        services.AddScoped<IWarrantyPolicyRepository, WarrantyPolicyRepository>();
 
         // Return Exchange Repositories
         services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();
@@ -58,6 +59,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IWarrantyPolicyService, WarrantyPolicyService>();
+        services.AddScoped<IProductManagerService, ProductManagerService>();
+        services.AddScoped<IPricingPromotionService, PricingPromotionService>();
+        services.AddScoped<IUserStaffService, UserStaffService>();
+        services.AddScoped<IRevenueService, RevenueService>();
         return services;
     }
 }

@@ -1,0 +1,65 @@
+# Tài liệu giải thích chức năng các API của Manager Module
+
+Dưới đây là chi tiết về các hàm và API mà tôi đã viết cho phần Manager của hệ thống Glasses Management System. Các API này được tổ chức theo từng Domain (lĩnh vực) riêng biệt để dễ quản lý.
+
+## 1. Policy Management (Quản lý Chính sách và Quy định)
+**Controller:** `WarrantyPolicyController.cs`
+**Service:** `WarrantyPolicyService.cs`
+
+Module này chịu trách nhiệm quản lý các chính sách bảo hành, đổi trả áp dụng cho sản phẩm.
+- **`GetAll()` (`GET /api/manager/policies`)**: Lấy danh sách toàn bộ các chính sách bảo hành hiện có trong hệ thống.
+- **`GetById(Guid id)` (`GET /api/manager/policies/{id}`)**: Lấy thông tin chi tiết của một chính sách bảo hành cụ thể dựa vào ID.
+- **`Create(...)` (`POST /api/manager/policies`)**: Tạo mới một chính sách bảo hành (Ví dụ: "Bảo hành gọng kính 6 tháng"). Quản trị viên truyền vào các thông số như Tên chính sách, Mô tả, Thời hạn (tháng) và Điều khoản.
+- **`Update(...)` (`PUT /api/manager/policies/{id}`)**: Cập nhật thông tin của một chính sách hiện tại.
+- **`Delete(Guid id)` (`DELETE /api/manager/policies/{id}`)**: Xóa bỏ một chính sách khỏi hệ thống.
+
+## 2. Product Catalog Management (Quản lý Danh mục Sản phẩm)
+**Controller:** `ProductManagerController.cs`
+**Service:** `ProductManagerService.cs`
+
+Module này quản lý thông tin sản phẩm (gọng, tròng), cũng như danh mục (Category) và thương hiệu (Brand). Điểm đặc biệt là nó xử lý cả các biến thể của sản phẩm (ProductVariant cho gọng kính, LensVariant cho tròng kính).
+- **`GetAllProduc
+ts()` (`GET /api/manager/products`)**: Lấy danh sách toàn bộ sản phẩm cùng với thông tin Category, Brand, và các biến thể phân loại (màu sắc, kích cỡ đối với gọng; độ cận, viễn, loạn đối với tròng).
+- **`GetProductById(Guid id)` (`GET /api/manager/products/{id}`)**: Lấy thông tin chi tiết cấu hình của một sản phẩm.
+- **`CreateProduct(...)` (`POST /api/manager/products`)**: Thêm một sản phẩm mới vào kho. Request sẽ bao gồm các thông tin cơ bản và các liên kết tới Danh mục, Thương hiệu, Chính sách bảo hành.
+- **`UpdateProduct(...)` (`PUT /api/manager/products/{id}`)**: Chỉnh sửa thông tin cơ bản của sản phẩm.
+- **`DeleteProduct(Guid id)` (`DELETE /api/manager/products/{id}`)**: Xóa một sản phẩm.
+- **`GetCategories()` (`GET /api/manager/products/categories`)**: Lấy danh sách toàn bộ các danh mục sản phẩm (Ví dụ: Gọng Nam, Gọng Nữ, Tròng Kính Cận...).
+- **`GetBrands()` (`GET /api/manager/products/brands`)**: Lấy danh sách các thương hiệu đối tác (Ví dụ: Ray-Ban, Essilor...).
+
+## 3. Pricing, Combos & Promotions Management (Quản lý Giá bán, Khuyến mãi & Combo)
+**Controller:** `PricingPromotionController.cs`
+**Service:** `PricingPromotionService.cs`
+
+Module này cho phép Manager cài đặt các chương trình giảm giá, khuyến mãi, quản lý dịch vụ (ví dụ: đo mắt) và các gói Combo (Gọng + Tròng).
+- **`GetAllPromotions()` (`GET /api/manager/pricing/promotions`)**: Danh sách các chương trình khuyến mãi hiện có (còn hạn, hết hạn...).
+- **`GetPromotionById(...)` (`GET /api/manager/pricing/promotions/{id}`)**: Thông tin chi tiết 1 chương trình khuyến mãi.
+- **`CreatePromotion(...)` (`POST /api/manager/pricing/promotions`)**: Tạo mã giảm giá hoặc chương trình sale mới. Có thể cấu hình theo phần trăm (%) hoặc số tiền cố định, thời gian bắt đầu và kết thúc.
+- **`UpdatePromotion(...)` (`PUT /api/manager/pricing/promotions/{id}`)** / **`DeletePromotion(...)` (`DELETE ...`)**: Sửa/Xóa khuyến mãi.
+- **`GetAllServices()` (`GET /api/manager/pricing/services`)**: Liệt kê các dịch vụ của cửa hàng, kèm theo giá. (Ví dụ: Đo mắt - 50.000 VND).
+- **`GetAllCombos()` (`GET /api/manager/pricing/combos`)**: Liệt kê các combo bán hàng ưu đãi.
+
+## 4. User & Staff Management (Quản lý Người dùng & Nhân sự)
+**Controller:** `UserStaffController.cs`
+**Service:** `UserStaffService.cs`
+
+Công cụ để quản trị viên (Admin) quản lý tài khoản của đội ngũ nhân viên và các phân quyền liên quan.
+- **`GetAll()` (`GET /api/manager/users`)**: Lấy danh sách tất cả các tài khoản nội bộ (Nhân viên bán hàng, Nhân viên CSKH, Admin,...).
+- **`GetById(Guid id)` (`GET /api/manager/users/{id}`)**: Xem chi tiết hồ sơ tài khoản.
+- **`Create(...)` (`POST /api/manager/users`)**: Tạo tài khoản cho nhân viên mới. Mật khẩu đầu vào sẽ được **mã hóa (băm) bằng thư viện BCrypt** để đảm bảo bảo mật trước khi lưu xuống Database. Cấp phát vai trò (Role: staff, admin...).
+- **`Update(...)` (`PUT /api/manager/users/{id}`)**: Cập nhật thông tin nhân viên (đổi số điện thoại, thay đổi chức vụ, khóa tài khoản...).
+- **`Delete(Guid id)` (`DELETE /api/manager/users/{id}`)**: Xóa tài khoản nhân viên đã nghỉ việc.
+
+## 5. Revenue Management (Quản lý Doanh thu & Thống kê)
+**Controller:** `RevenueController.cs`
+**Service:** `RevenueService.cs`
+
+Cung cấp dữ liệu tổng quan cho trang Dashboard của Manager để theo dõi tình hình kinh doanh.
+- **`GetOverview()` (`GET /api/manager/revenue/overview`)**: Trả về các chỉ số KPI quan trọng bao gồm:
+  - Tổng doanh thu toàn thời gian (TotalRevenue).
+  - Doanh thu của tháng hiện tại (MonthlyRevenue).
+  - Tổng số lượng đơn hàng đã bán (TotalOrders).
+  - Tổng số khách hàng (TotalCustomers).
+  - *Lưu ý: Chỉ tính những đơn hàng có trạng thái là "Completed" (Đã hoàn thành) hoặc "Paid" (Đã thanh toán).*
+- **`GetMonthlyRevenue(int year)` (`GET /api/manager/revenue/monthly/{year}`)**: Trả về dữ liệu doanh thu chi tiết từng tháng (từ tháng 1 tới tháng 12) của một năm cụ thể. Dữ liệu này rất thuận tiện để vẽ biểu đồ dạng cột (Bar Chart) hoặc đường (Line Chart) trên Frontend.
+- **`GetRecentOrders(int count)` (`GET /api/manager/revenue/recent-orders?count=5`)**: Lấy danh sách N đơn hàng mới nhất vừa được đặt để hiển thị lên bảng tin hoạt động gần đây của Dashboard.
