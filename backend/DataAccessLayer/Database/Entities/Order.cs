@@ -28,6 +28,7 @@ namespace DataAccessLayer.Database.Entities
         public virtual Promotion? Promotion { get; set; }
         public virtual Service? Service { get; set; }
 
+        public virtual Prescription? Prescription { get; set; }
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
         public virtual ICollection<ReturnExchange> ReturnExchanges { get; set; } = new List<ReturnExchange>();

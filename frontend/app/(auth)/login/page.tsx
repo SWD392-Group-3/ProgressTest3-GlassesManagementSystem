@@ -30,7 +30,14 @@ export default function LoginPage() {
         role: res.role ?? null,
         expiresAt: res.expiresAt,
       });
-      router.push("/");
+      const role = (res.role ?? "").toLowerCase();
+      if (role === "operation") {
+        router.push("/operation");
+      } else if (["staff", "admin"].includes(role)) {
+        router.push("/staff");
+      } else {
+        router.push("/");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại.");

@@ -27,7 +27,12 @@ VALUES
      'Trần Thị Lan', '0987654321', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('a0000000-0000-0000-0000-000000000005'::uuid, 'customer3@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-     'Lê Văn Minh', '0978123456', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
+     'Lê Văn Minh', '0978123456', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+    -- Operation account (mật khẩu: password)
+    ('a0000000-0000-0000-0000-000000000006'::uuid, 'operation@example.com',
+     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     'Nhân viên Operation', '0900000000', 'Operation', 'Active',
+     NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Email") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
@@ -198,50 +203,117 @@ ON CONFLICT ("Id") DO NOTHING;
 -- -----------------------------------------------------------------------------
 -- 15. CARTS (CustomerId, ServiceId?, SlotId?)
 -- -----------------------------------------------------------------------------
-INSERT INTO "CARTS" ("Id", "CustomerId", "ServiceId", "SlotId", "TotalAmount", "Status", "CreatedAt")
+INSERT INTO "CARTS"
+("Id", "CustomerId", "ServiceId", "TotalAmount", "Status", "CreatedAt")
 VALUES
-    ('be000000-0000-0000-0000-000000000001'::uuid, 'bb000000-0000-0000-0000-000000000001'::uuid,
-     'b5000000-0000-0000-0000-000000000001'::uuid, 'bc000000-0000-0000-0000-000000000001'::uuid,
-     50000.00, 'Pending', NOW() AT TIME ZONE 'UTC'),
-    ('be000000-0000-0000-0000-000000000002'::uuid, 'bb000000-0000-0000-0000-000000000002'::uuid,
-     NULL, NULL, 2030000.00, 'Pending', NOW() AT TIME ZONE 'UTC'),
-    ('be000000-0000-0000-0000-000000000003'::uuid, 'bb000000-0000-0000-0000-000000000003'::uuid,
-     'b5000000-0000-0000-0000-000000000003'::uuid, 'bc000000-0000-0000-0000-000000000003'::uuid,
-     30000.00, 'Pending', NOW() AT TIME ZONE 'UTC')
+(
+    'be000000-0000-0000-0000-000000000001'::uuid,
+    'bb000000-0000-0000-0000-000000000001'::uuid,
+    'b5000000-0000-0000-0000-000000000001'::uuid,
+    50000.00,
+    'Pending',
+    NOW() AT TIME ZONE 'UTC'
+),
+(
+    'be000000-0000-0000-0000-000000000002'::uuid,
+    'bb000000-0000-0000-0000-000000000002'::uuid,
+    NULL,
+    2030000.00,
+    'Pending',
+    NOW() AT TIME ZONE 'UTC'
+),
+(
+    'be000000-0000-0000-0000-000000000003'::uuid,
+    'bb000000-0000-0000-0000-000000000003'::uuid,
+    'b5000000-0000-0000-0000-000000000003'::uuid,
+    30000.00,
+    'Pending',
+    NOW() AT TIME ZONE 'UTC'
+)
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
 -- 16. CART_ITEMS (CartId, ProductVariantId?, LensesVariantId?, ComboItemId?)
 -- -----------------------------------------------------------------------------
-INSERT INTO "CART_ITEMS" ("Id", "CartId", "ProductVariantId", "LensesVariantId", "ComboItemId", "Quantity", "UnitPrice", "Note")
+INSERT INTO "CART_ITEMS"
+("Id", "CartId", "ProductVariantId", "LensesVariantId", "ComboItemId", "Quantity", "UnitPrice", "Note")
 VALUES
-    ('bf000000-0000-0000-0000-000000000001'::uuid, 'be000000-0000-0000-0000-000000000001'::uuid,
+    ('bf000000-0000-0000-0000-000000000001'::uuid,
+     'be000000-0000-0000-0000-000000000001'::uuid,
      NULL, NULL, NULL, 1, 50000.00, 'Dịch vụ đo mắt'),
-    ('bf000000-0000-0000-0000-000000000002'::uuid, 'be000000-0000-0000-0000-000000000002'::uuid,
-     'b8000000-0000-0000-0000-000000000003'::uuid, NULL, NULL, 1, 1200000.00, NULL),
-    ('bf000000-0000-0000-0000-000000000003'::uuid, 'be000000-0000-0000-0000-000000000002'::uuid,
-     NULL, 'b9000000-0000-0000-0000-000000000002'::uuid, 1, 280000.00, NULL),
-    ('bf000000-0000-0000-0000-000000000004'::uuid, 'be000000-0000-0000-0000-000000000002'::uuid,
-     'b8000000-0000-0000-0000-000000000005'::uuid, NULL, NULL, 1, 750000.00, NULL),
-    ('bf000000-0000-0000-0000-000000000005'::uuid, 'be000000-0000-0000-0000-000000000003'::uuid,
+
+    ('bf000000-0000-0000-0000-000000000002'::uuid,
+     'be000000-0000-0000-0000-000000000002'::uuid,
+     'b8000000-0000-0000-0000-000000000003'::uuid,
+     NULL, NULL, 1, 1200000.00, NULL),
+
+    -- ✅ FIX Ở ĐÂY
+    ('bf000000-0000-0000-0000-000000000003'::uuid,
+     'be000000-0000-0000-0000-000000000002'::uuid,
+     NULL,
+     'b9000000-0000-0000-0000-000000000002'::uuid,
+     NULL,  -- ← thêm ComboItemId
+     1,
+     280000.00,
+     NULL),
+
+    ('bf000000-0000-0000-0000-000000000004'::uuid,
+     'be000000-0000-0000-0000-000000000002'::uuid,
+     'b8000000-0000-0000-0000-000000000005'::uuid,
+     NULL, NULL, 1, 750000.00, NULL),
+
+    ('bf000000-0000-0000-0000-000000000005'::uuid,
+     'be000000-0000-0000-0000-000000000003'::uuid,
      NULL, NULL, NULL, 1, 30000.00, 'Vệ sinh kính')
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
--- 17. ORDERS (CustomerId, PromotionId?, ServiceId?, SlotId?)
+-- 17. ORDERS (CustomerId, PromotionId?, ServiceId?)
 -- -----------------------------------------------------------------------------
-INSERT INTO "ORDERS" ("Id", "CustomerId", "PromotionId", "ServiceId", "SlotId", "Status", "TotalAmount", "DiscountAmount", "FinalAmount", "OrderDate", "ShippingAddress", "ShippingPhone", "Note")
+INSERT INTO "ORDERS"
+("Id", "CustomerId", "PromotionId", "ServiceId",
+ "Status", "TotalAmount", "DiscountAmount",
+ "OrderDate", "ShippingAddress", "ShippingPhone", "Note")
 VALUES
-    ('c1000000-0000-0000-0000-000000000001'::uuid, 'bb000000-0000-0000-0000-000000000001'::uuid,
-     'b4000000-0000-0000-0000-000000000001'::uuid, NULL, NULL,
-     'Completed', 935000.00, 85000.00, 850000.00, (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days',
-     '123 Đường ABC', '0912345678', 'Giao giờ hành chính'),
-    ('c1000000-0000-0000-0000-000000000002'::uuid, 'bb000000-0000-0000-0000-000000000002'::uuid,
-     NULL, NULL, NULL, 'Completed', 780000.00, 0, 780000.00, (NOW() AT TIME ZONE 'UTC') - INTERVAL '5 days',
-     '456 Nguyễn Huệ', '0987654321', NULL),
-    ('c1000000-0000-0000-0000-000000000003'::uuid, 'bb000000-0000-0000-0000-000000000003'::uuid,
-     'b4000000-0000-0000-0000-000000000002'::uuid, NULL, NULL, 'Processing', 1450000.00, 250000.00, 1200000.00, (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 day',
-     '789 Lê Lợi', '0978123456', 'Gọi trước khi giao')
+(
+    'c1000000-0000-0000-0000-000000000001'::uuid,
+    'bb000000-0000-0000-0000-000000000001'::uuid,
+    'b4000000-0000-0000-0000-000000000001'::uuid,
+    NULL,
+    'Completed',
+    935000.00,
+    85000.00,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days',
+    '123 Đường ABC',
+    '0912345678',
+    'Giao giờ hành chính'
+),
+(
+    'c1000000-0000-0000-0000-000000000002'::uuid,
+    'bb000000-0000-0000-0000-000000000002'::uuid,
+    NULL,
+    NULL,
+    'Completed',
+    780000.00,
+    0,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '5 days',
+    '456 Nguyễn Huệ',
+    '0987654321',
+    NULL
+),
+(
+    'c1000000-0000-0000-0000-000000000003'::uuid,
+    'bb000000-0000-0000-0000-000000000003'::uuid,
+    'b4000000-0000-0000-0000-000000000002'::uuid,
+    NULL,
+    'Processing',
+    1450000.00,
+    250000.00,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 day',
+    '789 Lê Lợi',
+    '0978123456',
+    'Gọi trước khi giao'
+)
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------

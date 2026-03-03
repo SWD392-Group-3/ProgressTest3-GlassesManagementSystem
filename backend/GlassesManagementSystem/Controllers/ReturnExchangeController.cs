@@ -112,10 +112,10 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Sales lấy danh sách yêu cầu hoàn hàng chờ xử lý
+        /// Staff lấy danh sách yêu cầu hoàn hàng chờ xử lý
         /// </summary>
         [HttpGet("pending")]
-        [Authorize(Roles = "Sales")]
+        [Authorize(Roles = "Staff")]
         [ProducesResponseType(typeof(IEnumerable<ReturnExchangeResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPendingReturnExchanges(
             CancellationToken cancellationToken
@@ -152,10 +152,10 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Sales xem xét và phê duyệt/từ chối yêu cầu hoàn hàng
+        /// Staff xem xét và phê duyệt/từ chối yêu cầu hoàn hàng
         /// </summary>
         [HttpPost("review")]
-        [Authorize(Roles = "Sales")]
+        [Authorize(Roles = "Staff")]
         [ProducesResponseType(typeof(ReturnExchangeResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

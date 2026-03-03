@@ -69,7 +69,7 @@ export default function CheckoutPage() {
         note: note.trim() || null,
       });
       await fetchCart(); // làm mới giỏ (đã rỗng sau khi đặt)
-      router.push(`/orders/${order.orderId}`);
+      router.push(`/orders/${order.id}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {

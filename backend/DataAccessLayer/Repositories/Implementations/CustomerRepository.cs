@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DataAccessLayer.Database;
+﻿using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +13,7 @@ namespace DataAccessLayer.Repositories.Implementations
 
         public async Task<Customer?> GetByUserIdAsync(Guid userId)
         {
-            return await _context.Customer
-                .FirstOrDefaultAsync(c => c.UserId == userId);
+            return await _dbSet.FirstOrDefaultAsync(c => c.UserId == userId);
         }
     }
 }

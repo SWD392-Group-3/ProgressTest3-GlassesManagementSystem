@@ -17,9 +17,12 @@ namespace BusinessLogicLayer.Services.Interfaces
         // Read
         Task<OrderDto?> GetByIdAsync(Guid orderId);
         Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid userId);
+        Task<IEnumerable<OrderDto>> GetAllAsync();
 
         // Status
         Task<bool> UpdateStatusAsync(Guid orderId, string newStatus);
+        Task<bool> ConfirmOrderAsync(Guid orderId);
+        Task<bool> RejectOrderAsync(Guid orderId, string? reason);
         Task<bool> CancelOrderAsync(Guid orderId, Guid userId);
     }
 }

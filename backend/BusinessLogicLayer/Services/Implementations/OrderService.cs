@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
 using BusinessLogicLayer.Services.Interfaces;
@@ -22,10 +19,16 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly IPromotionRepository _promotionRepository;
         private readonly ICustomerRepository _customerRepository;
 
-        public OrderService(IOrderRepository orderRepository, IUnitOfWork unitOfWork,
-            IOrderItemRepository orderItemRepository, IUserRepository userRepository,
-            ICartRepository cartRepository, ICartItemRepository cartItemRepository,
-            IPromotionRepository promotionRepository, ICustomerRepository customerRepository)
+        public OrderService(
+            IOrderRepository orderRepository,
+            IUnitOfWork unitOfWork,
+            IOrderItemRepository orderItemRepository,
+            IUserRepository userRepository,
+            ICartRepository cartRepository,
+            ICartItemRepository cartItemRepository,
+            IPromotionRepository promotionRepository,
+            ICustomerRepository customerRepository
+        )
         {
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
@@ -54,6 +57,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
             throw new Exception("Không tìm thấy thông tin khách hàng.");
         }
+
         public async Task<bool> CancelOrderAsync(Guid orderId, Guid userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
@@ -65,6 +69,11 @@ namespace BusinessLogicLayer.Services.Implementations
             var order = await _orderRepository.GetByIdAndUserIdAsync(orderId, customerId);
             if (order == null)
                 return false;
+
+            if (order.Status != "Pending")
+            {
+                throw new Exception("Chỉ có thể huỷ đơn khi đang ở trạng thái Pending.");
+            }
 
             order.Status = "Cancelled";
             _orderRepository.Update(order);
@@ -96,7 +105,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 OrderDate = DateTime.UtcNow,
                 ShippingAddress = request.ShippingAddress,
                 ShippingPhone = request.ShippingPhone,
-                OrderItems = new List<OrderItem>()
+                OrderItems = new List<OrderItem>(),
             };
 
             foreach (var item in cart.CartItems)
@@ -113,7 +122,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     Quantity = item.Quantity,
                     UnitPrice = item.UnitPrice,
                     TotalPrice = item.Quantity * item.UnitPrice,
-                    Note = item.Note
+                    Note = item.Note,
                 };
                 order.OrderItems.Add(orderItem);
             }
@@ -146,31 +155,30 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
                 Note = order.Note,
-                OrderItems = order.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    OrderId = oi.OrderId,
-                    ProductVariantId = oi.ProductVariantId,
-                    LensesVariantId = oi.LensesVariantId,
-                    ComboItemId = oi.ComboItemId,
-                    ServiceId = oi.ServiceId,
-                    SlotId = oi.SlotId,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    TotalPrice = oi.TotalPrice,
-                    Note = oi.Note
-                }).ToList()
+                OrderItems = order
+                    .OrderItems.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        OrderId = oi.OrderId,
+                        ProductVariantId = oi.ProductVariantId,
+                        LensesVariantId = oi.LensesVariantId,
+                        ComboItemId = oi.ComboItemId,
+                        ServiceId = oi.ServiceId,
+                        SlotId = oi.SlotId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice,
+                        Note = oi.Note,
+                    })
+                    .ToList(),
             };
         }
 
         public async Task<OrderDto> CreateManualOrderAsync(CreateManualOrderRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(request.CustomerId);
-            if (user == null)
-                throw new Exception("Tài khoản không tồn tại.");
-
-            // request.CustomerId là UserId từ JWT — resolve sang Customer.Id thực
-            var customerId = await ResolveCustomerIdAsync(request.CustomerId);
+            var customer = await _customerRepository.GetByUserIdAsync(request.CustomerId);
+            if (customer == null)
+                throw new Exception("Khách hàng không tồn tại.");
 
             if (request.Items == null || !request.Items.Any())
                 throw new Exception("Phải có ít nhất 1 sản phẩm.");
@@ -178,47 +186,57 @@ namespace BusinessLogicLayer.Services.Implementations
             var order = new Order
             {
                 Id = Guid.NewGuid(),
-                CustomerId = customerId,
+                CustomerId = customer.Id,
                 PromotionId = request.PromotionId,
                 Status = "Pending",
                 OrderDate = DateTime.UtcNow,
                 ShippingAddress = request.ShippingAddress,
                 ShippingPhone = request.ShippingPhone,
                 Note = request.Note,
-                OrderItems = new List<OrderItem>()
+                OrderItems = new List<OrderItem>(),
             };
 
             foreach (var item in request.Items)
             {
                 // Phải chọn ít nhất 1 loại
-                if (item.ProductVariantId == null && item.LensesVariantId == null
-                    && item.ComboItemId == null && item.ServiceId == null)
-                    throw new Exception("Mỗi item phải có ít nhất một sản phẩm, tròng kính, combo hoặc dịch vụ.");
+                if (
+                    item.ProductVariantId == null
+                    && item.LensesVariantId == null
+                    && item.ComboItemId == null
+                    && item.ServiceId == null
+                )
+                    throw new Exception(
+                        "Mỗi item phải có ít nhất một sản phẩm, tròng kính, combo hoặc dịch vụ."
+                    );
 
                 // Tính UnitPrice từ DB
                 decimal unitPrice = 0;
 
                 if (item.ProductVariantId.HasValue)
                 {
-                    var variant = await _unitOfWork.GetRepository<DataAccessLayer.Database.Entities.ProductVariant>()
+                    var variant = await _unitOfWork
+                        .GetRepository<DataAccessLayer.Database.Entities.ProductVariant>()
                         .GetByIdAsync(item.ProductVariantId.Value);
                     unitPrice += variant?.Price ?? 0;
                 }
 
                 if (item.LensesVariantId.HasValue)
                 {
-                    var lens = await _unitOfWork.GetRepository<DataAccessLayer.Database.Entities.LensVariant>()
+                    var lens = await _unitOfWork
+                        .GetRepository<DataAccessLayer.Database.Entities.LensVariant>()
                         .GetByIdAsync(item.LensesVariantId.Value);
                     unitPrice += lens?.Price ?? 0;
                 }
 
                 if (item.ComboItemId.HasValue)
                 {
-                    var comboItem = await _unitOfWork.GetRepository<DataAccessLayer.Database.Entities.ComboItem>()
+                    var comboItem = await _unitOfWork
+                        .GetRepository<DataAccessLayer.Database.Entities.ComboItem>()
                         .GetByIdAsync(item.ComboItemId.Value);
                     if (comboItem != null)
                     {
-                        var combo = await _unitOfWork.GetRepository<DataAccessLayer.Database.Entities.Combo>()
+                        var combo = await _unitOfWork
+                            .GetRepository<DataAccessLayer.Database.Entities.Combo>()
                             .GetByIdAsync(comboItem.ComboId);
                         unitPrice += combo?.BasePrice ?? 0;
                     }
@@ -226,7 +244,8 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 if (item.ServiceId.HasValue)
                 {
-                    var service = await _unitOfWork.GetRepository<DataAccessLayer.Database.Entities.Service>()
+                    var service = await _unitOfWork
+                        .GetRepository<DataAccessLayer.Database.Entities.Service>()
                         .GetByIdAsync(item.ServiceId.Value);
                     unitPrice += service?.Price ?? 0;
                 }
@@ -243,7 +262,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     Quantity = item.Quantity,
                     UnitPrice = unitPrice,
                     TotalPrice = unitPrice * item.Quantity,
-                    Note = item.Note
+                    Note = item.Note,
                 };
 
                 order.OrderItems.Add(orderItem);
@@ -273,21 +292,57 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
                 Note = order.Note,
-                OrderItems = order.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    OrderId = oi.OrderId,
-                    ProductVariantId = oi.ProductVariantId,
-                    LensesVariantId = oi.LensesVariantId,
-                    ComboItemId = oi.ComboItemId,
-                    ServiceId = oi.ServiceId,
-                    SlotId = oi.SlotId,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    TotalPrice = oi.TotalPrice,
-                    Note = oi.Note
-                }).ToList()
+                OrderItems = order
+                    .OrderItems.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        OrderId = oi.OrderId,
+                        ProductVariantId = oi.ProductVariantId,
+                        LensesVariantId = oi.LensesVariantId,
+                        ComboItemId = oi.ComboItemId,
+                        ServiceId = oi.ServiceId,
+                        SlotId = oi.SlotId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice,
+                        Note = oi.Note,
+                    })
+                    .ToList(),
             };
+        }
+
+        public async Task<IEnumerable<OrderDto>> GetAllAsync()
+        {
+            var orders = await _orderRepository.GetAll();
+            return orders.Select(o => new OrderDto
+            {
+                Id = o.Id,
+                CustomerId = o.CustomerId,
+                PromotionId = o.PromotionId,
+                Status = o.Status,
+                TotalAmount = o.TotalAmount,
+                DiscountAmount = o.DiscountAmount,
+                OrderDate = o.OrderDate,
+                ShippingAddress = o.ShippingAddress,
+                ShippingPhone = o.ShippingPhone,
+                Note = o.Note,
+                OrderItems = o
+                    .OrderItems.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        OrderId = oi.OrderId,
+                        ProductVariantId = oi.ProductVariantId,
+                        LensesVariantId = oi.LensesVariantId,
+                        ComboItemId = oi.ComboItemId,
+                        ServiceId = oi.ServiceId,
+                        SlotId = oi.SlotId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice,
+                        Note = oi.Note,
+                    })
+                    .ToList(),
+            });
         }
 
         public async Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid userId)
@@ -307,20 +362,22 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = o.ShippingAddress,
                 ShippingPhone = o.ShippingPhone,
                 Note = o.Note,
-                OrderItems = o.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    OrderId = oi.OrderId,
-                    ProductVariantId = oi.ProductVariantId,
-                    LensesVariantId = oi.LensesVariantId,
-                    ComboItemId = oi.ComboItemId,
-                    ServiceId = oi.ServiceId,
-                    SlotId = oi.SlotId,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    TotalPrice = oi.TotalPrice,
-                    Note = oi.Note
-                }).ToList()
+                OrderItems = o
+                    .OrderItems.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        OrderId = oi.OrderId,
+                        ProductVariantId = oi.ProductVariantId,
+                        LensesVariantId = oi.LensesVariantId,
+                        ComboItemId = oi.ComboItemId,
+                        ServiceId = oi.ServiceId,
+                        SlotId = oi.SlotId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice,
+                        Note = oi.Note,
+                    })
+                    .ToList(),
             });
         }
 
@@ -342,38 +399,76 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
                 Note = order.Note,
-                OrderItems = order.OrderItems.Select(oi => new OrderItemDto
-                {
-                    Id = oi.Id,
-                    OrderId = oi.OrderId,
-                    ProductVariantId = oi.ProductVariantId,
-                    LensesVariantId = oi.LensesVariantId,
-                    ComboItemId = oi.ComboItemId,
-                    ServiceId = oi.ServiceId,
-                    SlotId = oi.SlotId,
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice,
-                    TotalPrice = oi.TotalPrice,
-                    Note = oi.Note
-                }).ToList()
+                OrderItems = order
+                    .OrderItems.Select(oi => new OrderItemDto
+                    {
+                        Id = oi.Id,
+                        OrderId = oi.OrderId,
+                        ProductVariantId = oi.ProductVariantId,
+                        LensesVariantId = oi.LensesVariantId,
+                        ComboItemId = oi.ComboItemId,
+                        ServiceId = oi.ServiceId,
+                        SlotId = oi.SlotId,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        TotalPrice = oi.TotalPrice,
+                        Note = oi.Note,
+                    })
+                    .ToList(),
             };
         }
 
         public async Task<bool> UpdateStatusAsync(Guid orderId, string newStatus)
         {
-            var validStatuses = new[] { "Pending", "Processing", "Shipped", "Delivered", "Cancelled" };
-            if (!validStatuses.Contains(newStatus))
-                throw new Exception($"Trạng thái '{newStatus}' không hợp lệ.");
-
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
                 return false;
 
-            // Không cho phép cập nhật đơn đã huỷ hoặc đã giao
-            if (order.Status == "Cancelled" || order.Status == "Delivered")
-                throw new Exception($"Không thể thay đổi trạng thái đơn hàng đang ở '{order.Status}'.");
+            // Operation chỉ cập nhật theo flow tuần tự: Confirmed -> Processing -> Shipped -> Delivered
+            var validTransitions = new Dictionary<string, string[]>
+            {
+                { "Confirmed", new[] { "Processing" } },
+                { "Processing", new[] { "Shipped" } },
+                { "Shipped", new[] { "Delivered" } }
+            };
+
+            if (!validTransitions.ContainsKey(order.Status!) || !validTransitions[order.Status!].Contains(newStatus))
+            {
+                throw new Exception($"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng đúng là: Confirmed -> Processing -> Shipped -> Delivered.");
+            }
 
             order.Status = newStatus;
+            _orderRepository.Update(order);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ConfirmOrderAsync(Guid orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null) return false;
+
+            if (order.Status != "Pending")
+                throw new Exception("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Pending'.");
+
+            order.Status = "Confirmed";
+            _orderRepository.Update(order);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RejectOrderAsync(Guid orderId, string? reason)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null) return false;
+
+            if (order.Status != "Pending")
+                throw new Exception("Chỉ có thể từ chối đơn hàng đang ở trạng thái 'Pending'.");
+
+            order.Status = "Rejected";
+            if (!string.IsNullOrEmpty(reason))
+                order.Note = string.IsNullOrEmpty(order.Note) ? reason : $"{order.Note} | Saler rejecting reason: {reason}";
+
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
             return true;

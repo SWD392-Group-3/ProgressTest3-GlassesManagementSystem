@@ -219,7 +219,7 @@ namespace BusinessLogicLayer.Services.Implementations
                         var existingCount =
                             await _returnExchangeImageRepository.CountImagesByItemAndRoleAsync(
                                 imageRequest.ReturnExchangeItemId,
-                                "Sales"
+                                "Staff"
                             );
 
                         if (existingCount + imageRequest.ImageUrls.Count > 5)
@@ -232,7 +232,7 @@ namespace BusinessLogicLayer.Services.Implementations
                                 Id = Guid.NewGuid(),
                                 ReturnExchangeItemId = imageRequest.ReturnExchangeItemId,
                                 ImageUrl = imageUrl,
-                                UploadedByRole = "Sales",
+                                UploadedByRole = "Staff",
                                 UploadedByUserId = salesUserId,
                                 UploadedAt = DateTime.UtcNow,
                                 Description = imageRequest.Description,
@@ -253,7 +253,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     NewStatus = returnExchange.Status,
                     Comment = request.Comment,
                     PerformedByUserId = salesUserId,
-                    PerformedByRole = "Sales",
+                    PerformedByRole = "Staff",
                     PerformedAt = DateTime.UtcNow,
                 };
 
@@ -289,7 +289,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     return (null, "Yêu cầu hoàn hàng không tồn tại");
 
                 if (returnExchange.Status != "ApprovedBySales")
-                    return (null, "Yêu cầu hoàn hàng chưa được phê duyệt bởi Sales");
+                    return (null, "Yêu cầu hoàn hàng chưa được phê duyệt bởi nhân viên");
 
                 var order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(
                     returnExchange.OrderId,
