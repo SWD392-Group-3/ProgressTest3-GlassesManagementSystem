@@ -44,6 +44,7 @@ public class OrderController : ControllerBase
     /// Lấy chi tiết một đơn hàng theo ID.
     /// </summary>
     [HttpGet("{orderId:guid}")]
+    [Authorize(Roles = "Customer,Staff,Operation")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid orderId)
@@ -59,6 +60,7 @@ public class OrderController : ControllerBase
     /// Lấy danh sách tất cả đơn hàng của một khách hàng.
     /// </summary>
     [HttpGet("customer")]
+    [Authorize(Roles = "Customer")]
     [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetByCustomer()
     {
@@ -76,6 +78,7 @@ public class OrderController : ControllerBase
     /// Tạo đơn hàng từ giỏ hàng (checkout).
     /// </summary>
     [HttpPost("from-cart")]
+    [Authorize(Roles = "Customer")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -105,6 +108,7 @@ public class OrderController : ControllerBase
     /// Tạo đơn hàng trực tiếp, không cần qua giỏ hàng (mua ngay).
     /// </summary>
     [HttpPost("manual")]
+    [Authorize(Roles = "Customer")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateManual([FromBody] CreateManualOrderRequest request)
@@ -132,10 +136,11 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật trạng thái đơn hàng (dành cho staff/admin).
-    /// Các trạng thái hợp lệ: Pending, Processing, Shipped, Delivered, Cancelled.
+    /// Cập nhật trạng thái đơn hàng (dành cho Operation Staff).
+    /// Các trạng thái hợp lệ: Processing, Shipped, Delivered.
     /// </summary>
     [HttpPatch("{orderId:guid}/status")]
+    [Authorize(Roles = "Operation")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -165,6 +170,7 @@ public class OrderController : ControllerBase
     /// Khách hàng huỷ đơn hàng của mình.
     /// </summary>
     [HttpPatch("{orderId:guid}/cancel")]
+    [Authorize(Roles = "Customer")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -185,6 +191,44 @@ public class OrderController : ControllerBase
                 );
 
             return Ok(new { message = "Đơn hàng đã được huỷ." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Staff (Saler) xác nhận đơn hàng thường.
+    /// </summary>
+    [HttpPatch("{orderId:guid}/confirm")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> Confirm(Guid orderId)
+    {
+        try
+        {
+            var result = await _orderService.ConfirmOrderAsync(orderId);
+            if (!result) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            return Ok(new { message = "Đã xác nhận đơn hàng." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Staff (Saler) từ chối đơn hàng thường.
+    /// </summary>
+    [HttpPatch("{orderId:guid}/reject")]
+    [Authorize(Roles = "Staff")]
+    public async Task<IActionResult> Reject(Guid orderId, [FromBody] string? reason)
+    {
+        try
+        {
+            var result = await _orderService.RejectOrderAsync(orderId, reason);
+            if (!result) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            return Ok(new { message = "Đã từ chối đơn hàng." });
         }
         catch (Exception ex)
         {

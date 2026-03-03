@@ -23,6 +23,8 @@ namespace BusinessLogicLayer.Services.Interfaces
 
         // Status
         Task<bool> UpdateStatusAsync(Guid orderId, string newStatus);
+        Task<bool> ConfirmOrderAsync(Guid orderId);
+        Task<bool> RejectOrderAsync(Guid orderId, string? reason);
         Task<bool> CancelOrderAsync(Guid orderId, Guid userId);
     }
 }

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
 using BusinessLogicLayer.Services.Interfaces;
@@ -20,6 +17,7 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly ICartRepository _cartRepository;
         private readonly ICartItemRepository _cartItemRepository;
         private readonly IPromotionRepository _promotionRepository;
+        private readonly ICustomerRepository _customerRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -28,7 +26,8 @@ namespace BusinessLogicLayer.Services.Implementations
             IUserRepository userRepository,
             ICartRepository cartRepository,
             ICartItemRepository cartItemRepository,
-            IPromotionRepository promotionRepository
+            IPromotionRepository promotionRepository,
+            ICustomerRepository customerRepository
         )
         {
             _orderRepository = orderRepository;
@@ -38,6 +37,7 @@ namespace BusinessLogicLayer.Services.Implementations
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _promotionRepository = promotionRepository;
+            _customerRepository = customerRepository;
         }
 
         public async Task<bool> CancelOrderAsync(Guid orderId, Guid userId)
@@ -52,6 +52,11 @@ namespace BusinessLogicLayer.Services.Implementations
             if (order == null)
             {
                 return false;
+            }
+
+            if (order.Status != "Pending")
+            {
+                throw new Exception("Chỉ có thể huỷ đơn khi đang ở trạng thái Pending.");
             }
 
             order.Status = "Cancelled";
@@ -156,9 +161,9 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<OrderDto> CreateManualOrderAsync(CreateManualOrderRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(request.CustomerId);
-            if (user == null)
-                throw new Exception("Tài khoản không tồn tại.");
+            var customer = await _customerRepository.GetByUserIdAsync(request.CustomerId);
+            if (customer == null)
+                throw new Exception("Khách hàng không tồn tại.");
 
             if (request.Items == null || !request.Items.Any())
                 throw new Exception("Phải có ít nhất 1 sản phẩm.");
@@ -166,7 +171,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var order = new Order
             {
                 Id = Guid.NewGuid(),
-                CustomerId = request.CustomerId,
+                CustomerId = customer.Id,
                 PromotionId = request.PromotionId,
                 Status = "Pending",
                 OrderDate = DateTime.UtcNow,
@@ -399,28 +404,55 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<bool> UpdateStatusAsync(Guid orderId, string newStatus)
         {
-            var validStatuses = new[]
-            {
-                "Pending",
-                "Processing",
-                "Shipped",
-                "Delivered",
-                "Cancelled",
-            };
-            if (!validStatuses.Contains(newStatus))
-                throw new Exception($"Trạng thái '{newStatus}' không hợp lệ.");
-
             var order = await _orderRepository.GetByIdAsync(orderId);
             if (order == null)
                 return false;
 
-            // Không cho phép cập nhật đơn đã huỷ hoặc đã giao
-            if (order.Status == "Cancelled" || order.Status == "Delivered")
-                throw new Exception(
-                    $"Không thể thay đổi trạng thái đơn hàng đang ở '{order.Status}'."
-                );
+            // Operation chỉ cập nhật theo flow tuần tự: Confirmed -> Processing -> Shipped -> Delivered
+            var validTransitions = new Dictionary<string, string[]>
+            {
+                { "Confirmed", new[] { "Processing" } },
+                { "Processing", new[] { "Shipped" } },
+                { "Shipped", new[] { "Delivered" } }
+            };
+
+            if (!validTransitions.ContainsKey(order.Status!) || !validTransitions[order.Status!].Contains(newStatus))
+            {
+                throw new Exception($"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng đúng là: Confirmed -> Processing -> Shipped -> Delivered.");
+            }
 
             order.Status = newStatus;
+            _orderRepository.Update(order);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ConfirmOrderAsync(Guid orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null) return false;
+
+            if (order.Status != "Pending")
+                throw new Exception("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Pending'.");
+
+            order.Status = "Confirmed";
+            _orderRepository.Update(order);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> RejectOrderAsync(Guid orderId, string? reason)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null) return false;
+
+            if (order.Status != "Pending")
+                throw new Exception("Chỉ có thể từ chối đơn hàng đang ở trạng thái 'Pending'.");
+
+            order.Status = "Rejected";
+            if (!string.IsNullOrEmpty(reason))
+                order.Note = string.IsNullOrEmpty(order.Note) ? reason : $"{order.Note} | Saler rejecting reason: {reason}";
+
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
             return true;

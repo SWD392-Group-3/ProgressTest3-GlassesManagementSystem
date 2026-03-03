@@ -30,6 +30,11 @@ namespace DataAccessLayer.Database.Configurations
                 .WithMany(x => x.Prescriptions)
                 .HasForeignKey(x => x.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(x => x.Order)
+                .WithOne(x => x.Prescription)
+                .HasForeignKey<Prescription>(x => x.OrderId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }
