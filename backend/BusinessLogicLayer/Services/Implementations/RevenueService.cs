@@ -18,12 +18,14 @@ namespace BusinessLogicLayer.Services.Implementations
             _unitOfWork = unitOfWork;
         }
 
+        // ─── REVENUE MONITORING (with optional date range) ─────────────────────
+
         public async Task<RevenueOverviewDto> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null)
         {
             var allOrders = await _unitOfWork.GetRepository<Order>().GetAllAsync();
             var customers = await _unitOfWork.GetRepository<Customer>().GetAllAsync();
 
-            // Apply date range filter (UC: "Select time range/filters")
+            // UC: "Select time range/filters"
             var orders = allOrders.AsQueryable();
             if (from.HasValue) orders = orders.Where(o => o.OrderDate >= from.Value);
             if (to.HasValue)   orders = orders.Where(o => o.OrderDate <= to.Value);
@@ -51,8 +53,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 .GroupBy(o => o.OrderDate.Month)
                 .Select(g => new MonthlyRevenueDto
                 {
-                    Month = g.Key,
-                    Year = year,
+                    Month   = g.Key,
+                    Year    = year,
                     Revenue = g.Sum(o => o.TotalAmount)
                 })
                 .OrderBy(m => m.Month)
@@ -63,16 +65,8 @@ namespace BusinessLogicLayer.Services.Implementations
             for (int i = 1; i <= 12; i++)
             {
                 var monthData = monthlyRevenues.FirstOrDefault(m => m.Month == i);
-                if (monthData != null)
-                {
-                    result.Add(monthData);
-                }
-                else
-                {
-                    result.Add(new MonthlyRevenueDto { Month = i, Year = year, Revenue = 0 });
-                }
+                result.Add(monthData ?? new MonthlyRevenueDto { Month = i, Year = year, Revenue = 0 });
             }
-
             return result;
         }
 
@@ -85,13 +79,15 @@ namespace BusinessLogicLayer.Services.Implementations
                 .Take(count)
                 .Select(o => new RecentOrderDto
                 {
-                    Id = o.Id,
-                    CustomerName = o.Customer?.FullName ?? "Unknown",
-                    FinalAmount = o.TotalAmount,
-                    Status = o.Status,
-                    OrderDate = o.OrderDate
+                    Id           = o.Id,
+                    CustomerName = o.Customer?.FullName ?? o.CustomerId.ToString(),
+                    FinalAmount  = o.TotalAmount,
+                    Status       = o.Status,
+                    OrderDate    = o.OrderDate
                 });
         }
+
+        // ─── PAYMENT RECONCILIATION ────────────────────────────────────────────
 
         public async Task<IEnumerable<PaymentReconciliationDto>> GetPaymentReconciliationAsync(DateTime? from, DateTime? to)
         {
@@ -113,6 +109,8 @@ namespace BusinessLogicLayer.Services.Implementations
             }).ToList();
         }
 
+        // ─── RETURN/EXCHANGE IMPACT ANALYSIS (with optional date range) ────────
+
         public async Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync(DateTime? from = null, DateTime? to = null)
         {
             var allRe = await _unitOfWork.GetRepository<ReturnExchange>().GetAllAsync();
@@ -126,7 +124,7 @@ namespace BusinessLogicLayer.Services.Implementations
             // Financial impact = sum of order TotalAmount for Completed returns
             var financialImpact = list
                 .Where(r => r.Status == "Completed" && r.Order != null)
-                .Sum(r => r.Order?.TotalAmount ?? 0);
+                .Sum(r => r.Order!.TotalAmount);
 
             // Top returned products via ReturnExchangeItems -> OrderItem -> ProductVariant
             var topProducts = list
@@ -152,9 +150,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 CompletedRequests    = list.Count(r => r.Status == "Completed"),
                 TotalFinancialImpact = financialImpact,
                 TopReturnedProducts  = topProducts
+            };
         }
-    }
-}
-
     }
 }
