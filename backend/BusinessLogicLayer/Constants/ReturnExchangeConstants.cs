@@ -14,12 +14,6 @@ namespace BusinessLogicLayer.Constants
         /// <summary>
         /// Danh sách giá trị hợp lệ cho validation.
         /// </summary>
-        public static readonly string[] All =
-        {
-            Available,
-            Defective,
-            Damaged,
-            NeedRepair,
-        };
+        public static readonly string[] All = { Available, Defective, Damaged, NeedRepair };
     }
 }

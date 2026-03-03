@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
 using BusinessLogicLayer.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GlassesManagementSystem.Controllers;
@@ -15,6 +16,28 @@ public class OrderController : ControllerBase
     public OrderController(IOrderService orderService)
     {
         _orderService = orderService;
+    }
+
+    /// <summary>
+    /// Lấy danh sách tất cả đơn hàng (dành cho operation/staff saler).
+    /// </summary>
+    [HttpGet("orders")]
+    [Authorize(Roles = "Operation,Staff")]
+    [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetOrders()
+    {
+        try
+        {
+            var orders = await _orderService.GetAllAsync();
+            return Ok(orders);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     /// <summary>
@@ -116,7 +139,10 @@ public class OrderController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateStatus(Guid orderId, [FromBody] UpdateOrderStatusRequest request)
+    public async Task<IActionResult> UpdateStatus(
+        Guid orderId,
+        [FromBody] UpdateOrderStatusRequest request
+    )
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -154,7 +180,9 @@ public class OrderController : ControllerBase
 
             var result = await _orderService.CancelOrderAsync(orderId, customerId);
             if (!result)
-                return NotFound(new { message = "Không tìm thấy đơn hàng hoặc bạn không có quyền huỷ." });
+                return NotFound(
+                    new { message = "Không tìm thấy đơn hàng hoặc bạn không có quyền huỷ." }
+                );
 
             return Ok(new { message = "Đơn hàng đã được huỷ." });
         }

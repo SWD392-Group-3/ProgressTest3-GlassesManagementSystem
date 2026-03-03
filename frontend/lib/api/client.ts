@@ -25,6 +25,7 @@ export const API = {
   order: {
     getById: (orderId: string) => `/api/order/${orderId}`,
     getByCustomer: "/api/order/customer",
+    getOrders: "/api/Order/orders",
     fromCart: "/api/order/from-cart",
     manual: "/api/order/manual",
     updateStatus: (orderId: string) => `/api/order/${orderId}/status`,
