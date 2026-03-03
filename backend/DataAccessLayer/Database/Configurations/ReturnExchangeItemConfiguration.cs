@@ -16,6 +16,7 @@ namespace DataAccessLayer.Database.Configurations
             builder.Property(x => x.Reason).HasMaxLength(1000);
             builder.Property(x => x.Status).HasMaxLength(50).IsRequired();
             builder.Property(x => x.Note).HasMaxLength(1000);
+            builder.Property(x => x.InspectionResult).HasMaxLength(50).IsRequired(false);
             builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
 
             builder

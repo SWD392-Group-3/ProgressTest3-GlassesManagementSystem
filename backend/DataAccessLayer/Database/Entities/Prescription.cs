@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,7 +20,10 @@ namespace DataAccessLayer.Database.Entities
         public string? DuoiGong { get; set; }
 
         public string? Note { get; set; }
+        /// <summary>Trạng thái sau kiểm tra đổi trả (vd. Available, Defective, Damaged, NeedRepair).</summary>
+        public string? Status { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
         public virtual Customer Customer { get; set; } = null!;
         public virtual Service Service { get; set; } = null!;

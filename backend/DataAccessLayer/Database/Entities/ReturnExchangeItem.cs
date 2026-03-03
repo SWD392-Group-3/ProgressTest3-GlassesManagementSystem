@@ -13,6 +13,8 @@ namespace DataAccessLayer.Database.Entities
         public string? Reason { get; set; }
         public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected, Received
         public string? Note { get; set; }
+        /// <summary>Kết quả kiểm tra khi Operations nhận hàng: Available, Defective, Damaged, NeedRepair.</summary>
+        public string? InspectionResult { get; set; }
 
         public DateTime CreatedAt { get; set; }
 
