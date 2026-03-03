@@ -95,7 +95,6 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function OrdersPage() {
   const router = useRouter();
-  const user = getUser();
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
@@ -115,12 +114,13 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
+    const user = getUser();
     if (!user) {
       router.replace("/login");
       return;
     }
     fetchOrders();
-  }, [user, router, fetchOrders]);
+  }, [router, fetchOrders]);
 
   async function handleCancel(orderId: string) {
     if (!confirm("Bạn có chắc chắn muốn huỷ đơn hàng này?")) return;
@@ -128,9 +128,7 @@ export default function OrdersPage() {
     try {
       await cancelOrder(orderId);
       setOrders((prev) =>
-        prev.map((o) =>
-          o.orderId === orderId ? { ...o, status: "Cancelled" } : o,
-        ),
+        prev.map((o) => (o.id === orderId ? { ...o, status: "Cancelled" } : o)),
       );
     } catch (e) {
       alert((e as Error).message);
@@ -197,7 +195,7 @@ export default function OrdersPage() {
             <div className="space-y-4">
               {orders.map((order) => (
                 <div
-                  key={order.orderId}
+                  key={order.id}
                   className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
                 >
                   {/* Order header */}
@@ -209,7 +207,7 @@ export default function OrdersPage() {
                       <div>
                         <p className="text-xs text-[#6B7280]">Mã đơn hàng</p>
                         <p className="text-sm font-mono font-semibold text-[#1A1A1A]">
-                          #{order.orderId.slice(0, 8).toUpperCase()}
+                          #{(order.id ?? "").slice(0, 8).toUpperCase()}
                         </p>
                       </div>
                     </div>
@@ -232,7 +230,7 @@ export default function OrdersPage() {
                           Sản phẩm
                         </p>
                         <p className="text-[#1A1A1A] font-medium">
-                          {order.items.length} items
+                          {(order.orderItems ?? []).length} items
                         </p>
                       </div>
                       <div>
@@ -260,11 +258,11 @@ export default function OrdersPage() {
                     {(order.status === "Pending" ||
                       order.status === "Processing") && (
                       <button
-                        onClick={() => handleCancel(order.orderId)}
-                        disabled={cancellingId === order.orderId}
+                        onClick={() => handleCancel(order.id)}
+                        disabled={cancellingId === order.id}
                         className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors disabled:opacity-50 flex items-center gap-1.5"
                       >
-                        {cancellingId === order.orderId ? (
+                        {cancellingId === order.id ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
                         ) : (
                           <XCircle className="w-3.5 h-3.5" />
@@ -275,7 +273,7 @@ export default function OrdersPage() {
                     {order.status !== "Pending" &&
                       order.status !== "Processing" && <span />}
                     <Link
-                      href={`/orders/${order.orderId}`}
+                      href={`/orders/${order.id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                     >
                       Xem chi tiết

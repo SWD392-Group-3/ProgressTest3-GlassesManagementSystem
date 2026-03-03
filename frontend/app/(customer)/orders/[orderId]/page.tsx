@@ -100,9 +100,9 @@ export default function OrderDetailPage() {
     setPayLoading(true);
     try {
       const resp = await createMomoPayment(
-        order.orderId,
+        order.id,
         Math.round(order.finalAmount ?? order.totalAmount),
-        `Thanh toán đơn hàng #${order.orderId.slice(0, 8).toUpperCase()}`,
+        `Thanh toán đơn hàng #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
       );
       if (resp.payUrl) {
         window.location.href = resp.payUrl;
@@ -120,7 +120,7 @@ export default function OrderDetailPage() {
     if (!order || !confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
     setCancelLoading(true);
     try {
-      await cancelOrder(order.orderId);
+      await cancelOrder(order.id);
       setOrder({ ...order, status: "Cancelled" });
     } catch (e) {
       alert((e as Error).message);
@@ -304,13 +304,13 @@ export default function OrderDetailPage() {
                 <div className="px-6 py-4 border-b border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    Sản phẩm ({order.items.length})
+                    Sản phẩm ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
                 <div className="divide-y divide-[#E5E7EB]">
-                  {order.items.map((item) => (
+                  {(order.orderItems ?? []).map((item) => (
                     <div
-                      key={item.orderItemId}
+                      key={item.id}
                       className="px-6 py-4 flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3">

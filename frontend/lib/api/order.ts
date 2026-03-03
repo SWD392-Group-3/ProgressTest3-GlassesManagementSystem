@@ -1,7 +1,8 @@
 import { apiRequest, API } from "./client";
 
 export interface OrderItemDto {
-  orderItemId: string;
+  id: string;
+  orderId: string;
   productVariantId: string | null;
   lensesVariantId: string | null;
   comboItemId: string | null;
@@ -9,21 +10,23 @@ export interface OrderItemDto {
   slotId: string | null;
   quantity: number;
   unitPrice: number;
+  totalPrice: number;
   note: string | null;
 }
 
 export interface OrderDto {
-  orderId: string;
+  id: string;
   customerId: string;
+  promotionId?: string | null;
   status: string;
   totalAmount: number;
   discountAmount: number;
-  finalAmount: number;
+  finalAmount?: number;
   shippingAddress: string;
   shippingPhone: string;
   note: string | null;
   orderDate: string;
-  items: OrderItemDto[];
+  orderItems: OrderItemDto[];
 }
 
 export interface CreateOrderRequest {
@@ -32,6 +35,13 @@ export interface CreateOrderRequest {
   shippingAddress: string;
   shippingPhone: string;
   note?: string | null;
+}
+
+/**
+ * GET /api/Order/orders — Staff/Operation lấy tất cả đơn hàng
+ */
+export async function getOrders(): Promise<OrderDto[]> {
+  return apiRequest<OrderDto[]>(API.order.getOrders, {}, { auth: true });
 }
 
 /** GET /api/order/{orderId} */

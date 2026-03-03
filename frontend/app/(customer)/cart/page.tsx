@@ -156,6 +156,8 @@ export default function CartPage() {
                             )}
                           </div>
                           <button
+                            type="button"
+                            aria-label="Xóa sản phẩm"
                             onClick={() => handleRemove(item.cartItemId)}
                             className="p-1.5 rounded-full hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors"
                           >
@@ -167,6 +169,8 @@ export default function CartPage() {
                           {/* Quantity */}
                           <div className="flex items-center gap-2 border border-[#E5E7EB] rounded-full px-3 py-1">
                             <button
+                              type="button"
+                              aria-label="Giảm số lượng"
                               onClick={() =>
                                 handleQuantity(
                                   item.cartItemId,
@@ -181,6 +185,8 @@ export default function CartPage() {
                               {item.quantity}
                             </span>
                             <button
+                              type="button"
+                              aria-label="Tăng số lượng"
                               onClick={() =>
                                 handleQuantity(
                                   item.cartItemId,
