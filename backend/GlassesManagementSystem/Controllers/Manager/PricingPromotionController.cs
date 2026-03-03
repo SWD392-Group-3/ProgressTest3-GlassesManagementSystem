@@ -17,6 +17,8 @@ namespace GlassesManagementSystem.Controllers.Manager
             _pricingPromotionService = pricingPromotionService;
         }
 
+        // ─── PROMOTIONS (Business Regulation - pricing rules) ─────────────────
+
         [HttpGet("promotions")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllPromotions()
@@ -39,6 +41,8 @@ namespace GlassesManagementSystem.Controllers.Manager
             if (!result) return NotFound();
             return NoContent();
         }
+
+        // ─── SERVICES ─────────────────────────────────────────────────────────
 
         [HttpGet("services")]
         [AllowAnonymous]
@@ -63,6 +67,8 @@ namespace GlassesManagementSystem.Controllers.Manager
             return NoContent();
         }
 
+        // ─── COMBO MANAGEMENT (Frame + Lens) ──────────────────────────────────
+
         [HttpGet("combos")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllCombos()
@@ -78,10 +84,46 @@ namespace GlassesManagementSystem.Controllers.Manager
             return Ok(result);
         }
 
+        [HttpPut("combos/{id}")]
+        public async Task<IActionResult> UpdateCombo(Guid id, [FromBody] UpdateComboRequest request)
+        {
+            try
+            {
+                var result = await _pricingPromotionService.UpdateComboAsync(id, request);
+                return Ok(result);
+            }
+            catch (Exception ex) { return NotFound(ex.Message); }
+        }
+
         [HttpDelete("combos/{id}")]
         public async Task<IActionResult> DeleteCombo(Guid id)
         {
             var result = await _pricingPromotionService.DeleteComboAsync(id);
+            if (!result) return NotFound();
+            return NoContent();
+        }
+
+        // ─── COMBO ITEMS ──────────────────────────────────────────────────────
+
+        [HttpGet("combos/{comboId}/items")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetComboItems(Guid comboId)
+        {
+            var items = await _pricingPromotionService.GetComboItemsAsync(comboId);
+            return Ok(items);
+        }
+
+        [HttpPost("combos/{comboId}/items")]
+        public async Task<IActionResult> AddComboItem(Guid comboId, [FromBody] AddComboItemRequest request)
+        {
+            var result = await _pricingPromotionService.AddComboItemAsync(comboId, request);
+            return Ok(result);
+        }
+
+        [HttpDelete("combos/{comboId}/items/{itemId}")]
+        public async Task<IActionResult> RemoveComboItem(Guid comboId, Guid itemId)
+        {
+            var result = await _pricingPromotionService.RemoveComboItemAsync(itemId);
             if (!result) return NotFound();
             return NoContent();
         }

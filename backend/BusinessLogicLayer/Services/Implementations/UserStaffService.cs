@@ -127,5 +127,29 @@ namespace BusinessLogicLayer.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
+
+        public async Task<UserDto> SetAccountStatusAsync(Guid id, string status)
+        {
+            var user = await _unitOfWork.GetRepository<User>().GetByIdAsync(id);
+            if (user == null) throw new Exception("User not found");
+
+            user.Status = status;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            _unitOfWork.GetRepository<User>().Update(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new UserDto
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FullName = user.FullName,
+                Phone = user.Phone,
+                Role = user.Role,
+                Status = user.Status,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            };
+        }
     }
 }

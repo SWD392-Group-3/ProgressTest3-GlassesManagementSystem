@@ -1,4 +1,5 @@
 using System;
+using DataAccessLayer.Database.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -83,6 +84,26 @@ namespace BusinessLogicLayer.Services.Implementations
                     Status = o.Status,
                     OrderDate = o.OrderDate
                 });
+        }
+
+        public async Task<IEnumerable<PaymentReconciliationDto>> GetPaymentReconciliationAsync(DateTime? from, DateTime? to)
+        {
+            var payments = await _unitOfWork.GetRepository<Payment>().GetAllAsync();
+
+            var filtered = payments.AsQueryable();
+            if (from.HasValue) filtered = filtered.Where(p => p.PaidAt >= from.Value);
+            if (to.HasValue)   filtered = filtered.Where(p => p.PaidAt <= to.Value);
+
+            return filtered.Select(p => new PaymentReconciliationDto
+            {
+                PaymentId = p.Id,
+                OrderId   = p.OrderId,
+                Amount    = p.Amount,
+                Method    = p.Method,
+                Status    = p.Status,
+                PaidAt    = p.PaidAt,
+                Note      = p.Note
+            }).ToList();
         }
     }
 }

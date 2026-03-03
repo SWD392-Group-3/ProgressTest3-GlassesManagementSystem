@@ -38,5 +38,16 @@ namespace GlassesManagementSystem.Controllers.Manager
             var orders = await _revenueService.GetRecentOrdersAsync(count);
             return Ok(orders);
         }
+
+        // ─── PAYMENT RECONCILIATION (<<includes>> Revenue Monitoring) ─────────
+
+        [HttpGet("payments")]
+        public async Task<IActionResult> GetPaymentReconciliation(
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to)
+        {
+            var payments = await _revenueService.GetPaymentReconciliationAsync(from, to);
+            return Ok(payments);
+        }
     }
 }

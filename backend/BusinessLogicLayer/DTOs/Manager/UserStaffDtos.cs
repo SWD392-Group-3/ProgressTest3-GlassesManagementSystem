@@ -31,4 +31,12 @@ namespace BusinessLogicLayer.DTOs.Manager
         public string? Role { get; set; }
         public string? Status { get; set; }
     }
+
+    /// <summary>Used by PATCH /users/{id}/status for Account Status Control (Lock/Unlock).</summary>
+    public class SetAccountStatusRequest
+    {
+        /// <summary>Expected values: "Active" | "Locked"</summary>
+        public string Status { get; set; } = "Active";
+    }
 }
+

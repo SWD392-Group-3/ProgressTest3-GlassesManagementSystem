@@ -73,5 +73,18 @@ namespace GlassesManagementSystem.Controllers.Manager
             }
             return NoContent();
         }
+
+        // ─── ACCOUNT STATUS CONTROL (Lock / Unlock) ───────────────────────────
+
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> SetStatus(Guid id, [FromBody] SetAccountStatusRequest request)
+        {
+            try
+            {
+                var result = await _userStaffService.SetAccountStatusAsync(id, request.Status);
+                return Ok(result);
+            }
+            catch (Exception ex) { return NotFound(ex.Message); }
+        }
     }
 }

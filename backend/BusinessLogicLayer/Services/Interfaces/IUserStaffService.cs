@@ -12,5 +12,8 @@ namespace BusinessLogicLayer.Services.Interfaces
         Task<UserDto> CreateUserAsync(CreateUserRequest request);
         Task<UserDto> UpdateUserAsync(Guid id, UpdateUserRequest request);
         Task<bool> DeleteUserAsync(Guid id);
+
+        /// <summary>Account Status Control (Lock/Unlock) — sets Status to "Active" or "Locked".</summary>
+        Task<UserDto> SetAccountStatusAsync(Guid id, string status);
     }
 }

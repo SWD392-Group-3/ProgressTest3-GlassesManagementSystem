@@ -18,21 +18,12 @@ namespace BusinessLogicLayer.Services.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        // Promotions
+        // ─── PROMOTIONS ───────────────────────────────────────────────────────
+
         public async Task<IEnumerable<PromotionDto>> GetAllPromotionsAsync()
         {
             var promotions = await _unitOfWork.GetRepository<Promotion>().GetAllAsync();
-            return promotions.Select(p => new PromotionDto
-            {
-                Id = p.Id,
-                Code = p.Code,
-                Name = p.Name,
-                Description = p.Description,
-                DiscountValue = p.DiscountValue,
-                StartDate = p.StartDate,
-                EndDate = p.EndDate,
-                Status = p.Status
-            });
+            return promotions.Select(MapToPromotionDto);
         }
 
         public async Task<PromotionDto> CreatePromotionAsync(CreatePromotionRequest request)
@@ -51,18 +42,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
             await _unitOfWork.GetRepository<Promotion>().AddAsync(promotion);
             await _unitOfWork.SaveChangesAsync();
-
-            return new PromotionDto
-            {
-                Id = promotion.Id,
-                Code = promotion.Code,
-                Name = promotion.Name,
-                Description = promotion.Description,
-                DiscountValue = promotion.DiscountValue,
-                StartDate = promotion.StartDate,
-                EndDate = promotion.EndDate,
-                Status = promotion.Status
-            };
+            return MapToPromotionDto(promotion);
         }
 
         public async Task<bool> DeletePromotionAsync(Guid id)
@@ -75,7 +55,8 @@ namespace BusinessLogicLayer.Services.Implementations
             return true;
         }
 
-        // Services (Dịch vụ)
+        // ─── SERVICES ─────────────────────────────────────────────────────────
+
         public async Task<IEnumerable<ServiceDto>> GetAllServicesAsync()
         {
             var services = await _unitOfWork.GetRepository<Service>().GetAllAsync();
@@ -103,14 +84,7 @@ namespace BusinessLogicLayer.Services.Implementations
             await _unitOfWork.GetRepository<Service>().AddAsync(service);
             await _unitOfWork.SaveChangesAsync();
 
-            return new ServiceDto
-            {
-                Id = service.Id,
-                Name = service.Name,
-                Description = service.Description,
-                Price = service.Price,
-                Status = service.Status
-            };
+            return new ServiceDto { Id = service.Id, Name = service.Name, Description = service.Description, Price = service.Price, Status = service.Status };
         }
 
         public async Task<bool> DeleteServiceAsync(Guid id)
@@ -123,20 +97,12 @@ namespace BusinessLogicLayer.Services.Implementations
             return true;
         }
 
-        // Combos
+        // ─── COMBO MANAGEMENT (Frame + Lens) ──────────────────────────────────
+
         public async Task<IEnumerable<ComboDto>> GetAllCombosAsync()
         {
             var combos = await _unitOfWork.GetRepository<Combo>().GetAllAsync();
-            return combos.Select(c => new ComboDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Description = c.Description,
-                BasePrice = c.BasePrice,
-                StartDate = c.StartDate,
-                EndDate = c.EndDate,
-                Status = c.Status
-            });
+            return combos.Select(MapToComboDto);
         }
 
         public async Task<ComboDto> CreateComboAsync(CreateComboRequest request)
@@ -154,17 +120,24 @@ namespace BusinessLogicLayer.Services.Implementations
 
             await _unitOfWork.GetRepository<Combo>().AddAsync(combo);
             await _unitOfWork.SaveChangesAsync();
+            return MapToComboDto(combo);
+        }
 
-            return new ComboDto
-            {
-                Id = combo.Id,
-                Name = combo.Name,
-                Description = combo.Description,
-                BasePrice = combo.BasePrice,
-                StartDate = combo.StartDate,
-                EndDate = combo.EndDate,
-                Status = combo.Status
-            };
+        public async Task<ComboDto> UpdateComboAsync(Guid id, UpdateComboRequest request)
+        {
+            var combo = await _unitOfWork.GetRepository<Combo>().GetByIdAsync(id);
+            if (combo == null) throw new Exception("Combo not found");
+
+            combo.Name = request.Name;
+            combo.Description = request.Description;
+            combo.BasePrice = request.BasePrice;
+            combo.StartDate = request.StartDate;
+            combo.EndDate = request.EndDate;
+            if (request.Status != null) combo.Status = request.Status;
+
+            _unitOfWork.GetRepository<Combo>().Update(combo);
+            await _unitOfWork.SaveChangesAsync();
+            return MapToComboDto(combo);
         }
 
         public async Task<bool> DeleteComboAsync(Guid id)
@@ -176,5 +149,74 @@ namespace BusinessLogicLayer.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
             return true;
         }
+
+        // ─── COMBO ITEM MANAGEMENT ────────────────────────────────────────────
+
+        public async Task<IEnumerable<ComboItemDto>> GetComboItemsAsync(Guid comboId)
+        {
+            var items = await _unitOfWork.GetRepository<ComboItem>().FindAsync(ci => ci.ComboId == comboId);
+            return items.Select(MapToComboItemDto);
+        }
+
+        public async Task<ComboItemDto> AddComboItemAsync(Guid comboId, AddComboItemRequest request)
+        {
+            var item = new ComboItem
+            {
+                Id = Guid.NewGuid(),
+                ComboId = comboId,
+                ProductVariantId = request.ProductVariantId,
+                LensesVariantId = request.LensesVariantId,
+                Quantity = request.Quantity
+            };
+
+            await _unitOfWork.GetRepository<ComboItem>().AddAsync(item);
+            await _unitOfWork.SaveChangesAsync();
+            return MapToComboItemDto(item);
+        }
+
+        public async Task<bool> RemoveComboItemAsync(Guid itemId)
+        {
+            var item = await _unitOfWork.GetRepository<ComboItem>().GetByIdAsync(itemId);
+            if (item == null) return false;
+
+            _unitOfWork.GetRepository<ComboItem>().Delete(item);
+            await _unitOfWork.SaveChangesAsync();
+            return true;
+        }
+
+        // ─── MAPPERS ──────────────────────────────────────────────────────────
+
+        private static PromotionDto MapToPromotionDto(Promotion p) => new PromotionDto
+        {
+            Id = p.Id,
+            Code = p.Code,
+            Name = p.Name,
+            Description = p.Description,
+            DiscountValue = p.DiscountValue,
+            StartDate = p.StartDate,
+            EndDate = p.EndDate,
+            Status = p.Status
+        };
+
+        private static ComboDto MapToComboDto(Combo c) => new ComboDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Description = c.Description,
+            BasePrice = c.BasePrice,
+            StartDate = c.StartDate,
+            EndDate = c.EndDate,
+            Status = c.Status,
+            ComboItems = c.ComboItems?.Select(MapToComboItemDto).ToList() ?? new List<ComboItemDto>()
+        };
+
+        private static ComboItemDto MapToComboItemDto(ComboItem ci) => new ComboItemDto
+        {
+            Id = ci.Id,
+            ComboId = ci.ComboId,
+            ProductVariantId = ci.ProductVariantId,
+            LensesVariantId = ci.LensesVariantId,
+            Quantity = ci.Quantity
+        };
     }
 }
