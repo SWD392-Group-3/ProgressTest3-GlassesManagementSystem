@@ -27,7 +27,12 @@ VALUES
      'Trần Thị Lan', '0987654321', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('a0000000-0000-0000-0000-000000000005'::uuid, 'customer3@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-     'Lê Văn Minh', '0978123456', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
+     'Lê Văn Minh', '0978123456', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+    -- Operation account (mật khẩu: password)
+    ('a0000000-0000-0000-0000-000000000006'::uuid, 'operation@example.com',
+     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     'Nhân viên Operation', '0900000000', 'Operation', 'Active',
+     NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Email") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
