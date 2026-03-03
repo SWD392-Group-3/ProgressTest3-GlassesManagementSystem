@@ -13,7 +13,6 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly IOrderRepository _orderRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOrderItemRepository _orderItemRepository;
-        private readonly IUserRepository _userRepository;
         private readonly ICartRepository _cartRepository;
         private readonly ICartItemRepository _cartItemRepository;
         private readonly IPromotionRepository _promotionRepository;
@@ -23,7 +22,6 @@ namespace BusinessLogicLayer.Services.Implementations
             IOrderRepository orderRepository,
             IUnitOfWork unitOfWork,
             IOrderItemRepository orderItemRepository,
-            IUserRepository userRepository,
             ICartRepository cartRepository,
             ICartItemRepository cartItemRepository,
             IPromotionRepository promotionRepository,
@@ -33,40 +31,19 @@ namespace BusinessLogicLayer.Services.Implementations
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
             _orderItemRepository = orderItemRepository;
-            _userRepository = userRepository;
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _promotionRepository = promotionRepository;
             _customerRepository = customerRepository;
         }
 
-        /// <summary>
-        /// Nhận userId (từ JWT), resolve sang Customer.Id thực trong DB.
-        /// </summary>
-        private async Task<Guid> ResolveCustomerIdAsync(Guid userId)
-        {
-            // Thử tìm theo Customer.Id trực tiếp
-            var byId = await _customerRepository.GetByIdAsync(userId);
-            if (byId != null)
-                return byId.Id;
-
-            // Nếu không có, tìm theo UserId FK
-            var byUserId = await _customerRepository.GetByUserIdAsync(userId);
-            if (byUserId != null)
-                return byUserId.Id;
-
-            throw new Exception("Không tìm thấy thông tin khách hàng.");
-        }
-
         public async Task<bool> CancelOrderAsync(Guid orderId, Guid userId)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
+            var customer = await _customerRepository.GetByUserIdAsync(userId);
+            if (customer == null)
                 return false;
 
-            var customerId = await ResolveCustomerIdAsync(userId);
-
-            var order = await _orderRepository.GetByIdAndUserIdAsync(orderId, customerId);
+            var order = await _orderRepository.GetByIdAndUserIdAsync(orderId, customer.Id);
             if (order == null)
                 return false;
 
@@ -83,11 +60,9 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<OrderDto> CreateFromCartAsync(Guid userId, CreateOrderRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
+            var customer = await _customerRepository.GetByUserIdAsync(userId);
+            if (customer == null)
                 throw new Exception("Tài khoản không tồn tại.");
-
-            var customerId = await ResolveCustomerIdAsync(userId);
 
             // FIX 1: Dùng GetCartWithItemsAsync để Include CartItems
             var cart = await _cartRepository.GetCartWithItemsAsync(request.CartId);
@@ -99,7 +74,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var order = new Order
             {
                 Id = Guid.NewGuid(),
-                CustomerId = customerId,
+                CustomerId = customer.Id,
                 PromotionId = request.PromotionId,
                 Status = "Pending",
                 OrderDate = DateTime.UtcNow,
@@ -155,6 +130,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
                 Note = order.Note,
+                Status = order.Status,
                 OrderItems = order
                     .OrderItems.Select(oi => new OrderItemDto
                     {
@@ -347,8 +323,11 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<IEnumerable<OrderDto>> GetByCustomerAsync(Guid userId)
         {
-            var customerId = await ResolveCustomerIdAsync(userId);
-            var orders = await _orderRepository.GetByCustomerIdAsync(customerId);
+            var customer = await _customerRepository.GetByUserIdAsync(userId);
+            if (customer == null)
+                return Enumerable.Empty<OrderDto>();
+
+            var orders = await _orderRepository.GetByCustomerIdAsync(customer.Id);
 
             return orders.Select(o => new OrderDto
             {
