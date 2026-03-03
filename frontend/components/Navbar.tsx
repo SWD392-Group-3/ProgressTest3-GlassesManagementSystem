@@ -32,10 +32,14 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [user, setUser] = useState<StoredUser | null>(() => getUser());
+  const [user, setUser] = useState<StoredUser | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { cartCount } = useCart();
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
