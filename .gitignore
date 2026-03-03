@@ -11,6 +11,9 @@ Thumbs.db
 *~
 desktop.ini
 
+# Text files
+*.txt
+
 # IDE - Visual Studio / Visual Studio Code
 .vs/
 .vscode/
