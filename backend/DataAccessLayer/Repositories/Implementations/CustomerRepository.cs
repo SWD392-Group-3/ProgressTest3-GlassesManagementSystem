@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using DataAccessLayer.Database;
+﻿using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Repositories.Implementations
 {
@@ -13,6 +9,11 @@ namespace DataAccessLayer.Repositories.Implementations
     {
         public CustomerRepository(IApplicationDbContext context) : base(context)
         {
+        }
+
+        public async Task<Customer?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         }
     }
 }

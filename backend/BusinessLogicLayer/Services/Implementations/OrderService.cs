@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BusinessLogicLayer.DTOs.Request;
+﻿using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
 using BusinessLogicLayer.Services.Interfaces;
 using DataAccessLayer.Database.Entities;
@@ -20,6 +15,7 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly ICartRepository _cartRepository;
         private readonly ICartItemRepository _cartItemRepository;
         private readonly IPromotionRepository _promotionRepository;
+        private readonly ICustomerRepository _customerRepository;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -28,7 +24,8 @@ namespace BusinessLogicLayer.Services.Implementations
             IUserRepository userRepository,
             ICartRepository cartRepository,
             ICartItemRepository cartItemRepository,
-            IPromotionRepository promotionRepository
+            IPromotionRepository promotionRepository,
+            ICustomerRepository customerRepository
         )
         {
             _orderRepository = orderRepository;
@@ -38,6 +35,7 @@ namespace BusinessLogicLayer.Services.Implementations
             _cartRepository = cartRepository;
             _cartItemRepository = cartItemRepository;
             _promotionRepository = promotionRepository;
+            _customerRepository = customerRepository;
         }
 
         public async Task<bool> CancelOrderAsync(Guid orderId, Guid userId)
@@ -156,9 +154,9 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<OrderDto> CreateManualOrderAsync(CreateManualOrderRequest request)
         {
-            var user = await _userRepository.GetByIdAsync(request.CustomerId);
-            if (user == null)
-                throw new Exception("Tài khoản không tồn tại.");
+            var customer = await _customerRepository.GetByUserIdAsync(request.CustomerId);
+            if (customer == null)
+                throw new Exception("Khách hàng không tồn tại.");
 
             if (request.Items == null || !request.Items.Any())
                 throw new Exception("Phải có ít nhất 1 sản phẩm.");
@@ -166,7 +164,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var order = new Order
             {
                 Id = Guid.NewGuid(),
-                CustomerId = request.CustomerId,
+                CustomerId = customer.Id,
                 PromotionId = request.PromotionId,
                 Status = "Pending",
                 OrderDate = DateTime.UtcNow,

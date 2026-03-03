@@ -6,8 +6,6 @@ using DataAccessLayer.Repositories;
 using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 namespace GlassesManagementSystem.Extensions;
 
 /// <summary>
@@ -41,6 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
 
         // Return Exchange Repositories
         services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();
