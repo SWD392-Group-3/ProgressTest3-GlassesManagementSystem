@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
 using BusinessLogicLayer.Services.Interfaces;
@@ -34,10 +35,16 @@ public class OrderController : ControllerBase
     /// <summary>
     /// Lấy danh sách tất cả đơn hàng của một khách hàng.
     /// </summary>
-    [HttpGet("customer/{customerId:guid}")]
+    [HttpGet("customer")]
     [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetByCustomer(Guid customerId)
+    public async Task<IActionResult> GetByCustomer()
     {
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr))
+            return Unauthorized();
+
+        var customerId = Guid.Parse(userIdStr);
+
         var orders = await _orderService.GetByCustomerAsync(customerId);
         return Ok(orders);
     }
@@ -45,17 +52,23 @@ public class OrderController : ControllerBase
     /// <summary>
     /// Tạo đơn hàng từ giỏ hàng (checkout).
     /// </summary>
-    [HttpPost("from-cart/{customerId:guid}")]
+    [HttpPost("from-cart")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> CreateFromCart(Guid customerId, [FromBody] CreateOrderRequest request)
+    public async Task<IActionResult> CreateFromCart([FromBody] CreateOrderRequest request)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
         try
         {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized();
+
+            var customerId = Guid.Parse(userIdStr);
+
             var order = await _orderService.CreateFromCartAsync(customerId, request);
             return StatusCode(StatusCodes.Status201Created, order);
         }
@@ -78,6 +91,14 @@ public class OrderController : ControllerBase
 
         try
         {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized();
+
+            var customerId = Guid.Parse(userIdStr);
+
+            request.CustomerId = customerId;
+
             var order = await _orderService.CreateManualOrderAsync(request);
             return StatusCode(StatusCodes.Status201Created, order);
         }
@@ -121,11 +142,17 @@ public class OrderController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Cancel(Guid orderId, [FromQuery] Guid userId)
+    public async Task<IActionResult> Cancel(Guid orderId)
     {
         try
         {
-            var result = await _orderService.CancelOrderAsync(orderId, userId);
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized();
+
+            var customerId = Guid.Parse(userIdStr);
+
+            var result = await _orderService.CancelOrderAsync(orderId, customerId);
             if (!result)
                 return NotFound(new { message = "Không tìm thấy đơn hàng hoặc bạn không có quyền huỷ." });
 
