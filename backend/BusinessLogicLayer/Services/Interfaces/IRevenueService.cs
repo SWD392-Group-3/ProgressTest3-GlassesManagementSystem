@@ -8,7 +8,7 @@ namespace BusinessLogicLayer.Services.Interfaces
     public interface IRevenueService
     {
         // Revenue Monitoring
-        Task<RevenueOverviewDto> GetRevenueOverviewAsync();
+        Task<RevenueOverviewDto> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null);
         Task<IEnumerable<MonthlyRevenueDto>> GetMonthlyRevenueAsync(int year);
         Task<IEnumerable<RecentOrderDto>> GetRecentOrdersAsync(int count = 5);
 
@@ -16,6 +16,6 @@ namespace BusinessLogicLayer.Services.Interfaces
         Task<IEnumerable<PaymentReconciliationDto>> GetPaymentReconciliationAsync(DateTime? from, DateTime? to);
 
         // Return/Exchange Impact Analysis (<<includes>> Business Regulation Management)
-        Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync();
+        Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync(DateTime? from = null, DateTime? to = null);
     }
 }

@@ -157,3 +157,38 @@ Use-case "Return/Exchange Impact Analysis" `<<includes>>` trong Business Regulat
   - `completedRequests` — Số yêu cầu đã hoàn thành.
   - `totalFinancialImpact` — Tổng giá trị tài chính bị ảnh hưởng (tổng giá trị đơn hàng của các yêu cầu đã hoàn thành).
   - `topReturnedProducts` — Top 5 sản phẩm bị trả nhiều nhất.
+
+---
+
+## [CẬP NHẬT] Bổ sung API bám sát Use-Case chi tiết (Sprint 3)
+
+---
+
+### I. Return/Exchange Request Handling — Manager Endpoint mới
+**Controller:** `ReturnExchangeManagerController.cs` (mới) | **Service:** `ReturnExchangeService.cs`
+
+Use-case yêu cầu Manager có endpoint riêng để xem và duyệt yêu cầu đổi/trả (khác với Sales). Tất cả đặt dưới prefix `/api/manager/return-exchanges`:
+
+- **`GET /api/manager/return-exchanges/pending`** — Lấy danh sách yêu cầu đang chờ xử lý (Status = Pending). Manager xem để kiểm tra điều kiện theo business rules và payment status trước khi duyệt.
+- **`GET /api/manager/return-exchanges/approved`** — Lấy danh sách yêu cầu đã được duyệt (ApprovedBySales), sẵn sàng cho Operation xử lý tiếp.
+- **`GET /api/manager/return-exchanges/{id}`** — Lấy chi tiết yêu cầu đổi/trả theo ID, bao gồm items, ảnh, lịch sử trạng thái.
+- **`POST /api/manager/return-exchanges/review`** — Manager phê duyệt hoặc từ chối yêu cầu. Body: `{ returnExchangeId, isApproved, rejectionReason? }`. Cập nhật `return_exchanges.status` và `resolved_at` nếu hòan tất.
+
+*Lưu ý: Lý do tạo controller riêng (không dùng `ReturnExchangeController` cũ): giữ rõ phân tầng vai trò, Manager chỉ thấy prefix `/api/manager/*`.*
+
+---
+
+### J. Revenue Monitoring — Bổ sung bộ lọc thời gian
+**Controller:** `RevenueController.cs` | **Service:** `RevenueService.cs`
+
+Use-case chỉ rõ "Select time range/filters" — đã thêm tham số `from` và `to` vào các endpoint sau:
+- **`GET /api/manager/revenue/overview?from={date}&to={date}`** — Giờ đây có thể lọc theo khoảng thời gian. Nếu không truyền, lấy toàn bộ.
+- **`GET /api/manager/revenue/return-exchange-impact?from={date}&to={date}`** — Giờ lọc theo `CreatedAt` của yêu cầu đổi/trả. UC: "Filter return requests by time range. Aggregate by status. Link to order to estimate revenue impact."
+
+---
+
+### K. Service Pricing Setup — Endpoint riêng cho cập nhật giá dịch vụ
+**Controller:** `PricingPromotionController.cs` | **Service:** `PricingPromotionService.cs`
+
+Use-case "Service Pricing Setup" yêu cầu cương lượt cập nhật giá mà không cần gửi lại toàn bộ thông tin dịch vụ (bên cạnh `PUT` chính):
+- **`PATCH /api/manager/pricing-promotions/services/{id}/price`** — Chỉ cập nhật giá dịch vụ. Body: `{ "price": 75000 }`. UC: "Enter new price for services. Save new price of services."

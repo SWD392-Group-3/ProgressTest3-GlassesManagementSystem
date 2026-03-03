@@ -89,6 +89,32 @@ namespace GlassesManagementSystem.Controllers.Manager
             return NoContent();
         }
 
+        /// <summary>
+        /// Service Pricing Setup UC: Set/update price for a specific service.
+        /// Lightweight alternative to full PUT — only changes price field.
+        /// </summary>
+        [HttpPatch("services/{id}/price")]
+        public async Task<IActionResult> SetServicePrice(Guid id, [FromBody] SetServicePriceRequest request)
+        {
+            try
+            {
+                // Reuse UpdateServiceAsync — fetch existing then only change price
+                var existing = (await _pricingPromotionService.GetAllServicesAsync())
+                    .FirstOrDefault(s => s.Id == id);
+                if (existing == null) return NotFound($"Service {id} not found.");
+
+                var result = await _pricingPromotionService.UpdateServiceAsync(id, new UpdateServiceRequest
+                {
+                    Name        = existing.Name,
+                    Description = existing.Description,
+                    Price       = request.Price,
+                    Status      = existing.Status
+                });
+                return Ok(result);
+            }
+            catch (Exception ex) { return NotFound(ex.Message); }
+        }
+
         // ─── COMBO MANAGEMENT (Frame + Lens) ──────────────────────────────────
 
         [HttpGet("combos")]

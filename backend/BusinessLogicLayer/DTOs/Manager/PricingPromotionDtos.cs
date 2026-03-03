@@ -113,4 +113,13 @@ namespace BusinessLogicLayer.DTOs.Manager
         public Guid? LensesVariantId { get; set; }
         public int Quantity { get; set; } = 1;
     }
+
+    /// <summary>
+    /// Service Pricing Setup UC: lightweight price-only update request.
+    /// Used by PATCH /services/{id}/price.
+    /// </summary>
+    public class SetServicePriceRequest
+    {
+        public decimal Price { get; set; }
+    }
 }

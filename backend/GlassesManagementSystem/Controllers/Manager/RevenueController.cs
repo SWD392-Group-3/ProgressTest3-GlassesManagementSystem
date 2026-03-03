@@ -18,10 +18,15 @@ namespace GlassesManagementSystem.Controllers.Manager
             _revenueService = revenueService;
         }
 
+        /// <summary>
+        /// Revenue Monitoring — UC: "Select time range/filters. System aggregates from orders."
+        /// </summary>
         [HttpGet("overview")]
-        public async Task<IActionResult> GetOverview()
+        public async Task<IActionResult> GetOverview(
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to)
         {
-            var overview = await _revenueService.GetRevenueOverviewAsync();
+            var overview = await _revenueService.GetRevenueOverviewAsync(from, to);
             return Ok(overview);
         }
 
@@ -52,10 +57,16 @@ namespace GlassesManagementSystem.Controllers.Manager
 
         // ─── RETURN/EXCHANGE IMPACT ANALYSIS (<<includes>> Business Regulation Mgmt) ──
 
+        /// <summary>
+        /// Return/Exchange Impact Analysis — UC: "Filter return requests by time range.
+        /// Aggregate by status. Link to order to estimate revenue impact."
+        /// </summary>
         [HttpGet("return-exchange-impact")]
-        public async Task<IActionResult> GetReturnExchangeImpact()
+        public async Task<IActionResult> GetReturnExchangeImpact(
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to)
         {
-            var impact = await _revenueService.GetReturnExchangeImpactAsync();
+            var impact = await _revenueService.GetReturnExchangeImpactAsync(from, to);
             return Ok(impact);
         }
     }

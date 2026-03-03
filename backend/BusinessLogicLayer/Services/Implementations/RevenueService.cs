@@ -1,5 +1,4 @@
 using System;
-using DataAccessLayer.Database.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,17 +18,25 @@ namespace BusinessLogicLayer.Services.Implementations
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<RevenueOverviewDto> GetRevenueOverviewAsync()
+        public async Task<RevenueOverviewDto> GetRevenueOverviewAsync(DateTime? from = null, DateTime? to = null)
         {
-            var orders = await _unitOfWork.GetRepository<Order>().GetAllAsync();
+            var allOrders = await _unitOfWork.GetRepository<Order>().GetAllAsync();
             var customers = await _unitOfWork.GetRepository<Customer>().GetAllAsync();
 
-            var currentMonthOrders = orders.Where(o => o.OrderDate.Month == DateTime.UtcNow.Month && o.OrderDate.Year == DateTime.UtcNow.Year);
+            // Apply date range filter (UC: "Select time range/filters")
+            var orders = allOrders.AsQueryable();
+            if (from.HasValue) orders = orders.Where(o => o.OrderDate >= from.Value);
+            if (to.HasValue)   orders = orders.Where(o => o.OrderDate <= to.Value);
+            var ordList = orders.ToList();
+
+            var currentMonthOrders = ordList.Where(o =>
+                o.OrderDate.Month == DateTime.UtcNow.Month &&
+                o.OrderDate.Year  == DateTime.UtcNow.Year);
 
             return new RevenueOverviewDto
             {
-                TotalRevenue = orders.Where(o => o.Status == "Completed" || o.Status == "Paid").Sum(o => o.TotalAmount),
-                TotalOrders = orders.Count(),
+                TotalRevenue   = ordList.Where(o => o.Status == "Completed" || o.Status == "Paid").Sum(o => o.TotalAmount),
+                TotalOrders    = ordList.Count,
                 TotalCustomers = customers.Count(),
                 MonthlyRevenue = currentMonthOrders.Where(o => o.Status == "Completed" || o.Status == "Paid").Sum(o => o.TotalAmount)
             };
@@ -106,28 +113,31 @@ namespace BusinessLogicLayer.Services.Implementations
             }).ToList();
         }
 
-        public async Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync()
+        public async Task<ReturnExchangeImpactDto> GetReturnExchangeImpactAsync(DateTime? from = null, DateTime? to = null)
         {
             var allRe = await _unitOfWork.GetRepository<ReturnExchange>().GetAllAsync();
-            var list  = allRe.ToList();
+
+            // UC: "Filter return requests by time range"
+            var query = allRe.AsQueryable();
+            if (from.HasValue) query = query.Where(r => r.CreatedAt >= from.Value);
+            if (to.HasValue)   query = query.Where(r => r.CreatedAt <= to.Value);
+            var list = query.ToList();
 
             // Financial impact = sum of order TotalAmount for Completed returns
-            var completedOrders = list
-                .Where(r => r.Status == "Completed")
-                .Select(r => r.Order)
-                .Where(o => o != null)
-                .ToList();
+            var financialImpact = list
+                .Where(r => r.Status == "Completed" && r.Order != null)
+                .Sum(r => r.Order?.TotalAmount ?? 0);
 
-            var financialImpact = completedOrders.Sum(o => o?.TotalAmount ?? 0);
-
-            // Top returned products: aggregate through ReturnExchangeItems → OrderItem → Product
+            // Top returned products via ReturnExchangeItems -> OrderItem -> ProductVariant
             var topProducts = list
                 .SelectMany(r => r.ReturnExchangeItems)
-                .GroupBy(ri => ri.OrderItem?.Order?.Id) // group by order for now
+                .GroupBy(ri => ri.OrderItem?.ProductVariantId)
                 .Select(g => new TopReturnedProductDto
                 {
-                    ProductName = g.FirstOrDefault()?.OrderItem?.ProductVariantId.ToString() ?? "Unknown",
-                    ReturnCount = g.Count()
+                    ProductName = g.FirstOrDefault()?.OrderItem?.ProductVariant?.Color
+                                  ?? g.Key?.ToString()
+                                  ?? "Unknown",
+                    ReturnCount = g.Sum(ri => ri.Quantity)
                 })
                 .OrderByDescending(x => x.ReturnCount)
                 .Take(5)
@@ -135,14 +145,16 @@ namespace BusinessLogicLayer.Services.Implementations
 
             return new ReturnExchangeImpactDto
             {
-                TotalRequests     = list.Count,
-                PendingRequests   = list.Count(r => r.Status == "Pending"),
-                ApprovedRequests  = list.Count(r => r.Status == "ApprovedBySales"),
-                RejectedRequests  = list.Count(r => r.Status == "Rejected"),
-                CompletedRequests = list.Count(r => r.Status == "Completed"),
+                TotalRequests        = list.Count,
+                PendingRequests      = list.Count(r => r.Status == "Pending"),
+                ApprovedRequests     = list.Count(r => r.Status == "ApprovedBySales"),
+                RejectedRequests     = list.Count(r => r.Status == "Rejected"),
+                CompletedRequests    = list.Count(r => r.Status == "Completed"),
                 TotalFinancialImpact = financialImpact,
                 TopReturnedProducts  = topProducts
-            };
         }
+    }
+}
+
     }
 }
