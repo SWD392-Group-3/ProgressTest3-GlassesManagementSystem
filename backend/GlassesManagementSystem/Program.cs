@@ -20,6 +20,7 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSett
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection(CloudinarySettings.SectionName)
 );
+builder.Services.Configure<MomoSettings>(builder.Configuration.GetSection(MomoSettings.SectionName));
 
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
 builder
@@ -42,6 +43,9 @@ builder
 
 // Business Logic Layer
 builder.Services.AddBusinessLogic();
+
+// Momo Payment Service
+builder.Services.AddHttpClient<IMomoService, MomoService>();
 
 // Cloudinary Service
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
