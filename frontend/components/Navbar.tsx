@@ -15,6 +15,10 @@ import {
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
 
+const STAFF_ROLES = ["Staff", "Admin", "Operation"];
+const isStaffUser = (u: StoredUser | null) =>
+  u?.role != null && STAFF_ROLES.includes(u.role);
+
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "Collection", href: "/products" },
@@ -150,6 +154,15 @@ export default function Navbar() {
                         <Package className="w-4 h-4 text-[#6B7280]" />
                         Đơn hàng của tôi
                       </Link>
+                      {isStaffUser(user) && (
+                        <Link
+                          href="/staff"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
+                        >
+                          Khu vực nhân viên
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
@@ -231,6 +244,15 @@ export default function Navbar() {
               >
                 Đơn hàng
               </Link>
+              {isStaffUser(user) && (
+                <Link
+                  href="/staff"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
+                >
+                  Khu vực nhân viên
+                </Link>
+              )}
               <button
                 onClick={() => {
                   handleLogout();
