@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
 
         // Return Exchange Repositories
         services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();
@@ -58,6 +59,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<IPaymentService, PaymentService>();
         return services;
     }
 }
