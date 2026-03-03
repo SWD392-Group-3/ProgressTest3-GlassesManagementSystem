@@ -11,9 +11,9 @@ namespace DataAccessLayer.Repositories.Implementations
         {
         }
 
-        public async Task<Customer?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<Customer?> GetByUserIdAsync(Guid userId)
         {
-            return await _dbSet.FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+            return await _dbSet.FirstOrDefaultAsync(c => c.UserId == userId);
         }
     }
 }

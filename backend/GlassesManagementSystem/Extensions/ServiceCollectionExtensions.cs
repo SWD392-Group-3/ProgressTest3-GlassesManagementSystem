@@ -47,6 +47,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReturnExchangeImageRepository, ReturnExchangeImageRepository>();
         services.AddScoped<IReturnExchangeHistoryRepository, ReturnExchangeHistoryRepository>();
 
+        // Prescription Repository
+        services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+
         return services;
     }
 
@@ -59,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICartService, CartService>();
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IPrescriptionService, PrescriptionService>();
         return services;
     }
 }
