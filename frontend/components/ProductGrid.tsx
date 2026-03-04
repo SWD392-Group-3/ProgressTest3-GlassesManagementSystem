@@ -7,12 +7,14 @@ interface ProductGridProps {
   products: Product[];
   title?: string;
   subtitle?: string;
+  loading?: boolean;
 }
 
 export default function ProductGrid({
   products,
   title,
   subtitle,
+  loading = false,
 }: ProductGridProps) {
   return (
     <section className="py-20 sm:py-28 bg-white">
@@ -36,10 +38,21 @@ export default function ProductGrid({
         )}
 
         {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 stagger-children">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl bg-[#F5F5F5] animate-pulse">
+                  <div className="aspect-square rounded-t-2xl bg-[#E5E5E5]" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-3 bg-[#E5E5E5] rounded w-1/3" />
+                    <div className="h-4 bg-[#E5E5E5] rounded w-2/3" />
+                    <div className="h-4 bg-[#E5E5E5] rounded w-1/4" />
+                  </div>
+                </div>
+              ))
+            : products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
         </div>
       </div>
     </section>

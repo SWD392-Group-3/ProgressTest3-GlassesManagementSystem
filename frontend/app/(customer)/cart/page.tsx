@@ -174,8 +174,8 @@ export default function CartPage() {
                 Giỏ hàng trống
               </h2>
               <p className="text-[#6B7280] mb-8 max-w-sm">
-                Bạn chưa có sản phẩm nào trong giỏ. Hãy khám phá bộ sưu tập
-                của chúng tôi.
+                Bạn chưa có sản phẩm nào trong giỏ. Hãy khám phá bộ sưu tập của
+                chúng tôi.
               </p>
               <Link
                 href="/products"
@@ -391,4 +391,3 @@ export default function CartPage() {
     </>
   );
 }
-

@@ -33,7 +33,7 @@ export default function CheckoutPage() {
     if (!user) router.replace("/login");
   }, [user, router]);
 
-  if (!cart || cart.cartItems.length === 0) {
+  if (!cart || cart.items.length === 0) {
     return (
       <>
         <Navbar />
@@ -62,7 +62,7 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       const order = await createOrderFromCart({
-        cartId: cart.id,
+        cartId: cart.cartId,
         promotionId: promotionId.trim() || null,
         shippingAddress: shippingAddress.trim(),
         shippingPhone: shippingPhone.trim(),
@@ -180,14 +180,14 @@ export default function CheckoutPage() {
                     className="text-base font-bold text-[#1A1A1A] mb-5"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
-                    Đơn hàng ({cart.cartItems.length} sản phẩm)
+                    Đơn hàng ({cart.items.length} sản phẩm)
                   </h2>
 
                   {/* Items */}
                   <div className="space-y-3 mb-5 max-h-48 overflow-y-auto pr-1">
-                    {cart.cartItems.map((item) => (
+                    {cart.items.map((item) => (
                       <div
-                        key={item.id}
+                        key={item.cartItemId}
                         className="flex justify-between text-sm"
                       >
                         <span className="text-[#6B7280] truncate max-w-[60%]">
