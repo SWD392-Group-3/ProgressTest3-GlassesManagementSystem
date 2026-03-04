@@ -8,7 +8,8 @@ import { getUser } from "@/lib/auth-storage";
 import { apiRequest } from "@/lib/api";
 
 interface CreateManualOrderItem {
-  productVariantId: string;
+  productVariantId?: string;
+  productId?: string;
   quantity: number;
 }
 
@@ -16,11 +17,12 @@ interface CreateManualOrderRequest {
   promotionId?: string;
   shippingAddress: string;
   shippingPhone: string;
+  note?: string;
   items: CreateManualOrderItem[];
 }
 
 interface OrderResponse {
-  orderId: string;
+  id: string;
   [key: string]: unknown;
 }
 
@@ -29,6 +31,8 @@ function BuyNowContent() {
   const searchParams = useSearchParams();
   const user = getUser();
 
+  // Hỗ trợ cả productVariantId (gọng kính có variant) và productId (sản phẩm không variant)
+  const productVariantId = searchParams.get("productVariantId") ?? "";
   const productId = searchParams.get("productId") ?? "";
   const qty = parseInt(searchParams.get("qty") ?? "1", 10);
   const price = parseFloat(searchParams.get("price") ?? "0");
@@ -41,6 +45,12 @@ function BuyNowContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Redirect về login nếu chưa đăng nhập (trước khi submit)
+  if (!user) {
+    router.replace("/login");
+    return null;
+  }
+
   const subtotal = price * qty;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,28 +59,31 @@ function BuyNowContent() {
       setError("Vui lòng điền đầy đủ địa chỉ và số điện thoại.");
       return;
     }
-    if (!user) {
-      router.push("/login");
-      return;
-    }
 
     setIsSubmitting(true);
     setError("");
 
     try {
+      // Xây dựng item — ưu tiên productVariantId, fallback productId
+      const item: CreateManualOrderItem = { quantity: qty };
+      if (productVariantId) item.productVariantId = productVariantId;
+      else if (productId) item.productId = productId;
+
       const body: CreateManualOrderRequest = {
         shippingAddress: shippingAddress.trim(),
         shippingPhone: shippingPhone.trim(),
-        items: [{ productVariantId: productId, quantity: qty }],
+        items: [item],
       };
       if (promotionId.trim()) body.promotionId = promotionId.trim();
+      if (note.trim()) body.note = note.trim();
 
-      const data = await apiRequest<OrderResponse>("/api/order/manual", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      const data = await apiRequest<OrderResponse>(
+        "/api/order/manual",
+        { method: "POST", body: JSON.stringify(body) },
+        { auth: true },   // ← gửi JWT token
+      );
 
-      router.push(`/orders/${data.orderId}`);
+      router.push(`/orders/${data.id}`);
     } catch (err) {
       setError((err as Error).message ?? "Có lỗi xảy ra, vui lòng thử lại.");
     } finally {

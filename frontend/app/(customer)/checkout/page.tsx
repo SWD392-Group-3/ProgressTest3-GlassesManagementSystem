@@ -33,7 +33,7 @@ export default function CheckoutPage() {
     if (!user) router.replace("/login");
   }, [user, router]);
 
-  if (!cart || cart.items.length === 0) {
+  if (!cart || cart.cartItems.length === 0) {
     return (
       <>
         <Navbar />
@@ -62,7 +62,7 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       const order = await createOrderFromCart({
-        cartId: cart.cartId,
+        cartId: cart.id,
         promotionId: promotionId.trim() || null,
         shippingAddress: shippingAddress.trim(),
         shippingPhone: shippingPhone.trim(),
@@ -180,24 +180,26 @@ export default function CheckoutPage() {
                     className="text-base font-bold text-[#1A1A1A] mb-5"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
-                    Đơn hàng ({cart.items.length} sản phẩm)
+                    Đơn hàng ({cart.cartItems.length} sản phẩm)
                   </h2>
 
                   {/* Items */}
                   <div className="space-y-3 mb-5 max-h-48 overflow-y-auto pr-1">
-                    {cart.items.map((item) => (
+                    {cart.cartItems.map((item) => (
                       <div
-                        key={item.cartItemId}
+                        key={item.id}
                         className="flex justify-between text-sm"
                       >
                         <span className="text-[#6B7280] truncate max-w-[60%]">
                           {item.productVariantId
                             ? "Gọng kính"
-                            : item.lensesVariantId
-                              ? "Tròng kính"
-                              : item.comboItemId
-                                ? "Combo"
-                                : "Dịch vụ"}{" "}
+                            : item.productId
+                              ? "Sản phẩm"
+                              : item.lensesVariantId
+                                ? "Tròng kính"
+                                : item.comboItemId
+                                  ? "Combo"
+                                  : "Dịch vụ"}{" "}
                           × {item.quantity}
                         </span>
                         <span className="font-medium text-[#1A1A1A] shrink-0">

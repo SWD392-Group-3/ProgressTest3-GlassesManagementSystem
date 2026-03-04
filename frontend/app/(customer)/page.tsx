@@ -17,18 +17,21 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    getProducts()
-      .then((dtos) => {
+    async function load() {
+      setLoading(true);
+      try {
+        const dtos = await getProducts();
         const all = dtos.map(mapProductDtoToProduct);
         // Lấy 6 sản phẩm đầu làm Bestsellers, 6 tiếp theo làm New Arrivals
         setFeaturedProducts(all.slice(0, 6));
         setNewArrivals(all.slice(6, 12));
-      })
-      .catch(() => {
+      } catch {
         // silent — home page degrades gracefully
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   return (
