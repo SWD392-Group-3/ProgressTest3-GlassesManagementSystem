@@ -21,7 +21,8 @@ export interface OrderDto {
   status: string;
   totalAmount: number;
   discountAmount: number;
-  finalAmount?: number;
+  finalAmount: number;
+  paymentStatus: string | null;
   shippingAddress: string;
   shippingPhone: string;
   note: string | null;

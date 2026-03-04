@@ -48,20 +48,23 @@ public class PaymentController : ControllerBase
 
     /// <summary>
     /// Momo redirect người dùng về đây sau khi thanh toán (ReturnUrl - phía client).
-    /// Chỉ xác thực chữ ký và trả kết quả cho user, KHÔNG ghi DB (IPN đã xử lý rồi).
+    /// Xác thực + cập nhật DB (phòng trường hợp IPN chưa kịp gọi), rồi redirect frontend.
     /// </summary>
     [HttpGet("momo-callback")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult MomoCallback([FromQuery] MomoCallbackResponse callback)
+    public async Task<IActionResult> MomoCallback([FromQuery] MomoCallbackResponse callback)
     {
-        if (!_momoService.ValidateCallback(callback))
-            return BadRequest(new { message = "Chữ ký không hợp lệ." });
+        var orderId = callback.OrderId ?? "";
 
         if (callback.ResultCode == 0)
-            return Ok(new { message = "Thanh toán thành công.", transId = callback.TransId, orderId = callback.OrderId });
+        {
+            // Thử cập nhật DB nếu IPN chưa kịp xử lý (idempotent — PaymentService kiểm tra trùng)
+            try { await _paymentService.HandleMomoNotifyAsync(callback); } catch { /* ignore dup */ }
+            return Redirect($"http://localhost:3000/orders/{orderId}?payment=success");
+        }
 
-        return BadRequest(new { message = $"Thanh toán thất bại: {callback.Message}", resultCode = callback.ResultCode });
+        return Redirect($"http://localhost:3000/orders/{orderId}?payment=failed&code={callback.ResultCode}");
     }
 
     /// <summary>

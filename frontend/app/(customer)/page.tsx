@@ -9,6 +9,7 @@ import BrandStory from "@/components/BrandStory";
 import Footer from "@/components/Footer";
 import type { Product } from "@/constants/products";
 import { getProducts, mapProductDtoToProduct } from "@/lib/api/product";
+import Link from "next/link";
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -59,12 +60,12 @@ export default function Home() {
               Use our AI-powered Virtual Try-On to see how any frame looks on
               your face. No mirror needed.
             </p>
-            <a
+            <Link
               href="/products"
               className="inline-flex items-center justify-center h-12 sm:h-14 px-8 rounded-full bg-[#D4AF37] text-white font-semibold text-sm tracking-wide hover:bg-[#C9A030] transition-colors duration-300"
             >
               Try It Now — It&apos;s Free
-            </a>
+            </Link>
           </div>
         </section>
 

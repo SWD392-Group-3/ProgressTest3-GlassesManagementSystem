@@ -1,7 +1,8 @@
 import { apiRequest, API } from "./client";
 
 export interface CartItemDto {
-  cartItemId: string;
+  id: string;
+  cartId: string;
   productVariantId: string | null;
   lensesVariantId: string | null;
   comboItemId: string | null;
@@ -13,13 +14,16 @@ export interface CartItemDto {
 }
 
 export interface CartDto {
-  cartId: string;
+  id: string;
   customerId: string;
-  items: CartItemDto[];
+  cartItems: CartItemDto[];
   totalAmount: number;
+  status: string | null;
+  createdAt: string;
 }
 
 export interface AddCartItemRequest {
+  productId?: string | null;
   productVariantId?: string | null;
   lensesVariantId?: string | null;
   comboItemId?: string | null;
@@ -29,27 +33,24 @@ export interface AddCartItemRequest {
   note?: string | null;
 }
 
-/** GET /api/cart/{customerId} */
-export async function getCart(customerId: string): Promise<CartDto> {
-  return apiRequest<CartDto>(API.cart.get(customerId), {}, { auth: true });
+/** GET /api/cart */
+export async function getCart(): Promise<CartDto> {
+  return apiRequest<CartDto>(API.cart.get(), {}, { auth: true });
 }
 
-/** POST /api/cart/{customerId}/create */
-export async function createCart(customerId: string): Promise<CartDto> {
+/** POST /api/cart/create */
+export async function createCart(): Promise<CartDto> {
   return apiRequest<CartDto>(
-    API.cart.create(customerId),
+    API.cart.create(),
     { method: "POST" },
     { auth: true },
   );
 }
 
-/** POST /api/cart/{customerId}/items */
-export async function addCartItem(
-  customerId: string,
-  body: AddCartItemRequest,
-): Promise<CartDto> {
+/** POST /api/cart/items */
+export async function addCartItem(body: AddCartItemRequest): Promise<CartDto> {
   return apiRequest<CartDto>(
-    API.cart.addItem(customerId),
+    API.cart.addItem(),
     { method: "POST", body: JSON.stringify(body) },
     { auth: true },
   );

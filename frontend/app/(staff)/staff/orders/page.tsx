@@ -7,7 +7,8 @@ import { getUser } from "@/lib/auth-storage";
 
 const STATUS_LABEL: Record<string, string> = {
   Pending: "Chờ xác nhận",
-  Processing: "Đang xử lý",
+  Paid: "Đã thanh toán",
+  Confirmed: "Đã xác nhận",
   Shipped: "Đang giao",
   Delivered: "Đã giao",
   Cancelled: "Đã huỷ",
@@ -15,9 +16,10 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_COLOR: Record<string, string> = {
   Pending: "bg-yellow-100 text-yellow-800",
-  Processing: "bg-blue-100 text-blue-800",
+  Paid: "bg-green-100 text-green-800",
+  Confirmed: "bg-blue-100 text-blue-800",
   Shipped: "bg-purple-100 text-purple-800",
-  Delivered: "bg-green-100 text-green-800",
+  Delivered: "bg-green-200 text-green-900",
   Cancelled: "bg-red-100 text-red-800",
 };
 
@@ -110,7 +112,8 @@ export default function StaffOrdersPage() {
           {[
             "all",
             "Pending",
-            "Processing",
+            "Paid",
+            "Confirmed",
             "Shipped",
             "Delivered",
             "Cancelled",

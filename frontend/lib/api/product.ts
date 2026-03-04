@@ -1,58 +1,59 @@
-import { apiRequest, API } from "./client";
+import { apiRequest } from "./client";
 import type { Product } from "@/constants/products";
 
-// ─── Backend DTOs ─────────────────────────────────────────────────────────────
+// ─── DTOs (match backend BusinessLogicLayer.DTOs.Manager) ─────────────────────
 
 export interface CategoryDto {
   id: string;
   name: string;
-  description?: string | null;
-  status?: string | null;
+  description: string | null;
+  status: string | null;
 }
 
 export interface BrandDto {
   id: string;
   name: string;
-  description?: string | null;
-  country?: string | null;
-  status?: string | null;
+  description: string | null;
+  country: string | null;
+  status: string | null;
 }
 
 export interface ProductVariantDto {
   id: string;
   productId: string;
-  color?: string | null;
-  size?: string | null;
-  material?: string | null;
+  color: string | null;
+  size: string | null;
+  material: string | null;
   price: number;
-  status?: string | null;
-  imageUrl?: string | null;
+  status: string | null;
+  imageUrl: string | null;
 }
 
 export interface LensesVariantDto {
   id: string;
   productId: string;
-  doCau?: number | null;
-  doTru?: number | null;
-  chiSoKhucXa?: number | null;
+  doCau: number | null;
+  doTru: number | null;
+  chiSoKhucXa: number | null;
   price: number;
-  status?: string | null;
-  imageUrl?: string | null;
+  status: string | null;
+  imageUrl: string | null;
 }
 
 export interface ProductDto {
   id: string;
-  categoryId?: string | null;
-  brandId?: string | null;
-  warrantyPolicyId?: string | null;
+  categoryId: string | null;
+  brandId: string | null;
+  warrantyPolicyId: string | null;
   name: string;
-  description?: string | null;
-  status?: string | null;
-  imageUrl?: string | null;
+  description: string | null;
+  unitPrice: number;
+  status: string | null;
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
-  category?: CategoryDto | null;
-  brand?: BrandDto | null;
+  category: CategoryDto | null;
+  brand: BrandDto | null;
   productVariants: ProductVariantDto[];
   lensesVariants: LensesVariantDto[];
 }
@@ -78,7 +79,7 @@ export function mapProductDtoToProduct(dto: ProductDto): Product {
     variantId: variant?.id ?? dto.id,
     name: dto.name,
     brand: dto.brand?.name ?? "Unknown",
-    price: variant?.price ?? 0,
+    price: variant?.price ?? dto.unitPrice ?? 0,
     image,
     images: [image],
     category: normalizeCategoryName(dto.category?.name),
@@ -100,40 +101,61 @@ export function mapProductDtoToProduct(dto: ProductDto): Product {
   };
 }
 
-// ─── API functions ────────────────────────────────────────────────────────────
+// ─── API functions ─────────────────────────────────────────────────────────────
 
+/** GET /api/products */
 export async function getProducts(): Promise<ProductDto[]> {
-  return apiRequest<ProductDto[]>(API.products.getAll);
+  return apiRequest<ProductDto[]>("/api/products");
 }
 
+/** GET /api/products/:id */
+export async function getProduct(id: string): Promise<ProductDto> {
+  return apiRequest<ProductDto>(`/api/products/${id}`);
+}
+
+/** @deprecated use getProduct instead */
 export async function getProductById(id: string): Promise<ProductDto | null> {
   try {
-    return await apiRequest<ProductDto>(API.products.getById(id));
+    return await getProduct(id);
   } catch {
     return null;
   }
 }
 
+/** GET /api/products/categories */
 export async function getCategories(): Promise<CategoryDto[]> {
-  return apiRequest<CategoryDto[]>(API.products.getCategories);
+  return apiRequest<CategoryDto[]>("/api/products/categories");
 }
 
+/** GET /api/products/brands */
 export async function getBrands(): Promise<BrandDto[]> {
-  return apiRequest<BrandDto[]>(API.products.getBrands);
+  return apiRequest<BrandDto[]>("/api/products/brands");
 }
 
+/** GET /api/products/frame-variants?productId=:productId */
 export async function getFrameVariants(
   productId: string,
 ): Promise<ProductVariantDto[]> {
   return apiRequest<ProductVariantDto[]>(
-    API.products.getFrameVariants(productId),
+    `/api/products/frame-variants?productId=${productId}`,
   );
 }
 
+/** GET /api/products/frame-variants/:id */
+export async function getFrameVariant(id: string): Promise<ProductVariantDto> {
+  return apiRequest<ProductVariantDto>(`/api/products/frame-variants/${id}`);
+}
+
+/** GET /api/products/lens-variants?productId=:productId */
 export async function getLensVariants(
   productId: string,
 ): Promise<LensesVariantDto[]> {
   return apiRequest<LensesVariantDto[]>(
-    API.products.getLensVariants(productId),
+    `/api/products/lens-variants?productId=${productId}`,
   );
+}
+
+/** GET /api/products/lens-variants/:id */
+export async function getLensVariant(id: string): Promise<LensesVariantDto> {
+  return apiRequest<LensesVariantDto>(`/api/products/lens-variants/${id}`);
 }

@@ -8,12 +8,47 @@ import FilterSystem, {
   sortOptions,
 } from "@/components/FilterSystem";
 import ProductCard from "@/components/ProductCard";
+import { getProducts, type ProductDto } from "@/lib/api/product";
 import type { Product } from "@/constants/products";
-import { getProducts, mapProductDtoToProduct } from "@/lib/api/product";
 import { Loader2 } from "lucide-react";
 
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800&q=80";
+
+/** Map backend ProductDto → frontend Product shape for ProductCard */
+function mapProductDto(dto: ProductDto): Product {
+  const variant = dto.productVariants[0];
+  const image = dto.imageUrl ?? variant?.imageUrl ?? FALLBACK_IMAGE;
+  return {
+    id: dto.id,
+    variantId: variant?.id ?? dto.id,
+    name: dto.name,
+    brand: dto.brand?.name ?? "Unknown",
+    price: dto.unitPrice,
+    image,
+    images: [image],
+    category: (dto.category?.name?.toLowerCase() ??
+      "optical") as Product["category"],
+    faceShape: [],
+    material: (variant?.material?.toLowerCase() ??
+      "acetate") as Product["material"],
+    style: "classic" as Product["style"],
+    color: variant?.color ?? "",
+    rating: 4.5,
+    reviewCount: 0,
+    specs: {
+      lensWidth: 0,
+      bridgeWidth: 0,
+      templeLength: 0,
+      lensHeight: 0,
+      weight: "",
+    },
+    description: dto.description ?? "",
+  };
+}
+
 export default function ProductsPage() {
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [apiProducts, setApiProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
@@ -29,13 +64,13 @@ export default function ProductsPage() {
     setLoading(true);
     setError(null);
     getProducts()
-      .then((dtos) => setAllProducts(dtos.map(mapProductDtoToProduct)))
+      .then((dtos) => setApiProducts(dtos.map(mapProductDto)))
       .catch(() => setError("Không thể tải sản phẩm. Vui lòng thử lại sau."))
       .finally(() => setLoading(false));
   }, []);
 
   const filteredProducts = useMemo(() => {
-    let result = [...allProducts];
+    let result = [...apiProducts];
 
     if (filters.category) {
       result = result.filter((p) => p.category === filters.category);
@@ -77,7 +112,7 @@ export default function ProductsPage() {
     }
 
     return result;
-  }, [filters, allProducts]);
+  }, [filters, apiProducts]);
 
   return (
     <>
@@ -96,8 +131,9 @@ export default function ProductsPage() {
               All Eyewear
             </h1>
             <p className="text-[#6B7280] mt-2">
-              {filteredProducts.length}{" "}
-              {filteredProducts.length === 1 ? "product" : "products"} found
+              {loading
+                ? "Loading..."
+                : `${filteredProducts.length} ${filteredProducts.length === 1 ? "product" : "products"} found`}
             </p>
           </div>
 

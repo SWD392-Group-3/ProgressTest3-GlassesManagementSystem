@@ -105,23 +105,23 @@ ON CONFLICT ("Id") DO NOTHING;
 -- -----------------------------------------------------------------------------
 -- 8. PRODUCTS (CategoryId, BrandId, WarrantyPolicyId)
 -- -----------------------------------------------------------------------------
-INSERT INTO "PRODUCTS" ("Id", "CategoryId", "BrandId", "WarrantyPolicyId", "Name", "Description", "Status", "ImageUrl", "CreatedAt", "UpdatedAt")
+INSERT INTO "PRODUCTS" ("Id", "CategoryId", "BrandId", "WarrantyPolicyId", "Name", "Description", "UnitPrice", "Status", "ImageUrl", "CreatedAt", "UpdatedAt")
 VALUES
     ('b7000000-0000-0000-0000-000000000001'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid,
      'b2000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-     'Ray-Ban Classic Aviator', 'Gọng aviator cổ điển', 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+     'Ray-Ban Classic Aviator', 'Gọng aviator cổ điển', 800000, 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('b7000000-0000-0000-0000-000000000002'::uuid, 'b1000000-0000-0000-0000-000000000002'::uuid,
      'b2000000-0000-0000-0000-000000000002'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-     'Tròng đơn tròng Essilor', 'Tròng kính đơn tròng chống trầy', 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+     'Tròng đơn tròng Essilor', 'Tròng kính đơn tròng chống trầy', 700000, 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('b7000000-0000-0000-0000-000000000003'::uuid, 'b1000000-0000-0000-0000-000000000003'::uuid,
      'b2000000-0000-0000-0000-000000000003'::uuid, 'b3000000-0000-0000-0000-000000000002'::uuid,
-     'Oakley Flak 2.0', 'Kính mát thể thao chống UV', 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+     'Oakley Flak 2.0', 'Kính mát thể thao chống UV', 890000, 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('b7000000-0000-0000-0000-000000000004'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid,
      'b2000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-     'Ray-Ban Wayfarer', 'Gọng wayfarer kinh điển', 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+     'Ray-Ban Wayfarer', 'Gọng wayfarer kinh điển', 900000, 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('b7000000-0000-0000-0000-000000000005'::uuid, 'b1000000-0000-0000-0000-000000000002'::uuid,
      'b2000000-0000-0000-0000-000000000004'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-     'Tròng đa tròng Nikon', 'Tròng đa tròng cho người lão thị', 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
+     'Tròng đa tròng Nikon', 'Tròng đa tròng cho người lão thị', 500000, 'Active', NULL, NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------

@@ -31,7 +31,7 @@ namespace BusinessLogicLayer.DTOs.Response
         public string Message { get; set; } = null!;
         public string PayType { get; set; } = null!;
         public long ResponseTime { get; set; }
-        public string ExtraData { get; set; } = null!;
+        public string? ExtraData { get; set; }
         public string Signature { get; set; } = null!;
     }
 }

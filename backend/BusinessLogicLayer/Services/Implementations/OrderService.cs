@@ -81,6 +81,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = request.ShippingAddress,
                 ShippingPhone = request.ShippingPhone,
                 OrderItems = new List<OrderItem>(),
+                Note = request.Note
             };
 
             foreach (var item in cart.CartItems)
@@ -89,6 +90,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 {
                     Id = Guid.NewGuid(),
                     OrderId = order.Id,
+                    ProductId = item.ProductId,
                     ProductVariantId = item.ProductVariantId,
                     LensesVariantId = item.LensesVariantId,
                     ComboItemId = item.ComboItemId,
@@ -126,6 +128,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 PromotionId = order.PromotionId,
                 TotalAmount = order.TotalAmount,
                 DiscountAmount = order.DiscountAmount,
+                FinalAmount = order.TotalAmount - order.DiscountAmount,
+                PaymentStatus = null,
                 OrderDate = order.OrderDate,
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
@@ -136,6 +140,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
+                        ProductId = oi.ProductId,
                         ProductVariantId = oi.ProductVariantId,
                         LensesVariantId = oi.LensesVariantId,
                         ComboItemId = oi.ComboItemId,
@@ -176,7 +181,8 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 // Phải chọn ít nhất 1 loại
                 if (
-                    item.ProductVariantId == null
+                    item.ProductId == null
+                    && item.ProductVariantId == null
                     && item.LensesVariantId == null
                     && item.ComboItemId == null
                     && item.ServiceId == null
@@ -187,6 +193,14 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 // Tính UnitPrice từ DB
                 decimal unitPrice = 0;
+
+                if (item.ProductId.HasValue && !item.ProductVariantId.HasValue)
+                {
+                    var product = await _unitOfWork
+                        .GetRepository<DataAccessLayer.Database.Entities.Product>()
+                        .GetByIdAsync(item.ProductId.Value);
+                    unitPrice += product?.UnitPrice ?? 0;
+                }
 
                 if (item.ProductVariantId.HasValue)
                 {
@@ -230,6 +244,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 {
                     Id = Guid.NewGuid(),
                     OrderId = order.Id,
+                    ProductId = item.ProductId,
                     ProductVariantId = item.ProductVariantId,
                     LensesVariantId = item.LensesVariantId,
                     ComboItemId = item.ComboItemId,
@@ -264,6 +279,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 Status = order.Status,
                 TotalAmount = order.TotalAmount,
                 DiscountAmount = order.DiscountAmount,
+                FinalAmount = order.TotalAmount - order.DiscountAmount,
+                PaymentStatus = null,
                 OrderDate = order.OrderDate,
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
@@ -273,6 +290,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
+                        ProductId = oi.ProductId,
                         ProductVariantId = oi.ProductVariantId,
                         LensesVariantId = oi.LensesVariantId,
                         ComboItemId = oi.ComboItemId,
@@ -298,6 +316,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 Status = o.Status,
                 TotalAmount = o.TotalAmount,
                 DiscountAmount = o.DiscountAmount,
+                FinalAmount = o.TotalAmount - o.DiscountAmount,
+                PaymentStatus = o.Payments.FirstOrDefault()?.Status,
                 OrderDate = o.OrderDate,
                 ShippingAddress = o.ShippingAddress,
                 ShippingPhone = o.ShippingPhone,
@@ -307,6 +327,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
+                        ProductId = oi.ProductId,
                         ProductVariantId = oi.ProductVariantId,
                         LensesVariantId = oi.LensesVariantId,
                         ComboItemId = oi.ComboItemId,
@@ -337,6 +358,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 Status = o.Status,
                 TotalAmount = o.TotalAmount,
                 DiscountAmount = o.DiscountAmount,
+                FinalAmount = o.TotalAmount - o.DiscountAmount,
+                PaymentStatus = o.Payments.FirstOrDefault()?.Status,
                 OrderDate = o.OrderDate,
                 ShippingAddress = o.ShippingAddress,
                 ShippingPhone = o.ShippingPhone,
@@ -346,6 +369,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
+                        ProductId = oi.ProductId,
                         ProductVariantId = oi.ProductVariantId,
                         LensesVariantId = oi.LensesVariantId,
                         ComboItemId = oi.ComboItemId,
@@ -374,6 +398,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 Status = order.Status,
                 TotalAmount = order.TotalAmount,
                 DiscountAmount = order.DiscountAmount,
+                FinalAmount = order.TotalAmount - order.DiscountAmount,
+                PaymentStatus = order.Payments.FirstOrDefault()?.Status,
                 OrderDate = order.OrderDate,
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
@@ -383,6 +409,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
+                        ProductId = oi.ProductId,
                         ProductVariantId = oi.ProductVariantId,
                         LensesVariantId = oi.LensesVariantId,
                         ComboItemId = oi.ComboItemId,
@@ -403,17 +430,17 @@ namespace BusinessLogicLayer.Services.Implementations
             if (order == null)
                 return false;
 
-            // Operation chỉ cập nhật theo flow tuần tự: Confirmed -> Processing -> Shipped -> Delivered
+            // Staff cập nhật theo flow: Paid -> Confirmed -> Shipped -> Delivered
             var validTransitions = new Dictionary<string, string[]>
             {
-                { "Confirmed", new[] { "Processing" } },
-                { "Processing", new[] { "Shipped" } },
+                { "Paid", new[] { "Confirmed" } },
+                { "Confirmed", new[] { "Shipped" } },
                 { "Shipped", new[] { "Delivered" } }
             };
 
             if (!validTransitions.ContainsKey(order.Status!) || !validTransitions[order.Status!].Contains(newStatus))
             {
-                throw new Exception($"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng đúng là: Confirmed -> Processing -> Shipped -> Delivered.");
+                throw new Exception($"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng đúng là: Paid -> Confirmed -> Shipped -> Delivered.");
             }
 
             order.Status = newStatus;

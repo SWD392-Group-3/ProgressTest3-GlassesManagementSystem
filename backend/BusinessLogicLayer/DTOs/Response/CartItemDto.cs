@@ -11,6 +11,7 @@ namespace BusinessLogicLayer.DTOs.Response
         public Guid Id { get; set; }
         public Guid CartId { get; set; }
 
+        public Guid? ProductId { get; set; }
         public Guid? ProductVariantId { get; set; }
         public Guid? LensesVariantId { get; set; }
         public Guid? ComboItemId { get; set; }

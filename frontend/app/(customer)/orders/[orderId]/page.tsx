@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   Loader2,
@@ -16,6 +16,7 @@ import {
   Truck,
   CheckCircle2,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -44,11 +45,12 @@ function fmtDate(dateStr: string) {
   });
 }
 
-const STATUS_STEPS = ["Pending", "Processing", "Shipped", "Delivered"];
+const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
 
 const STATUS_LABEL: Record<string, string> = {
   Pending: "Chờ xác nhận",
-  Processing: "Đang xử lý",
+  Paid: "Đã thanh toán",
+  Confirmed: "Đã xác nhận",
   Shipped: "Đang giao",
   Delivered: "Đã giao",
   Cancelled: "Đã huỷ",
@@ -56,7 +58,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   Pending: <Clock className="w-4 h-4" />,
-  Processing: <RefreshCw className="w-4 h-4" />,
+  Paid: <CheckCircle2 className="w-4 h-4" />,
+  Confirmed: <RefreshCw className="w-4 h-4" />,
   Shipped: <Truck className="w-4 h-4" />,
   Delivered: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
@@ -66,7 +69,8 @@ export default function OrderDetailPage() {
   const params = useParams();
   const orderId = params?.orderId as string;
   const router = useRouter();
-  const user = getUser();
+  const searchParams = useSearchParams();
+  const paymentStatus = searchParams.get("payment"); // "success" | "failed" | null
 
   const [order, setOrder] = useState<OrderDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,12 +92,22 @@ export default function OrderDetailPage() {
   }, [orderId]);
 
   useEffect(() => {
+    const user = getUser();
     if (!user) {
       router.replace("/login");
       return;
     }
     fetchOrder();
-  }, [user, router, fetchOrder]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
+
+  // Re-fetch after MoMo redirects back so status reflects payment result
+  useEffect(() => {
+    if (paymentStatus === "success" || paymentStatus === "failed") {
+      fetchOrder();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentStatus]);
 
   async function handlePayMomo() {
     if (!order) return;
@@ -129,9 +143,8 @@ export default function OrderDetailPage() {
     }
   }
 
-  const canCancel =
-    order?.status === "Pending" || order?.status === "Processing";
-  const canPay = order?.status === "Pending" || order?.status === "Processing";
+  const canCancel = order?.status === "Pending";
+  const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
   const isCancelled = order?.status === "Cancelled";
   const currentStepIndex = isCancelled
     ? -1
@@ -142,6 +155,24 @@ export default function OrderDetailPage() {
       <Navbar />
       <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          {/* Payment result banner */}
+          {paymentStatus === "success" && (
+            <div className="flex items-center gap-3 mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
+              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+              <p className="text-sm font-semibold text-green-700">
+                Thanh toán thành công! Đơn hàng của bạn đang được xử lý.
+              </p>
+            </div>
+          )}
+          {paymentStatus === "failed" && (
+            <div className="flex items-center gap-3 mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+              <p className="text-sm font-semibold text-red-700">
+                Thanh toán thất bại hoặc bị huỷ. Bạn có thể thử lại bên dưới.
+              </p>
+            </div>
+          )}
+
           {/* Header */}
           <div className="mb-8 flex items-center gap-4">
             <Link

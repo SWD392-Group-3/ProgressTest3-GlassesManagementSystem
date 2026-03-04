@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IWarrantyPolicyRepository, WarrantyPolicyRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
 
         // Return Exchange Repositories
         services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();

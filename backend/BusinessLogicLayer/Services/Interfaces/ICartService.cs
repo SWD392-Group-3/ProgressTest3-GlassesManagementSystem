@@ -15,6 +15,7 @@ namespace BusinessLogicLayer.Services.Interfaces
         // CartItem
         Task<CartDto> AddItemAsync(
             Guid customerId,
+            Guid? productId,
             Guid? productVariantId,
             Guid? lensesVariantId,
             Guid? comboItemId,

@@ -4,45 +4,33 @@ using System.Linq;
 using System.Threading.Tasks;
 using BusinessLogicLayer.DTOs.Manager;
 using BusinessLogicLayer.Services.Interfaces;
-using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace BusinessLogicLayer.Services.Implementations
 {
     public class ProductManagerService : IProductManagerService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IApplicationDbContext _context;
+        private readonly IProductRepository _productRepository;
 
-        public ProductManagerService(IUnitOfWork unitOfWork, IApplicationDbContext context)
+        public ProductManagerService(IUnitOfWork unitOfWork, IProductRepository productRepository)
         {
             _unitOfWork = unitOfWork;
-            _context = context;
+            _productRepository = productRepository;
         }
 
         // ─── PRODUCT ──────────────────────────────────────────────────────────
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
-            var products = await _context
-                .Products.Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.ProductVariants)
-                .Include(p => p.LensVariants)
-                .ToListAsync();
+            var products = await _productRepository.GetAllWithDetailsAsync();
             return products.Select(MapToProductDto);
         }
 
         public async Task<ProductDto?> GetProductByIdAsync(Guid id)
         {
-            var product = await _context
-                .Products.Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.ProductVariants)
-                .Include(p => p.LensVariants)
-                .FirstOrDefaultAsync(p => p.Id == id);
+            var product = await _productRepository.GetByIdWithDetailsAsync(id);
             return product == null ? null : MapToProductDto(product);
         }
 
@@ -56,6 +44,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 WarrantyPolicyId = request.WarrantyPolicyId ?? Guid.Empty,
                 Name = request.Name,
                 Description = request.Description,
+                UnitPrice = request.UnitPrice,
                 Status = request.Status ?? "Active",
                 ImageUrl = request.ImageUrl,
                 CreatedAt = DateTime.UtcNow,
@@ -79,6 +68,7 @@ namespace BusinessLogicLayer.Services.Implementations
             product.WarrantyPolicyId = request.WarrantyPolicyId ?? Guid.Empty;
             product.Name = request.Name;
             product.Description = request.Description;
+            product.UnitPrice = request.UnitPrice;
             product.ImageUrl = request.ImageUrl;
             if (request.Status != null)
                 product.Status = request.Status;
@@ -402,6 +392,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 WarrantyPolicyId = p.WarrantyPolicyId,
                 Name = p.Name,
                 Description = p.Description,
+                UnitPrice = p.UnitPrice,
                 Status = p.Status,
                 ImageUrl = p.ImageUrl,
                 CreatedAt = p.CreatedAt,
