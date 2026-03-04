@@ -33,6 +33,8 @@ export default function LoginPage() {
       const role = (res.role ?? "").toLowerCase();
       if (role === "operation") {
         router.push("/operation");
+      } else if (role === "manager") {
+        router.push("/manager/dashboard");
       } else if (["staff", "admin"].includes(role)) {
         router.push("/staff");
       } else {
