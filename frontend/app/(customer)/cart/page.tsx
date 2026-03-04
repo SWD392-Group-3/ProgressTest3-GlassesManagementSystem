@@ -83,7 +83,7 @@ export default function CartPage() {
             <div className="flex justify-center items-center py-32">
               <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
             </div>
-          ) : !cart || cart.items.length === 0 ? (
+          ) : !cart || cart.cartItems.length === 0 ? (
             /* Empty State */
             <div className="flex flex-col items-center justify-center py-32 text-center">
               <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6 shadow-sm">
@@ -111,11 +111,11 @@ export default function CartPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Cart Items */}
               <div className="lg:col-span-2 space-y-4">
-                {cart.items.map((item) => (
+                {cart.cartItems.map((item) => (
                   <div
-                    key={item.cartItemId}
+                    key={item.id}
                     className={`bg-white rounded-2xl p-5 border border-[#E5E7EB] transition-opacity ${
-                      updating === item.cartItemId
+                      updating === item.id
                         ? "opacity-50 pointer-events-none"
                         : ""
                     }`}
@@ -158,7 +158,7 @@ export default function CartPage() {
                           <button
                             type="button"
                             aria-label="Xóa sản phẩm"
-                            onClick={() => handleRemove(item.cartItemId)}
+                            onClick={() => handleRemove(item.id)}
                             className="p-1.5 rounded-full hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -172,10 +172,7 @@ export default function CartPage() {
                               type="button"
                               aria-label="Giảm số lượng"
                               onClick={() =>
-                                handleQuantity(
-                                  item.cartItemId,
-                                  item.quantity - 1,
-                                )
+                                handleQuantity(item.id, item.quantity - 1)
                               }
                               className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F5F5F5] transition-colors"
                             >
@@ -188,10 +185,7 @@ export default function CartPage() {
                               type="button"
                               aria-label="Tăng số lượng"
                               onClick={() =>
-                                handleQuantity(
-                                  item.cartItemId,
-                                  item.quantity + 1,
-                                )
+                                handleQuantity(item.id, item.quantity + 1)
                               }
                               className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#F5F5F5] transition-colors"
                             >
@@ -229,7 +223,7 @@ export default function CartPage() {
                     <div className="flex justify-between text-sm">
                       <span className="text-[#6B7280]">
                         Tạm tính (
-                        {cart.items.reduce((s, i) => s + i.quantity, 0)} sản
+                        {cart.cartItems.reduce((s, i) => s + i.quantity, 0)} sản
                         phẩm)
                       </span>
                       <span className="font-medium text-[#1A1A1A]">

@@ -68,9 +68,9 @@ public class OrderController : ControllerBase
         if (string.IsNullOrEmpty(userIdStr))
             return Unauthorized();
 
-        var customerId = Guid.Parse(userIdStr);
+        var userId = Guid.Parse(userIdStr);
 
-        var orders = await _orderService.GetByCustomerAsync(customerId);
+        var orders = await _orderService.GetByCustomerAsync(userId);
         return Ok(orders);
     }
 
@@ -93,9 +93,9 @@ public class OrderController : ControllerBase
             if (string.IsNullOrEmpty(userIdStr))
                 return Unauthorized();
 
-            var customerId = Guid.Parse(userIdStr);
+            var userId = Guid.Parse(userIdStr);
 
-            var order = await _orderService.CreateFromCartAsync(customerId, request);
+            var order = await _orderService.CreateFromCartAsync(userId, request);
             return StatusCode(StatusCodes.Status201Created, order);
         }
         catch (Exception ex)
@@ -122,9 +122,9 @@ public class OrderController : ControllerBase
             if (string.IsNullOrEmpty(userIdStr))
                 return Unauthorized();
 
-            var customerId = Guid.Parse(userIdStr);
+            var userId = Guid.Parse(userIdStr);
 
-            request.CustomerId = customerId;
+            request.CustomerId = userId;
 
             var order = await _orderService.CreateManualOrderAsync(request);
             return StatusCode(StatusCodes.Status201Created, order);
@@ -182,9 +182,9 @@ public class OrderController : ControllerBase
             if (string.IsNullOrEmpty(userIdStr))
                 return Unauthorized();
 
-            var customerId = Guid.Parse(userIdStr);
+            var userId = Guid.Parse(userIdStr);
 
-            var result = await _orderService.CancelOrderAsync(orderId, customerId);
+            var result = await _orderService.CancelOrderAsync(orderId, userId);
             if (!result)
                 return NotFound(
                     new { message = "Không tìm thấy đơn hàng hoặc bạn không có quyền huỷ." }
