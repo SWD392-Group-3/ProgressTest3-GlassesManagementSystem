@@ -11,6 +11,7 @@ namespace DataAccessLayer.Database.Entities
         public Guid Id { get; set; }
         public Guid CartId { get; set; }
 
+        public Guid? ProductId { get; set; }
         public Guid? ProductVariantId { get; set; }
         public Guid? LensesVariantId { get; set; }
         public Guid? ComboItemId { get; set; }
@@ -23,6 +24,7 @@ namespace DataAccessLayer.Database.Entities
         public string? Note { get; set; }
 
         public virtual Cart Cart { get; set; } = null!;
+        public virtual Product? Product { get; set; }
         public virtual ProductVariant? ProductVariant { get; set; }
         public virtual LensVariant? LensesVariant { get; set; }
         public virtual ComboItem? ComboItem { get; set; }

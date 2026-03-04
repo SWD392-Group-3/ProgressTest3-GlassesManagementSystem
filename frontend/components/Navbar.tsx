@@ -39,7 +39,11 @@ export default function Navbar() {
   const { cartCount } = useCart();
 
   useEffect(() => {
-    setUser(getUser());
+    // Read localStorage only on client (avoids hydration mismatch)
+    const syncUser = () => setUser(getUser());
+    syncUser();
+    window.addEventListener("storage", syncUser);
+    return () => window.removeEventListener("storage", syncUser);
   }, []);
 
   useEffect(() => {
@@ -125,78 +129,81 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* User */}
-            {user ? (
-              <div className="relative hidden sm:block" ref={userMenuRef}>
-                <button
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+            {/* User — suppressHydrationWarning prevents mismatch because
+                user is read from localStorage (null on SSR, set after mount) */}
+            <div suppressHydrationWarning>
+              {user ? (
+                <div className="relative hidden sm:block" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+                    aria-label="Account"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">
+                        {(user.fullName ?? user.email)[0].toUpperCase()}
+                      </span>
+                    </div>
+                  </button>
+
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#E5E7EB] overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-[#E5E7EB]">
+                        <p className="text-sm font-semibold text-[#1A1A1A] truncate">
+                          {user.fullName ?? "Khách hàng"}
+                        </p>
+                        <p className="text-xs text-[#6B7280] truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <div className="py-1">
+                        <Link
+                          href="/orders"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
+                        >
+                          <Package className="w-4 h-4 text-[#6B7280]" />
+                          Đơn hàng của tôi
+                        </Link>
+                        {isStaffUser(user) && (
+                          <Link
+                            href="/staff"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
+                          >
+                            Khu vực nhân viên
+                          </Link>
+                        )}
+                        {!isStaffUser(user) && isOperationUser(user) && (
+                          <Link
+                            href="/operation"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
+                          >
+                            Khu vực Operation
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="hidden sm:flex p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
                   aria-label="Account"
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#D4AF37] flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">
-                      {(user.fullName ?? user.email)[0].toUpperCase()}
-                    </span>
-                  </div>
-                </button>
-
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#E5E7EB] overflow-hidden z-50">
-                    <div className="px-4 py-3 border-b border-[#E5E7EB]">
-                      <p className="text-sm font-semibold text-[#1A1A1A] truncate">
-                        {user.fullName ?? "Khách hàng"}
-                      </p>
-                      <p className="text-xs text-[#6B7280] truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                    <div className="py-1">
-                      <Link
-                        href="/orders"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
-                      >
-                        <Package className="w-4 h-4 text-[#6B7280]" />
-                        Đơn hàng của tôi
-                      </Link>
-                      {isStaffUser(user) && (
-                        <Link
-                          href="/staff"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
-                        >
-                          Khu vực nhân viên
-                        </Link>
-                      )}
-                      {!isStaffUser(user) && isOperationUser(user) && (
-                        <Link
-                          href="/operation"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
-                        >
-                          Khu vực Operation
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Đăng xuất
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                className="hidden sm:flex p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
-                aria-label="Account"
-              >
-                <User className="w-5 h-5 text-[#1A1A1A]" />
-              </Link>
-            )}
+                  <User className="w-5 h-5 text-[#1A1A1A]" />
+                </Link>
+              )}
+            </div>
 
             {/* Mobile Menu Toggle */}
             <button

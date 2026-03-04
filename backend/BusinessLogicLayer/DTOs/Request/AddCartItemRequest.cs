@@ -5,6 +5,7 @@ namespace BusinessLogicLayer.DTOs.Request
 {
     public class AddCartItemRequest
     {
+        public Guid? ProductId { get; set; }
         public Guid? ProductVariantId { get; set; }
         public Guid? LensesVariantId { get; set; }
         public Guid? ComboItemId { get; set; }

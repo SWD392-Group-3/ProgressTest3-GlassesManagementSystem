@@ -11,6 +11,7 @@ namespace DataAccessLayer.Database.Entities
         public Guid Id { get; set; }
         public Guid OrderId { get; set; }
 
+        public Guid? ProductId { get; set; }
         public Guid? ProductVariantId { get; set; }
         public Guid? LensesVariantId { get; set; }
         public Guid? ComboItemId { get; set; }
@@ -29,6 +30,7 @@ namespace DataAccessLayer.Database.Entities
         public virtual ICollection<ReturnExchangeItem> ReturnExchangeItems { get; set; } =
             new List<ReturnExchangeItem>();
 
+        public virtual Product? Product { get; set; }
         public virtual ProductVariant? ProductVariant { get; set; }
         public virtual LensVariant? LensesVariant { get; set; }
         public virtual ComboItem? ComboItem { get; set; }

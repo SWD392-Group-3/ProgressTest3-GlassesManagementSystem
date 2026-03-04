@@ -40,9 +40,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     setLoading(true);
     try {
-      let data = await getCart(user.userId).catch(() => null);
+      let data = await getCart().catch(() => null);
       if (!data) {
-        data = await createCart(user.userId);
+        data = await createCart();
       }
       setCart(data);
     } catch {
@@ -59,7 +59,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback(async (body: AddCartItemRequest) => {
     const user = getUser();
     if (!user) throw new Error("Vui lòng đăng nhập.");
-    const data = await addCartItem(user.userId, body);
+    const data = await addCartItem(body);
     setCart(data);
   }, []);
 

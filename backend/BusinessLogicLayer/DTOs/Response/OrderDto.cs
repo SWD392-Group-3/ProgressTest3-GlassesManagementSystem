@@ -14,6 +14,8 @@ namespace BusinessLogicLayer.DTOs.Response
         public string? Status { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal DiscountAmount { get; set; }
+        public decimal FinalAmount { get; set; }
+        public string? PaymentStatus { get; set; }   // null | "Paid" | "Failed"
         public DateTime OrderDate { get; set; }
         public string? ShippingAddress { get; set; }
         public string? ShippingPhone { get; set; }

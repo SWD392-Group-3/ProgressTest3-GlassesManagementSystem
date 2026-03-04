@@ -44,7 +44,7 @@ namespace BusinessLogicLayer.Services.Implementations
             throw new Exception("Không tìm thấy thông tin khách hàng.");
         }
 
-        public async Task<CartDto> AddItemAsync(Guid userId, Guid? productVariantId, Guid? lensesVariantId, Guid? comboItemId, Guid? serviceId, Guid? slotId, int quantity, string? note)
+        public async Task<CartDto> AddItemAsync(Guid userId, Guid? productId, Guid? productVariantId, Guid? lensesVariantId, Guid? comboItemId, Guid? serviceId, Guid? slotId, int quantity, string? note)
         {
             var customerId = await ResolveCustomerIdAsync(userId);
 
@@ -67,6 +67,13 @@ namespace BusinessLogicLayer.Services.Implementations
 
             // Tính UnitPrice dựa theo loại item được chọn
             decimal unitPrice = 0;
+
+            if (productId.HasValue && !productVariantId.HasValue)
+            {
+                var product = await _unitOfWork.GetRepository<Product>()
+                    .GetByIdAsync(productId.Value);
+                unitPrice += product?.UnitPrice ?? 0;
+            }
 
             if (productVariantId.HasValue)
             {
@@ -104,6 +111,7 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 Id = Guid.NewGuid(),
                 CartId = cart.Id,
+                ProductId = productId,
                 ProductVariantId = productVariantId,
                 LensesVariantId = lensesVariantId,
                 ComboItemId = comboItemId,
@@ -204,6 +212,7 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 Id = x.Id,
                 CartId = x.CartId,
+                ProductId = x.ProductId,
                 ProductVariantId = x.ProductVariantId,
                 LensesVariantId = x.LensesVariantId,
                 ComboItemId = x.ComboItemId,

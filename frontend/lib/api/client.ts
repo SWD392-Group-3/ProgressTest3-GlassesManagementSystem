@@ -1,4 +1,4 @@
-import { getToken } from "../auth-storage";
+import { getToken, getUser, clearAuth } from "../auth-storage";
 
 /**
  * Base URL của backend API (từ env).
@@ -16,9 +16,9 @@ export const API = {
     register: "/api/auth/register",
   },
   cart: {
-    get: (customerId: string) => `/api/cart/${customerId}`,
-    create: (customerId: string) => `/api/cart/${customerId}/create`,
-    addItem: (customerId: string) => `/api/cart/${customerId}/items`,
+    get: () => `/api/cart`,
+    create: () => `/api/cart/create`,
+    addItem: () => `/api/cart/items`,
     updateItem: (cartItemId: string) => `/api/cart/items/${cartItemId}`,
     removeItem: (cartItemId: string) => `/api/cart/items/${cartItemId}`,
   },
@@ -40,6 +40,7 @@ export type ApiEndpoint = string;
 
 /**
  * Gọi API backend. Tự gắn base URL, Content-Type JSON, và (nếu auth: true) Bearer token.
+ * Nếu nhận 401 → tự động xoá token và redirect về /login.
  */
 export async function apiRequest<T = unknown>(
   path: string,
@@ -55,6 +56,14 @@ export async function apiRequest<T = unknown>(
   };
 
   if (options.auth) {
+    // Kiểm tra token còn hạn chưa
+    const user = getUser();
+    if (user?.expiresAt && new Date(user.expiresAt) <= new Date()) {
+      clearAuth();
+      if (typeof window !== "undefined") window.location.href = "/login";
+      throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+    }
+
     const token = getToken();
     if (token)
       (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
@@ -62,6 +71,13 @@ export async function apiRequest<T = unknown>(
 
   const res = await fetch(url, { ...init, headers });
   const data = await res.json().catch(() => ({}));
+
+  if (res.status === 401) {
+    // Token hết hạn hoặc không hợp lệ → clear và về login
+    clearAuth();
+    if (typeof window !== "undefined") window.location.href = "/login";
+    throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+  }
 
   if (!res.ok) {
     const message =
