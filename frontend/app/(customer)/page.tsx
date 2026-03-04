@@ -1,17 +1,35 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeaturedCategories from "@/components/FeaturedCategories";
 import ProductGrid from "@/components/ProductGrid";
 import BrandStory from "@/components/BrandStory";
 import Footer from "@/components/Footer";
-import { products } from "@/constants/products";
+import type { Product } from "@/constants/products";
+import { getProducts, mapProductDtoToProduct } from "@/lib/api/product";
 import Link from "next/link";
 
 export default function Home() {
-  const featuredProducts = products.filter((p) => p.isBestseller).slice(0, 6);
-  const newArrivals = products.filter((p) => p.isNew).slice(0, 6);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    getProducts()
+      .then((dtos) => {
+        const all = dtos.map(mapProductDtoToProduct);
+        // Lấy 6 sản phẩm đầu làm Bestsellers, 6 tiếp theo làm New Arrivals
+        setFeaturedProducts(all.slice(0, 6));
+        setNewArrivals(all.slice(6, 12));
+      })
+      .catch(() => {
+        // silent — home page degrades gracefully
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <>
@@ -21,6 +39,7 @@ export default function Home() {
         <FeaturedCategories />
         <ProductGrid
           products={featuredProducts}
+          loading={loading}
           title="Bestsellers"
           subtitle="Our most loved frames, chosen by thousands of style-conscious customers."
         />
@@ -52,6 +71,7 @@ export default function Home() {
 
         <ProductGrid
           products={newArrivals}
+          loading={loading}
           title="New Arrivals"
           subtitle="The latest additions to our collection — fresh designs for the new season."
         />
