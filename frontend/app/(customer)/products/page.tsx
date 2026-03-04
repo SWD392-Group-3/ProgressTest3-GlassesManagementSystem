@@ -61,12 +61,19 @@ export default function ProductsPage() {
   });
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    getProducts()
-      .then((dtos) => setApiProducts(dtos.map(mapProductDto)))
-      .catch(() => setError("Không thể tải sản phẩm. Vui lòng thử lại sau."))
-      .finally(() => setLoading(false));
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const dtos = await getProducts();
+        setApiProducts(dtos.map(mapProductDto));
+      } catch {
+        setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
   }, []);
 
   const filteredProducts = useMemo(() => {
