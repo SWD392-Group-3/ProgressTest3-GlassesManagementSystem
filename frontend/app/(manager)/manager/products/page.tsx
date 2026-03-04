@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Search, Package, Check, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, Package } from "lucide-react";
 
 type Category = { id: string; name: string };
 type Brand = { id: string; name: string };

@@ -18,18 +18,18 @@ export default function ManagerLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-border flex flex-col hidden md:flex">
         <div className="p-6 border-b border-border">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/manager/dashboard" className="flex items-center gap-2">
             <span className="font-heading font-bold text-2xl text-primary">Elite</span>
             <span className="font-heading text-2xl text-accent">Manager</span>
           </Link>
         </div>
         
         <nav className="flex-1 py-6 px-4 space-y-1">
-          <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
-          <NavItem href="/policies" icon={<FileText size={20} />} label="Policies" />
-          <NavItem href="/products" icon={<Package size={20} />} label="Products" />
-          <NavItem href="/promotions-combos" icon={<Tag size={20} />} label="Pricing & Promos" />
-          <NavItem href="/users" icon={<Users size={20} />} label="Users & Staff" />
+          <NavItem href="/manager/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" />
+          <NavItem href="/manager/policies" icon={<FileText size={20} />} label="Policies" />
+          <NavItem href="/manager/products" icon={<Package size={20} />} label="Products" />
+          <NavItem href="/manager/promotions-combos" icon={<Tag size={20} />} label="Pricing & Promos" />
+          <NavItem href="/manager/users" icon={<Users size={20} />} label="Users & Staff" />
         </nav>
         
         <div className="p-4 border-t border-border">
@@ -44,7 +44,7 @@ export default function ManagerLayout({
       <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
         {/* Mobile Header (Hidden on large screens) */}
         <header className="md:hidden bg-white border-b border-border p-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-1">
+          <Link href="/manager/dashboard" className="flex items-center gap-1">
             <span className="font-heading font-bold text-xl text-primary">Elite</span>
             <span className="font-heading text-xl text-accent">Manager</span>
           </Link>
