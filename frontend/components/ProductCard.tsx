@@ -1,15 +1,47 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Star, Eye, ShoppingBag, CheckCircle2, Loader2 } from "lucide-react";
 import type { Product } from "@/constants/products";
+import { useCart } from "@/lib/CartContext";
+import { getUser } from "@/lib/auth-storage";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
+  const router = useRouter();
+
+  async function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const user = getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    setAdding(true);
+    try {
+      await addItem({ productVariantId: product.variantId, quantity: 1 });
+      setAdded(true);
+      // Sau khi thêm thành công → dẫn đến trang detail sản phẩm
+      setTimeout(() => {
+        router.push(`/products/${product.id}`);
+      }, 800);
+    } catch {
+      // silent fail — user can try from detail page
+    } finally {
+      setAdding(false);
+    }
+  }
+
   return (
     <Link
       href={`/products/${product.id}`}
@@ -88,7 +120,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </p>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 mb-4">
           <span className="text-lg font-bold text-[#1A1A1A]">
             ${product.price}
           </span>
@@ -98,6 +130,31 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
         </div>
+
+        {/* Add to Cart button */}
+        <button
+          onClick={handleAddToCart}
+          disabled={adding}
+          className={`w-full h-10 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
+            added
+              ? "bg-green-500 text-white"
+              : "bg-[#1A1A1A] text-white hover:bg-[#D4AF37]"
+          } disabled:opacity-60`}
+        >
+          {adding ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : added ? (
+            <>
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Đã thêm!
+            </>
+          ) : (
+            <>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              Thêm vào giỏ hàng
+            </>
+          )}
+        </button>
       </div>
     </Link>
   );

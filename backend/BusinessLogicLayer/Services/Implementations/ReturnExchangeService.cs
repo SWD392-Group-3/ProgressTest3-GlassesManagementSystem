@@ -1,3 +1,4 @@
+using BusinessLogicLayer.Constants;
 using BusinessLogicLayer.DTOs;
 using BusinessLogicLayer.Services.Interfaces;
 using DataAccessLayer.Database.Entities;
@@ -50,6 +51,49 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 if (order.CustomerId != customerId)
                     return (null, "Đơn hàng không thuộc về khách hàng này");
+
+                // Chỉ được hoàn hàng khi đơn đã giao
+                if (order.Status != "Delivered")
+                    return (null, "Chỉ có thể hoàn hàng khi đơn hàng đã được giao");
+
+                // Lấy tất cả OrderItem thuộc order này để validate
+                var orderItemRepo = _unitOfWork.GetRepository<OrderItem>();
+                var orderItems = await orderItemRepo.FindAsync(
+                    oi => oi.OrderId == request.OrderId,
+                    cancellationToken
+                );
+                var orderItemDict = orderItems.ToDictionary(oi => oi.Id);
+
+                // Validate từng item trong request
+                foreach (var item in request.Items)
+                {
+                    if (!orderItemDict.TryGetValue(item.OrderItemId, out var orderItem))
+                        return (null, $"Sản phẩm {item.OrderItemId} không thuộc đơn hàng này");
+
+                    if (item.Quantity <= 0)
+                        return (null, $"Số lượng hoàn phải lớn hơn 0");
+
+                    if (item.Quantity > orderItem.Quantity)
+                        return (
+                            null,
+                            $"Số lượng hoàn ({item.Quantity}) vượt quá số lượng đã mua ({orderItem.Quantity})"
+                        );
+
+                    // Kiểm tra OrderItem này đã có trong yêu cầu hoàn hàng Pending/ApprovedBySales chưa
+                    var existingItems = await _returnExchangeItemRepository.GetByOrderItemIdAsync(
+                        item.OrderItemId
+                    );
+                    var activeReturn = existingItems.FirstOrDefault(ri =>
+                        ri.ReturnExchange != null
+                        && ri.ReturnExchange.Status != "Rejected"
+                        && ri.ReturnExchange.Status != "Completed"
+                    );
+                    if (activeReturn != null)
+                        return (
+                            null,
+                            $"Sản phẩm {item.OrderItemId} đang có yêu cầu hoàn hàng chưa được xử lý"
+                        );
+                }
 
                 // Create return exchange
                 var returnExchange = new ReturnExchange
@@ -175,7 +219,7 @@ namespace BusinessLogicLayer.Services.Implementations
                         var existingCount =
                             await _returnExchangeImageRepository.CountImagesByItemAndRoleAsync(
                                 imageRequest.ReturnExchangeItemId,
-                                "Sales"
+                                "Staff"
                             );
 
                         if (existingCount + imageRequest.ImageUrls.Count > 5)
@@ -188,7 +232,7 @@ namespace BusinessLogicLayer.Services.Implementations
                                 Id = Guid.NewGuid(),
                                 ReturnExchangeItemId = imageRequest.ReturnExchangeItemId,
                                 ImageUrl = imageUrl,
-                                UploadedByRole = "Sales",
+                                UploadedByRole = "Staff",
                                 UploadedByUserId = salesUserId,
                                 UploadedAt = DateTime.UtcNow,
                                 Description = imageRequest.Description,
@@ -209,7 +253,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     NewStatus = returnExchange.Status,
                     Comment = request.Comment,
                     PerformedByUserId = salesUserId,
-                    PerformedByRole = "Sales",
+                    PerformedByRole = "Staff",
                     PerformedAt = DateTime.UtcNow,
                 };
 
@@ -245,7 +289,14 @@ namespace BusinessLogicLayer.Services.Implementations
                     return (null, "Yêu cầu hoàn hàng không tồn tại");
 
                 if (returnExchange.Status != "ApprovedBySales")
-                    return (null, "Yêu cầu hoàn hàng chưa được phê duyệt bởi Sales");
+                    return (null, "Yêu cầu hoàn hàng chưa được phê duyệt bởi nhân viên");
+
+                var order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(
+                    returnExchange.OrderId,
+                    cancellationToken
+                );
+                if (order == null)
+                    return (null, "Đơn hàng không tồn tại");
 
                 var oldStatus = returnExchange.Status;
                 returnExchange.Status = "ReceivedByOperation";
@@ -253,10 +304,14 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 _returnExchangeRepository.Update(returnExchange);
 
-                // Update items and add images
+                // Update items, InspectionResult, ProductVariant/Prescription, and add images
                 foreach (var item in request.Items)
                 {
-                    var returnItem = await _returnExchangeItemRepository.GetByIdAsync(
+                    if (!string.IsNullOrWhiteSpace(item.InspectionResult)
+                        && !InspectionResult.All.Contains(item.InspectionResult))
+                        return (null, $"Kết quả kiểm tra không hợp lệ. Cho phép: {string.Join(", ", InspectionResult.All)}");
+
+                    var returnItem = await _returnExchangeItemRepository.GetByIdWithOrderItemDetailsAsync(
                         item.ReturnExchangeItemId,
                         cancellationToken
                     );
@@ -266,8 +321,39 @@ namespace BusinessLogicLayer.Services.Implementations
 
                     returnItem.Status = item.Status;
                     returnItem.Note = item.Note;
+                    returnItem.InspectionResult = item.InspectionResult;
 
                     _returnExchangeItemRepository.Update(returnItem);
+
+                    // Cập nhật ProductVariant khi item là sản phẩm thường
+                    if (!string.IsNullOrWhiteSpace(item.InspectionResult)
+                        && returnItem.OrderItem?.ProductVariantId != null
+                        && returnItem.OrderItem.ProductVariant != null)
+                    {
+                        var pv = returnItem.OrderItem.ProductVariant;
+                        pv.Status = item.InspectionResult;
+                        _unitOfWork.GetRepository<ProductVariant>().Update(pv);
+                    }
+
+                    // Cập nhật Prescription khi item là kính custom (tra theo CustomerId + ServiceId)
+                    if (!string.IsNullOrWhiteSpace(item.InspectionResult)
+                        && returnItem.OrderItem?.ServiceId != null)
+                    {
+                        var prescription = await _unitOfWork
+                            .GetRepository<Prescription>()
+                            .FirstOrDefaultAsync(
+                                p =>
+                                    p.CustomerId == order.CustomerId
+                                    && p.ServiceId == returnItem.OrderItem.ServiceId,
+                                cancellationToken
+                            );
+                        if (prescription != null)
+                        {
+                            prescription.Status = item.InspectionResult;
+                            prescription.UpdatedAt = DateTime.UtcNow;
+                            _unitOfWork.GetRepository<Prescription>().Update(prescription);
+                        }
+                    }
 
                     // Add operation images
                     if (item.ImageUrls != null && item.ImageUrls.Any())
@@ -313,6 +399,38 @@ namespace BusinessLogicLayer.Services.Implementations
                 };
 
                 await _returnExchangeHistoryRepository.AddAsync(history, cancellationToken);
+
+                // Nếu tất cả items đã được xử lý (Received hoặc Rejected), cập nhật status Completed
+                var allItems = await _returnExchangeItemRepository.GetByReturnExchangeIdAsync(
+                    returnExchange.Id
+                );
+                var allProcessed = allItems.All(i =>
+                    i.Status == "Received" || i.Status == "Rejected"
+                );
+                if (allProcessed && allItems.Any())
+                {
+                    var prevStatus = returnExchange.Status;
+                    returnExchange.Status = "Completed";
+                    returnExchange.ResolvedAt = DateTime.UtcNow;
+                    _returnExchangeRepository.Update(returnExchange);
+
+                    var completedHistory = new ReturnExchangeHistory
+                    {
+                        Id = Guid.NewGuid(),
+                        ReturnExchangeId = returnExchange.Id,
+                        Action = "Completed",
+                        OldStatus = prevStatus,
+                        NewStatus = "Completed",
+                        Comment = "Tất cả sản phẩm đã được xử lý, yêu cầu hoàn hàng hoàn tất",
+                        PerformedByUserId = operationUserId,
+                        PerformedByRole = "Operation",
+                        PerformedAt = DateTime.UtcNow,
+                    };
+                    await _returnExchangeHistoryRepository.AddAsync(
+                        completedHistory,
+                        cancellationToken
+                    );
+                }
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -370,6 +488,7 @@ namespace BusinessLogicLayer.Services.Implementations
                             Reason = i.Reason,
                             Status = i.Status,
                             Note = i.Note,
+                            InspectionResult = i.InspectionResult,
                             CreatedAt = i.CreatedAt,
                             Images = i
                                 .Images.Select(img => new ReturnExchangeImageResponse

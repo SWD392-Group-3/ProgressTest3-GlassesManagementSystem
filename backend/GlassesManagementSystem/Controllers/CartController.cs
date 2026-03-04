@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
 using BusinessLogicLayer.Services.Interfaces;
@@ -17,16 +18,21 @@ public class CartController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy giỏ hàng của customer theo customerId.
+    /// Lấy giỏ hàng của customer theo userId.
     /// </summary>
-    [HttpGet("{customerId:guid}")]
+    [HttpGet()]
     [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetCart(Guid customerId)
+    public async Task<IActionResult> GetCart()
     {
         try
         {
-            var cart = await _cartService.GetCartByCustomerIdAsync(customerId);
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized();
+
+            var userId = Guid.Parse(userIdStr);
+            var cart = await _cartService.GetCartByCustomerIdAsync(userId);
             return Ok(cart);
         }
         catch (Exception ex)
@@ -38,14 +44,19 @@ public class CartController : ControllerBase
     /// <summary>
     /// Tạo giỏ hàng nếu customer chưa có, hoặc trả về giỏ hàng hiện tại.
     /// </summary>
-    [HttpPost("{customerId:guid}/create")]
+    [HttpPost("create")]
     [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(CartDto), StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateCart(Guid customerId)
+    public async Task<IActionResult> CreateCart()
     {
         try
         {
-            var cart = await _cartService.CreateCartIfNotExistsAsync(customerId);
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized();
+
+            var userId = Guid.Parse(userIdStr);
+            var cart = await _cartService.CreateCartIfNotExistsAsync(userId);
             return Ok(cart);
         }
         catch (Exception ex)
@@ -58,14 +69,20 @@ public class CartController : ControllerBase
     /// Thêm sản phẩm vào giỏ hàng.
     /// Có thể truyền productVariantId, lensesVariantId, comboItemId, serviceId tuỳ loại item.
     /// </summary>
-    [HttpPost("{customerId:guid}/items")]
+    [HttpPost("items")]
     [ProducesResponseType(typeof(CartDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> AddItem(Guid customerId, [FromBody] AddCartItemRequest request)
+    public async Task<IActionResult> AddItem([FromBody] AddCartItemRequest request)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdStr))
+            return Unauthorized();
+
+        var userId = Guid.Parse(userIdStr);
 
         // Phải có ít nhất 1 loại item
         if (request.ProductVariantId == null &&
@@ -79,7 +96,7 @@ public class CartController : ControllerBase
         try
         {
             var cart = await _cartService.AddItemAsync(
-                customerId,
+                userId,
                 request.ProductVariantId,
                 request.LensesVariantId,
                 request.ComboItemId,
@@ -92,7 +109,7 @@ public class CartController : ControllerBase
         }
         catch (Exception ex)
         {
-            return NotFound(new { message = ex.Message });
+            return BadRequest(new { message = ex.Message });
         }
     }
 

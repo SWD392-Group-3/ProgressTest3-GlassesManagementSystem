@@ -12,5 +12,7 @@ namespace DataAccessLayer.Repositories.Interfaces
         Task<Order?> GetByIdAndUserIdAsync(Guid orderId, Guid customerId);
         Task<Order?> GetByIdWithItemsAsync(Guid orderId);
         Task<IEnumerable<Order>> GetByCustomerIdAsync(Guid customerId);
+
+        Task<IEnumerable<Order>> GetAll();
     }
 }

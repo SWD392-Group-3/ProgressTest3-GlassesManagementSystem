@@ -25,6 +25,7 @@ namespace BusinessLogicLayer.DTOs
         public string? Reason { get; set; }
         public string Status { get; set; } = string.Empty;
         public string? Note { get; set; }
+        public string? InspectionResult { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public List<ReturnExchangeImageResponse> Images { get; set; } = new();

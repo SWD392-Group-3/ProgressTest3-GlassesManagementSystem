@@ -1,4 +1,4 @@
-﻿using DataAccessLayer.Database.Entities;
+using DataAccessLayer.Database.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -17,8 +17,9 @@ namespace DataAccessLayer.Database.Configurations
 
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.CreatedAt)
-                .HasColumnType("timestamptz");
+            builder.Property(x => x.Status).HasMaxLength(50);
+            builder.Property(x => x.CreatedAt).HasColumnType("timestamptz");
+            builder.Property(x => x.UpdatedAt).HasColumnType("timestamptz");
 
             builder.HasOne(x => x.Customer)
                 .WithMany(x => x.Prescriptions)
@@ -29,6 +30,11 @@ namespace DataAccessLayer.Database.Configurations
                 .WithMany(x => x.Prescriptions)
                 .HasForeignKey(x => x.ServiceId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(x => x.Order)
+                .WithOne(x => x.Prescription)
+                .HasForeignKey<Prescription>(x => x.OrderId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

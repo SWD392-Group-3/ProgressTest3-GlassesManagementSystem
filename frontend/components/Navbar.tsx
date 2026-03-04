@@ -1,8 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, ShoppingBag, User, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  ShoppingBag,
+  User,
+  Menu,
+  X,
+  LogOut,
+  Package,
+} from "lucide-react";
+import { useCart } from "@/lib/CartContext";
+import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
+
+const STAFF_ROLES = ["Staff", "Admin"];
+const isStaffUser = (u: StoredUser | null) =>
+  u?.role != null && STAFF_ROLES.includes(u.role);
+const isOperationUser = (u: StoredUser | null) => u?.role === "Operation";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -16,12 +32,41 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [user, setUser] = useState<StoredUser | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { cartCount } = useCart();
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    clearAuth();
+    setUser(null);
+    setUserMenuOpen(false);
+    router.push("/login");
+  }
 
   return (
     <header
@@ -68,24 +113,90 @@ export default function Navbar() {
 
             {/* Cart */}
             <Link
-              href="#"
+              href="/cart"
               className="relative p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
               aria-label="Cart"
             >
               <ShoppingBag className="w-5 h-5 text-[#1A1A1A]" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#D4AF37] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                0
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#D4AF37] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
             </Link>
 
             {/* User */}
-            <Link
-              href="/login"
-              className="hidden sm:flex p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
-              aria-label="Account"
-            >
-              <User className="w-5 h-5 text-[#1A1A1A]" />
-            </Link>
+            {user ? (
+              <div className="relative hidden sm:block" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+                  aria-label="Account"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#D4AF37] flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">
+                      {(user.fullName ?? user.email)[0].toUpperCase()}
+                    </span>
+                  </div>
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#E5E7EB] overflow-hidden z-50">
+                    <div className="px-4 py-3 border-b border-[#E5E7EB]">
+                      <p className="text-sm font-semibold text-[#1A1A1A] truncate">
+                        {user.fullName ?? "Khách hàng"}
+                      </p>
+                      <p className="text-xs text-[#6B7280] truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        href="/orders"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
+                      >
+                        <Package className="w-4 h-4 text-[#6B7280]" />
+                        Đơn hàng của tôi
+                      </Link>
+                      {isStaffUser(user) && (
+                        <Link
+                          href="/staff"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
+                        >
+                          Khu vực nhân viên
+                        </Link>
+                      )}
+                      {!isStaffUser(user) && isOperationUser(user) && (
+                        <Link
+                          href="/operation"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
+                        >
+                          Khu vực Operation
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:flex p-2 rounded-full hover:bg-black/5 transition-colors duration-200"
+                aria-label="Account"
+              >
+                <User className="w-5 h-5 text-[#1A1A1A]" />
+              </Link>
+            )}
 
             {/* Mobile Menu Toggle */}
             <button
@@ -138,20 +249,61 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          <Link
-            href="/login"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/register"
-            onClick={() => setMobileMenuOpen(false)}
-            className="inline-flex items-center justify-center h-11 px-8 rounded-full bg-[#D4AF37] text-white font-medium text-base tracking-wide hover:bg-[#C9A030] transition-colors"
-          >
-            Create Account
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/orders"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+              >
+                Đơn hàng
+              </Link>
+              {isStaffUser(user) && (
+                <Link
+                  href="/staff"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
+                >
+                  Khu vực nhân viên
+                </Link>
+              )}
+              {!isStaffUser(user) && isOperationUser(user) && (
+                <Link
+                  href="/operation"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
+                >
+                  Khu vực Operation
+                </Link>
+              )}
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMobileMenuOpen(false);
+                }}
+                className="text-lg font-medium tracking-wide text-red-500 hover:text-red-700 transition-colors"
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="inline-flex items-center justify-center h-11 px-8 rounded-full bg-[#D4AF37] text-white font-medium text-base tracking-wide hover:bg-[#C9A030] transition-colors"
+              >
+                Create Account
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

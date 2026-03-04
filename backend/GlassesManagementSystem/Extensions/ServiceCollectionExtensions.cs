@@ -6,8 +6,6 @@ using DataAccessLayer.Repositories;
 using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 namespace GlassesManagementSystem.Extensions;
 
 /// <summary>
@@ -35,18 +33,23 @@ public static class ServiceCollectionExtensions
         );
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<ICartItemRepository, CartItemRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();
         services.AddScoped<IPromotionRepository, PromotionRepository>();
         services.AddScoped<IWarrantyPolicyRepository, WarrantyPolicyRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
 
         // Return Exchange Repositories
         services.AddScoped<IReturnExchangeRepository, ReturnExchangeRepository>();
         services.AddScoped<IReturnExchangeItemRepository, ReturnExchangeItemRepository>();
         services.AddScoped<IReturnExchangeImageRepository, ReturnExchangeImageRepository>();
         services.AddScoped<IReturnExchangeHistoryRepository, ReturnExchangeHistoryRepository>();
+
+        // Prescription Repository
+        services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
 
         return services;
     }
@@ -64,6 +67,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPricingPromotionService, PricingPromotionService>();
         services.AddScoped<IUserStaffService, UserStaffService>();
         services.AddScoped<IRevenueService, RevenueService>();
+        services.AddScoped<IPaymentService, PaymentService>();
+        services.AddScoped<IPrescriptionService, PrescriptionService>();
         return services;
     }
 }

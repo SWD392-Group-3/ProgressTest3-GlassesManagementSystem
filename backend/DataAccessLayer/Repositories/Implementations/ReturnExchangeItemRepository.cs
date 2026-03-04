@@ -33,5 +33,19 @@ namespace DataAccessLayer.Repositories.Implementations
                 .Include(x => x.Images)
                 .ToListAsync();
         }
+
+        public async Task<ReturnExchangeItem?> GetByIdWithOrderItemDetailsAsync(
+            Guid id,
+            CancellationToken cancellationToken = default
+        )
+        {
+            return await _context
+                .Set<ReturnExchangeItem>()
+                .Include(x => x.OrderItem)
+                .ThenInclude(o => o!.ProductVariant)
+                .ThenInclude(pv => pv!.Product)
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
     }
 }

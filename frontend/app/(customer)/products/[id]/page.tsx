@@ -3,19 +3,27 @@
 import { use, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LensSelector from "@/components/LensSelector";
 import ProductCard from "@/components/ProductCard";
 import { products } from "@/constants/products";
+import { useCart } from "@/lib/CartContext";
+import { getUser } from "@/lib/auth-storage";
 import {
   Star,
   Heart,
   Share2,
-  ChevronLeft,
   Truck,
   ShieldCheck,
   RotateCcw,
+  ShoppingBag,
+  Zap,
+  Plus,
+  Minus,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 
 interface PageProps {
@@ -27,6 +35,43 @@ export default function ProductDetailPage({ params }: PageProps) {
   const product = products.find((p) => p.id === id);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showLensSelector, setShowLensSelector] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const { addItem } = useCart();
+  const router = useRouter();
+  const user = getUser();
+
+  async function handleAddToCart() {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!product) return;
+    setAddingToCart(true);
+    try {
+      await addItem({ productVariantId: product.variantId, quantity });
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2500);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setAddingToCart(false);
+    }
+  }
+
+  function handleBuyNow() {
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+    if (!product) return;
+    // Truyền thông tin sang trang buy-now qua query params
+    router.push(
+      `/checkout/buy-now?productId=${product.variantId}&qty=${quantity}&price=${product.price}&name=${encodeURIComponent(product.name)}`,
+    );
+  }
 
   if (!product) {
     return (
@@ -235,22 +280,85 @@ export default function ProductDetailPage({ params }: PageProps) {
                 </div>
               </div>
 
+              {/* Quantity Selector */}
+              <div className="mb-6">
+                <p className="text-xs font-bold tracking-[0.15em] uppercase text-[#6B7280] mb-3">
+                  Số lượng
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center border border-[#E5E7EB] rounded-full overflow-hidden">
+                    <button
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="w-10 h-10 flex items-center justify-center hover:bg-[#F5F5F5] transition-colors text-[#1A1A1A]"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="w-10 text-center text-sm font-bold text-[#1A1A1A]">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="w-10 h-10 flex items-center justify-center hover:bg-[#F5F5F5] transition-colors text-[#1A1A1A]"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <span className="text-xs text-[#6B7280]">Còn hàng</span>
+                </div>
+              </div>
+
               {/* Actions */}
               <div className="space-y-3 mb-8">
+                {/* Mua ngay */}
+                <button
+                  onClick={handleBuyNow}
+                  className="w-full h-14 rounded-full bg-[#1A1A1A] text-white font-semibold text-sm tracking-wide hover:bg-[#333] transition-colors duration-300 flex items-center justify-center gap-2"
+                >
+                  <Zap className="w-4 h-4 text-[#D4AF37]" />
+                  Mua ngay
+                </button>
+
+                {/* Thêm vào giỏ */}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                  className={`w-full h-14 rounded-full font-semibold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
+                    addedToCart
+                      ? "bg-green-500 text-white"
+                      : "bg-[#D4AF37] text-white hover:bg-[#C9A030]"
+                  } disabled:opacity-70`}
+                >
+                  {addingToCart ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : addedToCart ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Đã thêm vào giỏ!
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBag className="w-4 h-4" />
+                      Thêm vào giỏ hàng
+                    </>
+                  )}
+                </button>
+
+                {/* Chọn tròng kính */}
                 <button
                   onClick={() => setShowLensSelector(!showLensSelector)}
-                  className="w-full h-14 rounded-full bg-[#D4AF37] text-white font-semibold text-sm tracking-wide hover:bg-[#C9A030] transition-colors duration-300"
+                  className="w-full h-12 rounded-full border-2 border-[#E5E7EB] text-[#1A1A1A] text-sm font-medium flex items-center justify-center gap-2 hover:border-[#D4AF37] hover:text-[#D4AF37] transition-colors"
                 >
                   {showLensSelector
-                    ? "Hide Lens Options"
-                    : "Select Lenses & Add to Cart"}
+                    ? "Ẩn tuỳ chọn tròng"
+                    : "Chọn tròng kính (tuỳ chọn)"}
                 </button>
+
                 <div className="flex gap-3">
-                  <button className="flex-1 h-12 rounded-full border-2 border-[#E5E7EB] text-[#1A1A1A] text-sm font-medium flex items-center justify-center gap-2 hover:border-[#1A1A1A] transition-colors">
+                  <button className="flex-1 h-11 rounded-full border-2 border-[#E5E7EB] text-[#1A1A1A] text-sm font-medium flex items-center justify-center gap-2 hover:border-[#1A1A1A] transition-colors">
                     <Heart className="w-4 h-4" />
                     Wishlist
                   </button>
-                  <button className="flex-1 h-12 rounded-full border-2 border-[#E5E7EB] text-[#1A1A1A] text-sm font-medium flex items-center justify-center gap-2 hover:border-[#1A1A1A] transition-colors">
+                  <button className="flex-1 h-11 rounded-full border-2 border-[#E5E7EB] text-[#1A1A1A] text-sm font-medium flex items-center justify-center gap-2 hover:border-[#1A1A1A] transition-colors">
                     <Share2 className="w-4 h-4" />
                     Share
                   </button>
