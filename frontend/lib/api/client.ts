@@ -34,6 +34,16 @@ export const API = {
   payment: {
     momoCreate: "/api/payment/momo",
   },
+  products: {
+    getAll: "/api/products",
+    getById: (id: string) => `/api/products/${id}`,
+    getCategories: "/api/products/categories",
+    getBrands: "/api/products/brands",
+    getFrameVariants: (productId: string) =>
+      `/api/products/frame-variants?productId=${productId}`,
+    getLensVariants: (productId: string) =>
+      `/api/products/lens-variants?productId=${productId}`,
+  },
 } as const;
 
 export type ApiEndpoint = string;

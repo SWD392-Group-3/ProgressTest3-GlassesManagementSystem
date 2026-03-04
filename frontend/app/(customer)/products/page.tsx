@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FilterSystem, {
@@ -8,9 +8,14 @@ import FilterSystem, {
   sortOptions,
 } from "@/components/FilterSystem";
 import ProductCard from "@/components/ProductCard";
-import { products } from "@/constants/products";
+import type { Product } from "@/constants/products";
+import { getProducts, mapProductDtoToProduct } from "@/lib/api/product";
+import { Loader2 } from "lucide-react";
 
 export default function ProductsPage() {
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     category: "",
     faceShape: "",
@@ -20,8 +25,17 @@ export default function ProductsPage() {
     sortBy: "featured",
   });
 
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+    getProducts()
+      .then((dtos) => setAllProducts(dtos.map(mapProductDtoToProduct)))
+      .catch(() => setError("Không thể tải sản phẩm. Vui lòng thử lại sau."))
+      .finally(() => setLoading(false));
+  }, []);
+
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...allProducts];
 
     if (filters.category) {
       result = result.filter((p) => p.category === filters.category);
@@ -63,7 +77,7 @@ export default function ProductsPage() {
     }
 
     return result;
-  }, [filters]);
+  }, [filters, allProducts]);
 
   return (
     <>
@@ -114,39 +128,55 @@ export default function ProductsPage() {
                 ))}
               </div>
 
-              {/* Product Grid */}
-              {filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 stagger-children">
-                  {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-20">
-                  <div className="text-6xl mb-4">🕶️</div>
-                  <h3 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-                    No frames found
-                  </h3>
-                  <p className="text-[#6B7280] mb-6">
-                    Try adjusting your filters to discover more styles.
-                  </p>
-                  <button
-                    onClick={() =>
-                      setFilters({
-                        category: "",
-                        faceShape: "",
-                        material: "",
-                        style: "",
-                        priceRange: [0, 9999],
-                        sortBy: "featured",
-                      })
-                    }
-                    className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1A1A1A] text-white text-sm font-medium hover:bg-[#333] transition-colors"
-                  >
-                    Clear Filters
-                  </button>
+              {/* Loading State */}
+              {loading && (
+                <div className="flex items-center justify-center py-24">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#D4AF37]" />
                 </div>
               )}
+
+              {/* Error State */}
+              {!loading && error && (
+                <div className="text-center py-20">
+                  <p className="text-red-500 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Product Grid */}
+              {!loading &&
+                !error &&
+                (filteredProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 stagger-children">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20">
+                    <div className="text-6xl mb-4">🕶️</div>
+                    <h3 className="text-xl font-semibold text-[#1A1A1A] mb-2">
+                      No frames found
+                    </h3>
+                    <p className="text-[#6B7280] mb-6">
+                      Try adjusting your filters to discover more styles.
+                    </p>
+                    <button
+                      onClick={() =>
+                        setFilters({
+                          category: "",
+                          faceShape: "",
+                          material: "",
+                          style: "",
+                          priceRange: [0, 9999],
+                          sortBy: "featured",
+                        })
+                      }
+                      className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1A1A1A] text-white text-sm font-medium hover:bg-[#333] transition-colors"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         </div>

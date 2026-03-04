@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LensSelector from "@/components/LensSelector";
 import ProductCard from "@/components/ProductCard";
-import { products } from "@/constants/products";
+import type { Product } from "@/constants/products";
+import {
+  getProductById,
+  getProducts,
+  mapProductDtoToProduct,
+} from "@/lib/api/product";
 import { useCart } from "@/lib/CartContext";
 import { getUser } from "@/lib/auth-storage";
 import {
@@ -32,7 +37,9 @@ interface PageProps {
 
 export default function ProductDetailPage({ params }: PageProps) {
   const { id } = use(params);
-  const product = products.find((p) => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showLensSelector, setShowLensSelector] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -42,6 +49,34 @@ export default function ProductDetailPage({ params }: PageProps) {
   const { addItem } = useCart();
   const router = useRouter();
   const user = getUser();
+
+  useEffect(() => {
+    async function fetchProduct() {
+      setPageLoading(true);
+      const dto = await getProductById(id);
+      if (!dto) {
+        setProduct(null);
+        setPageLoading(false);
+        return;
+      }
+      const mapped = mapProductDtoToProduct(dto);
+      setProduct(mapped);
+
+      // Fetch related products (same category, exclude current)
+      try {
+        const allDtos = await getProducts();
+        const related = allDtos
+          .map(mapProductDtoToProduct)
+          .filter((p) => p.id !== id && p.category === mapped.category)
+          .slice(0, 3);
+        setRelatedProducts(related);
+      } catch {
+        // silent fail
+      }
+      setPageLoading(false);
+    }
+    fetchProduct();
+  }, [id]);
 
   async function handleAddToCart() {
     if (!user) {
@@ -73,6 +108,18 @@ export default function ProductDetailPage({ params }: PageProps) {
     );
   }
 
+  if (pageLoading) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-32 pb-20 flex justify-center items-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 animate-spin text-[#D4AF37]" />
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   if (!product) {
     return (
       <>
@@ -92,10 +139,6 @@ export default function ProductDetailPage({ params }: PageProps) {
       </>
     );
   }
-
-  const relatedProducts = products
-    .filter((p) => p.id !== product.id && p.category === product.category)
-    .slice(0, 3);
 
   return (
     <>

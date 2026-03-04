@@ -77,16 +77,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       prev
         ? {
             ...prev,
-            cartItems: prev.cartItems.filter((i) => i.id !== cartItemId),
-            totalAmount: prev.cartItems
-              .filter((i) => i.id !== cartItemId)
+            cartItems: prev.items.filter((i) => i.cartItemId !== cartItemId),
+            totalAmount: prev.items
+              .filter((i) => i.cartItemId !== cartItemId)
               .reduce((s, i) => s + i.unitPrice * i.quantity, 0),
           }
         : prev,
     );
   }, []);
 
-  const cartCount = cart?.cartItems.reduce((s, i) => s + i.quantity, 0) ?? 0;
+  const cartCount = cart?.items.reduce((s, i) => s + i.quantity, 0) ?? 0;
 
   return (
     <CartContext.Provider
