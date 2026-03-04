@@ -20,7 +20,9 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSett
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection(CloudinarySettings.SectionName)
 );
-builder.Services.Configure<MomoSettings>(builder.Configuration.GetSection(MomoSettings.SectionName));
+builder.Services.Configure<MomoSettings>(
+    builder.Configuration.GetSection(MomoSettings.SectionName)
+);
 
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
 builder
@@ -49,9 +51,6 @@ builder.Services.AddHttpClient<IMomoService, MomoService>();
 
 // Cloudinary Service
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
-
-// Return Exchange Service
-builder.Services.AddScoped<IReturnExchangeService, ReturnExchangeService>();
 
 // CORS (cho frontend Next.js)
 builder.Services.AddCors(options =>

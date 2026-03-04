@@ -6,6 +6,7 @@ using DataAccessLayer.Repositories;
 using DataAccessLayer.Repositories.Implementations;
 using DataAccessLayer.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+
 namespace GlassesManagementSystem.Extensions;
 
 /// <summary>
@@ -63,6 +64,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOrderService, OrderService>();
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IPrescriptionService, PrescriptionService>();
+        // Return Exchange Service
+        services.AddScoped<IReturnExchangeService, ReturnExchangeService>();
         return services;
     }
 }
