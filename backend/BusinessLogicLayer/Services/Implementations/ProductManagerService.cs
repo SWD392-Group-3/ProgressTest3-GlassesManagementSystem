@@ -4,32 +4,45 @@ using System.Linq;
 using System.Threading.Tasks;
 using BusinessLogicLayer.DTOs.Manager;
 using BusinessLogicLayer.Services.Interfaces;
+using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BusinessLogicLayer.Services.Implementations
 {
     public class ProductManagerService : IProductManagerService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IApplicationDbContext _context;
 
-        public ProductManagerService(IUnitOfWork unitOfWork)
+        public ProductManagerService(IUnitOfWork unitOfWork, IApplicationDbContext context)
         {
             _unitOfWork = unitOfWork;
+            _context = context;
         }
 
         // ─── PRODUCT ──────────────────────────────────────────────────────────
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
-            var products = await _unitOfWork.GetRepository<Product>().GetAllAsync();
+            var products = await _context
+                .Products.Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductVariants)
+                .Include(p => p.LensVariants)
+                .ToListAsync();
             return products.Select(MapToProductDto);
         }
 
         public async Task<ProductDto?> GetProductByIdAsync(Guid id)
         {
-            var products = await _unitOfWork.GetRepository<Product>().FindAsync(p => p.Id == id);
-            var product = products.FirstOrDefault();
+            var product = await _context
+                .Products.Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.ProductVariants)
+                .Include(p => p.LensVariants)
+                .FirstOrDefaultAsync(p => p.Id == id);
             return product == null ? null : MapToProductDto(product);
         }
 
@@ -46,7 +59,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 Status = request.Status ?? "Active",
                 ImageUrl = request.ImageUrl,
                 CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             };
 
             await _unitOfWork.GetRepository<Product>().AddAsync(product);
@@ -58,7 +71,8 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<ProductDto> UpdateProductAsync(Guid id, UpdateProductRequest request)
         {
             var product = await _unitOfWork.GetRepository<Product>().GetByIdAsync(id);
-            if (product == null) throw new Exception("Product not found");
+            if (product == null)
+                throw new Exception("Product not found");
 
             product.CategoryId = request.CategoryId ?? Guid.Empty;
             product.BrandId = request.BrandId ?? Guid.Empty;
@@ -66,7 +80,8 @@ namespace BusinessLogicLayer.Services.Implementations
             product.Name = request.Name;
             product.Description = request.Description;
             product.ImageUrl = request.ImageUrl;
-            if (request.Status != null) product.Status = request.Status;
+            if (request.Status != null)
+                product.Status = request.Status;
             product.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.GetRepository<Product>().Update(product);
@@ -78,7 +93,8 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> DeleteProductAsync(Guid id)
         {
             var product = await _unitOfWork.GetRepository<Product>().GetByIdAsync(id);
-            if (product == null) return false;
+            if (product == null)
+                return false;
 
             _unitOfWork.GetRepository<Product>().Delete(product);
             await _unitOfWork.SaveChangesAsync();
@@ -100,7 +116,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 Id = Guid.NewGuid(),
                 Name = request.Name,
                 Description = request.Description,
-                Status = request.Status ?? "Active"
+                Status = request.Status ?? "Active",
             };
 
             await _unitOfWork.GetRepository<Category>().AddAsync(category);
@@ -111,11 +127,13 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<CategoryDto> UpdateCategoryAsync(Guid id, UpdateCategoryRequest request)
         {
             var category = await _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
-            if (category == null) throw new Exception("Category not found");
+            if (category == null)
+                throw new Exception("Category not found");
 
             category.Name = request.Name;
             category.Description = request.Description;
-            if (request.Status != null) category.Status = request.Status;
+            if (request.Status != null)
+                category.Status = request.Status;
 
             _unitOfWork.GetRepository<Category>().Update(category);
             await _unitOfWork.SaveChangesAsync();
@@ -125,7 +143,8 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> DeleteCategoryAsync(Guid id)
         {
             var category = await _unitOfWork.GetRepository<Category>().GetByIdAsync(id);
-            if (category == null) return false;
+            if (category == null)
+                return false;
 
             _unitOfWork.GetRepository<Category>().Delete(category);
             await _unitOfWork.SaveChangesAsync();
@@ -148,7 +167,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 Name = request.Name,
                 Description = request.Description,
                 Country = request.Country,
-                Status = request.Status ?? "Active"
+                Status = request.Status ?? "Active",
             };
 
             await _unitOfWork.GetRepository<Brand>().AddAsync(brand);
@@ -159,12 +178,14 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<BrandDto> UpdateBrandAsync(Guid id, UpdateBrandRequest request)
         {
             var brand = await _unitOfWork.GetRepository<Brand>().GetByIdAsync(id);
-            if (brand == null) throw new Exception("Brand not found");
+            if (brand == null)
+                throw new Exception("Brand not found");
 
             brand.Name = request.Name;
             brand.Description = request.Description;
             brand.Country = request.Country;
-            if (request.Status != null) brand.Status = request.Status;
+            if (request.Status != null)
+                brand.Status = request.Status;
 
             _unitOfWork.GetRepository<Brand>().Update(brand);
             await _unitOfWork.SaveChangesAsync();
@@ -174,7 +195,8 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> DeleteBrandAsync(Guid id)
         {
             var brand = await _unitOfWork.GetRepository<Brand>().GetByIdAsync(id);
-            if (brand == null) return false;
+            if (brand == null)
+                return false;
 
             _unitOfWork.GetRepository<Brand>().Delete(brand);
             await _unitOfWork.SaveChangesAsync();
@@ -183,9 +205,12 @@ namespace BusinessLogicLayer.Services.Implementations
 
         // ─── FRAME VARIANT MANAGEMENT (Product Pricing Setup - Frames) ────────
 
-        public async Task<IEnumerable<ProductVariantDto>> GetFrameVariantsByProductAsync(Guid productId)
+        public async Task<IEnumerable<ProductVariantDto>> GetFrameVariantsByProductAsync(
+            Guid productId
+        )
         {
-            var variants = await _unitOfWork.GetRepository<ProductVariant>()
+            var variants = await _unitOfWork
+                .GetRepository<ProductVariant>()
                 .FindAsync(v => v.ProductId == productId);
             return variants.Select(MapToProductVariantDto);
         }
@@ -196,7 +221,9 @@ namespace BusinessLogicLayer.Services.Implementations
             return variant == null ? null : MapToProductVariantDto(variant);
         }
 
-        public async Task<ProductVariantDto> CreateFrameVariantAsync(CreateFrameVariantRequest request)
+        public async Task<ProductVariantDto> CreateFrameVariantAsync(
+            CreateFrameVariantRequest request
+        )
         {
             var variant = new ProductVariant
             {
@@ -207,7 +234,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 Material = request.Material,
                 Price = request.Price,
                 Status = request.Status ?? "Active",
-                ImageUrl = request.ImageUrl
+                ImageUrl = request.ImageUrl,
             };
 
             await _unitOfWork.GetRepository<ProductVariant>().AddAsync(variant);
@@ -215,16 +242,21 @@ namespace BusinessLogicLayer.Services.Implementations
             return MapToProductVariantDto(variant);
         }
 
-        public async Task<ProductVariantDto> UpdateFrameVariantAsync(Guid id, UpdateFrameVariantRequest request)
+        public async Task<ProductVariantDto> UpdateFrameVariantAsync(
+            Guid id,
+            UpdateFrameVariantRequest request
+        )
         {
             var variant = await _unitOfWork.GetRepository<ProductVariant>().GetByIdAsync(id);
-            if (variant == null) throw new Exception("Frame variant not found");
+            if (variant == null)
+                throw new Exception("Frame variant not found");
 
             variant.Color = request.Color;
             variant.Size = request.Size;
             variant.Material = request.Material;
             variant.Price = request.Price;
-            if (request.Status != null) variant.Status = request.Status;
+            if (request.Status != null)
+                variant.Status = request.Status;
             variant.ImageUrl = request.ImageUrl;
 
             _unitOfWork.GetRepository<ProductVariant>().Update(variant);
@@ -235,7 +267,8 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> DeleteFrameVariantAsync(Guid id)
         {
             var variant = await _unitOfWork.GetRepository<ProductVariant>().GetByIdAsync(id);
-            if (variant == null) return false;
+            if (variant == null)
+                return false;
 
             _unitOfWork.GetRepository<ProductVariant>().Delete(variant);
             await _unitOfWork.SaveChangesAsync();
@@ -244,9 +277,12 @@ namespace BusinessLogicLayer.Services.Implementations
 
         // ─── LENS VARIANT MANAGEMENT (Product Pricing Setup - Lenses) ─────────
 
-        public async Task<IEnumerable<LensesVariantDto>> GetLensVariantsByProductAsync(Guid productId)
+        public async Task<IEnumerable<LensesVariantDto>> GetLensVariantsByProductAsync(
+            Guid productId
+        )
         {
-            var variants = await _unitOfWork.GetRepository<LensVariant>()
+            var variants = await _unitOfWork
+                .GetRepository<LensVariant>()
                 .FindAsync(v => v.ProductId == productId);
             return variants.Select(MapToLensVariantDto);
         }
@@ -268,7 +304,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 ChiSoKhucXa = request.ChiSoKhucXa,
                 Price = request.Price,
                 Status = request.Status ?? "Active",
-                ImageUrl = request.ImageUrl
+                ImageUrl = request.ImageUrl,
             };
 
             await _unitOfWork.GetRepository<LensVariant>().AddAsync(variant);
@@ -276,16 +312,21 @@ namespace BusinessLogicLayer.Services.Implementations
             return MapToLensVariantDto(variant);
         }
 
-        public async Task<LensesVariantDto> UpdateLensVariantAsync(Guid id, UpdateLensVariantRequest request)
+        public async Task<LensesVariantDto> UpdateLensVariantAsync(
+            Guid id,
+            UpdateLensVariantRequest request
+        )
         {
             var variant = await _unitOfWork.GetRepository<LensVariant>().GetByIdAsync(id);
-            if (variant == null) throw new Exception("Lens variant not found");
+            if (variant == null)
+                throw new Exception("Lens variant not found");
 
             variant.DoCau = request.DoCau;
             variant.DoTru = request.DoTru;
             variant.ChiSoKhucXa = request.ChiSoKhucXa;
             variant.Price = request.Price;
-            if (request.Status != null) variant.Status = request.Status;
+            if (request.Status != null)
+                variant.Status = request.Status;
             variant.ImageUrl = request.ImageUrl;
 
             _unitOfWork.GetRepository<LensVariant>().Update(variant);
@@ -296,7 +337,8 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> DeleteLensVariantAsync(Guid id)
         {
             var variant = await _unitOfWork.GetRepository<LensVariant>().GetByIdAsync(id);
-            if (variant == null) return false;
+            if (variant == null)
+                return false;
 
             _unitOfWork.GetRepository<LensVariant>().Delete(variant);
             await _unitOfWork.SaveChangesAsync();
@@ -305,46 +347,50 @@ namespace BusinessLogicLayer.Services.Implementations
 
         // ─── MAPPERS ──────────────────────────────────────────────────────────
 
-        private static CategoryDto MapToCategoryDto(Category c) => new CategoryDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Description = c.Description,
-            Status = c.Status
-        };
+        private static CategoryDto MapToCategoryDto(Category c) =>
+            new CategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                Status = c.Status,
+            };
 
-        private static BrandDto MapToBrandDto(Brand b) => new BrandDto
-        {
-            Id = b.Id,
-            Name = b.Name,
-            Description = b.Description,
-            Country = b.Country,
-            Status = b.Status
-        };
+        private static BrandDto MapToBrandDto(Brand b) =>
+            new BrandDto
+            {
+                Id = b.Id,
+                Name = b.Name,
+                Description = b.Description,
+                Country = b.Country,
+                Status = b.Status,
+            };
 
-        private static ProductVariantDto MapToProductVariantDto(ProductVariant pv) => new ProductVariantDto
-        {
-            Id = pv.Id,
-            ProductId = pv.ProductId,
-            Color = pv.Color,
-            Size = pv.Size,
-            Material = pv.Material,
-            Price = pv.Price,
-            Status = pv.Status,
-            ImageUrl = pv.ImageUrl
-        };
+        private static ProductVariantDto MapToProductVariantDto(ProductVariant pv) =>
+            new ProductVariantDto
+            {
+                Id = pv.Id,
+                ProductId = pv.ProductId,
+                Color = pv.Color,
+                Size = pv.Size,
+                Material = pv.Material,
+                Price = pv.Price,
+                Status = pv.Status,
+                ImageUrl = pv.ImageUrl,
+            };
 
-        private static LensesVariantDto MapToLensVariantDto(LensVariant lv) => new LensesVariantDto
-        {
-            Id = lv.Id,
-            ProductId = lv.ProductId,
-            DoCau = lv.DoCau,
-            DoTru = lv.DoTru,
-            ChiSoKhucXa = lv.ChiSoKhucXa,
-            Price = lv.Price,
-            Status = lv.Status,
-            ImageUrl = lv.ImageUrl
-        };
+        private static LensesVariantDto MapToLensVariantDto(LensVariant lv) =>
+            new LensesVariantDto
+            {
+                Id = lv.Id,
+                ProductId = lv.ProductId,
+                DoCau = lv.DoCau,
+                DoTru = lv.DoTru,
+                ChiSoKhucXa = lv.ChiSoKhucXa,
+                Price = lv.Price,
+                Status = lv.Status,
+                ImageUrl = lv.ImageUrl,
+            };
 
         private ProductDto MapToProductDto(Product p)
         {
@@ -362,8 +408,12 @@ namespace BusinessLogicLayer.Services.Implementations
                 UpdatedAt = p.UpdatedAt,
                 Category = p.Category != null ? MapToCategoryDto(p.Category) : null,
                 Brand = p.Brand != null ? MapToBrandDto(p.Brand) : null,
-                ProductVariants = p.ProductVariants?.Select(MapToProductVariantDto).ToList() ?? new List<ProductVariantDto>(),
-                LensesVariants = p.LensVariants?.Select(MapToLensVariantDto).ToList() ?? new List<LensesVariantDto>()
+                ProductVariants =
+                    p.ProductVariants?.Select(MapToProductVariantDto).ToList()
+                    ?? new List<ProductVariantDto>(),
+                LensesVariants =
+                    p.LensVariants?.Select(MapToLensVariantDto).ToList()
+                    ?? new List<LensesVariantDto>(),
             };
         }
     }
