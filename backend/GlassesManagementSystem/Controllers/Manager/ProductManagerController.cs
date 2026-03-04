@@ -32,7 +32,8 @@ namespace GlassesManagementSystem.Controllers.Manager
         public async Task<IActionResult> GetById(Guid id)
         {
             var product = await _productManagerService.GetProductByIdAsync(id);
-            if (product == null) return NotFound($"Product with Id {id} not found.");
+            if (product == null)
+                return NotFound($"Product with Id {id} not found.");
             return Ok(product);
         }
 
@@ -46,20 +47,25 @@ namespace GlassesManagementSystem.Controllers.Manager
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductRequest request)
         {
-            if (id != request.Id) return BadRequest("ID in URL and ID in body must match.");
+            if (id != request.Id)
+                return BadRequest("ID in URL and ID in body must match.");
             try
             {
                 var result = await _productManagerService.UpdateProductAsync(id, request);
                 return Ok(result);
             }
-            catch (Exception ex) { return NotFound(ex.Message); }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var deleted = await _productManagerService.DeleteProductAsync(id);
-            if (!deleted) return NotFound($"Product with Id {id} not found.");
+            if (!deleted)
+                return NotFound($"Product with Id {id} not found.");
             return NoContent();
         }
 
@@ -81,21 +87,28 @@ namespace GlassesManagementSystem.Controllers.Manager
         }
 
         [HttpPut("categories/{id}")]
-        public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] UpdateCategoryRequest request)
+        public async Task<IActionResult> UpdateCategory(
+            Guid id,
+            [FromBody] UpdateCategoryRequest request
+        )
         {
             try
             {
                 var result = await _productManagerService.UpdateCategoryAsync(id, request);
                 return Ok(result);
             }
-            catch (Exception ex) { return NotFound(ex.Message); }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpDelete("categories/{id}")]
         public async Task<IActionResult> DeleteCategory(Guid id)
         {
             var deleted = await _productManagerService.DeleteCategoryAsync(id);
-            if (!deleted) return NotFound($"Category with Id {id} not found.");
+            if (!deleted)
+                return NotFound($"Category with Id {id} not found.");
             return NoContent();
         }
 
@@ -124,14 +137,18 @@ namespace GlassesManagementSystem.Controllers.Manager
                 var result = await _productManagerService.UpdateBrandAsync(id, request);
                 return Ok(result);
             }
-            catch (Exception ex) { return NotFound(ex.Message); }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpDelete("brands/{id}")]
         public async Task<IActionResult> DeleteBrand(Guid id)
         {
             var deleted = await _productManagerService.DeleteBrandAsync(id);
-            if (!deleted) return NotFound($"Brand with Id {id} not found.");
+            if (!deleted)
+                return NotFound($"Brand with Id {id} not found.");
             return NoContent();
         }
 
@@ -150,33 +167,43 @@ namespace GlassesManagementSystem.Controllers.Manager
         public async Task<IActionResult> GetFrameVariantById(Guid id)
         {
             var variant = await _productManagerService.GetFrameVariantByIdAsync(id);
-            if (variant == null) return NotFound($"Frame variant with Id {id} not found.");
+            if (variant == null)
+                return NotFound($"Frame variant with Id {id} not found.");
             return Ok(variant);
         }
 
         [HttpPost("frame-variants")]
-        public async Task<IActionResult> CreateFrameVariant([FromBody] CreateFrameVariantRequest request)
+        public async Task<IActionResult> CreateFrameVariant(
+            [FromBody] CreateFrameVariantRequest request
+        )
         {
             var result = await _productManagerService.CreateFrameVariantAsync(request);
             return CreatedAtAction(nameof(GetFrameVariantById), new { id = result.Id }, result);
         }
 
         [HttpPut("frame-variants/{id}")]
-        public async Task<IActionResult> UpdateFrameVariant(Guid id, [FromBody] UpdateFrameVariantRequest request)
+        public async Task<IActionResult> UpdateFrameVariant(
+            Guid id,
+            [FromBody] UpdateFrameVariantRequest request
+        )
         {
             try
             {
                 var result = await _productManagerService.UpdateFrameVariantAsync(id, request);
                 return Ok(result);
             }
-            catch (Exception ex) { return NotFound(ex.Message); }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpDelete("frame-variants/{id}")]
         public async Task<IActionResult> DeleteFrameVariant(Guid id)
         {
             var deleted = await _productManagerService.DeleteFrameVariantAsync(id);
-            if (!deleted) return NotFound($"Frame variant with Id {id} not found.");
+            if (!deleted)
+                return NotFound($"Frame variant with Id {id} not found.");
             return NoContent();
         }
 
@@ -195,33 +222,43 @@ namespace GlassesManagementSystem.Controllers.Manager
         public async Task<IActionResult> GetLensVariantById(Guid id)
         {
             var variant = await _productManagerService.GetLensVariantByIdAsync(id);
-            if (variant == null) return NotFound($"Lens variant with Id {id} not found.");
+            if (variant == null)
+                return NotFound($"Lens variant with Id {id} not found.");
             return Ok(variant);
         }
 
         [HttpPost("lens-variants")]
-        public async Task<IActionResult> CreateLensVariant([FromBody] CreateLensVariantRequest request)
+        public async Task<IActionResult> CreateLensVariant(
+            [FromBody] CreateLensVariantRequest request
+        )
         {
             var result = await _productManagerService.CreateLensVariantAsync(request);
             return CreatedAtAction(nameof(GetLensVariantById), new { id = result.Id }, result);
         }
 
         [HttpPut("lens-variants/{id}")]
-        public async Task<IActionResult> UpdateLensVariant(Guid id, [FromBody] UpdateLensVariantRequest request)
+        public async Task<IActionResult> UpdateLensVariant(
+            Guid id,
+            [FromBody] UpdateLensVariantRequest request
+        )
         {
             try
             {
                 var result = await _productManagerService.UpdateLensVariantAsync(id, request);
                 return Ok(result);
             }
-            catch (Exception ex) { return NotFound(ex.Message); }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         [HttpDelete("lens-variants/{id}")]
         public async Task<IActionResult> DeleteLensVariant(Guid id)
         {
             var deleted = await _productManagerService.DeleteLensVariantAsync(id);
-            if (!deleted) return NotFound($"Lens variant with Id {id} not found.");
+            if (!deleted)
+                return NotFound($"Lens variant with Id {id} not found.");
             return NoContent();
         }
     }
