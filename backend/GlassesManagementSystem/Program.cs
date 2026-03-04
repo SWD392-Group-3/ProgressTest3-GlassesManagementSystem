@@ -4,9 +4,7 @@ using BusinessLogicLayer.Services.Implementations;
 using BusinessLogicLayer.Services.Interfaces;
 using BusinessLogicLayer.Settings;
 using GlassesManagementSystem.Extensions;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -63,50 +61,29 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddOpenApi(options =>
+
+// Swagger / Swashbuckle (compatible với .NET 8)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
 {
-    options.AddDocumentTransformer(
-        async (document, context, cancellationToken) =>
-        {
-            var schemeProvider =
-                context.ApplicationServices.GetRequiredService<IAuthenticationSchemeProvider>();
-            var schemes = await schemeProvider.GetAllSchemesAsync();
-            if (!schemes.Any(s => s.Name == "Bearer"))
-                return;
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Glasses Management API", Version = "v1" });
 
-            document.Components ??= new OpenApiComponents();
-            document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
-            {
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                Description = "Nhập JWT từ API login/register.",
-            };
-
-            foreach (var pathItem in document.Paths.Values)
-            {
-                foreach (var operation in pathItem.Operations.Values)
-                {
-                    operation.Security ??= [];
-                    operation.Security.Add(
-                        new OpenApiSecurityRequirement
-                        {
-                            [
-                                new OpenApiSecurityScheme
-                                {
-                                    Reference = new OpenApiReference
-                                    {
-                                        Id = "Bearer",
-                                        Type = ReferenceType.SecurityScheme,
-                                    },
-                                }
-                            ] = [],
-                        }
-                    );
-                }
-            }
-        }
-    );
+    // JWT Bearer security scheme
+    var jwtScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập JWT từ API login/register. Ví dụ: Bearer {token}",
+        Reference = new OpenApiReference { Id = "Bearer", Type = ReferenceType.SecurityScheme }
+    };
+    options.AddSecurityDefinition("Bearer", jwtScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { jwtScheme, Array.Empty<string>() }
+    });
 });
 
 // Data Access (DbContext, UnitOfWork, Repositories)
@@ -117,11 +94,11 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "Glasses API v1");
-        options.EnablePersistAuthorization(); // Lưu token sau khi Authorize (không mất khi refresh)
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Glasses API v1");
+        options.EnablePersistAuthorization(); // Lưu token sau khi Authorize
     });
 }
 
