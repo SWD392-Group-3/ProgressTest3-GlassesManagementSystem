@@ -48,7 +48,6 @@ builder.Services.AddBusinessLogic();
 builder.Services.AddHttpClient<IMomoService, MomoService>();
 
 // Cloudinary Service
-builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
 // CORS (cho frontend Next.js)
 builder.Services.AddCors(options =>

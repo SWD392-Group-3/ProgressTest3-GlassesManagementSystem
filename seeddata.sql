@@ -32,6 +32,11 @@ VALUES
     ('a0000000-0000-0000-0000-000000000006'::uuid, 'operation@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
      'Nhân viên Operation', '0900000000', 'Operation', 'Active',
+     NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+    -- Manager account (mật khẩu: password)
+    ('a0000000-0000-0000-0000-000000000007'::uuid, 'manager@example.com',
+     '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+     'Quản lý cửa hàng', '0901111111', 'Manager', 'Active',
      NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Email") DO NOTHING;
 
