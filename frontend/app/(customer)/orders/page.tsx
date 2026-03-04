@@ -50,8 +50,14 @@ const STATUS_MAP: Record<string, StatusConfig> = {
     bg: "bg-amber-50 border-amber-100",
     icon: <Clock className="w-3.5 h-3.5" />,
   },
-  Processing: {
-    label: "Đang xử lý",
+  Paid: {
+    label: "Đã thanh toán",
+    color: "text-green-600",
+    bg: "bg-green-50 border-green-100",
+    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+  },
+  Confirmed: {
+    label: "Đã xác nhận",
     color: "text-blue-600",
     bg: "bg-blue-50 border-blue-100",
     icon: <RefreshCw className="w-3.5 h-3.5" />,
@@ -120,7 +126,8 @@ export default function OrdersPage() {
       return;
     }
     fetchOrders();
-  }, [router, fetchOrders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleCancel(orderId: string) {
     if (!confirm("Bạn có chắc chắn muốn huỷ đơn hàng này?")) return;
@@ -255,8 +262,7 @@ export default function OrdersPage() {
                   {/* Footer actions */}
                   <div className="flex items-center justify-between px-5 py-3 bg-[#F5F5F5] border-t border-[#E5E7EB]">
                     {/* Cancel button */}
-                    {(order.status === "Pending" ||
-                      order.status === "Processing") && (
+                    {order.status === "Pending" && (
                       <button
                         onClick={() => handleCancel(order.id)}
                         disabled={cancellingId === order.id}
@@ -270,8 +276,7 @@ export default function OrdersPage() {
                         Huỷ đơn
                       </button>
                     )}
-                    {order.status !== "Pending" &&
-                      order.status !== "Processing" && <span />}
+                    {order.status !== "Pending" && <span />}
                     <Link
                       href={`/orders/${order.id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:text-[#C9A030] transition-colors"

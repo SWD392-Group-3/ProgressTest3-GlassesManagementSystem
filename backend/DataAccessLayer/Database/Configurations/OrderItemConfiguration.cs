@@ -25,6 +25,11 @@ namespace DataAccessLayer.Database.Configurations
                 .HasForeignKey(x => x.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasOne(x => x.Product)
+                .WithMany()
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             builder.HasOne(x => x.ProductVariant)
             .WithMany()
             .HasForeignKey(x => x.ProductVariantId)

@@ -19,11 +19,12 @@ import {
 import { getOrderById, updateOrderStatus, OrderDto } from "@/lib/api/order";
 import { getUser } from "@/lib/auth-storage";
 
-const STATUS_STEPS = ["Pending", "Processing", "Shipped", "Delivered"];
+const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
 
 const STATUS_LABEL: Record<string, string> = {
   Pending: "Chờ xác nhận",
-  Processing: "Đang xử lý",
+  Paid: "Đã thanh toán",
+  Confirmed: "Đã xác nhận",
   Shipped: "Đang giao",
   Delivered: "Đã giao",
   Cancelled: "Đã huỷ",
@@ -31,7 +32,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   Pending: <Clock className="w-4 h-4" />,
-  Processing: <RefreshCw className="w-4 h-4" />,
+  Paid: <CheckCircle2 className="w-4 h-4" />,
+  Confirmed: <RefreshCw className="w-4 h-4" />,
   Shipped: <Truck className="w-4 h-4" />,
   Delivered: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
@@ -39,8 +41,9 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
 
 // Bước tiếp theo hợp lệ cho từng trạng thái
 const NEXT_STATUS: Record<string, string | null> = {
-  Pending: "Processing",
-  Processing: "Shipped",
+  Pending: null,
+  Paid: "Confirmed",
+  Confirmed: "Shipped",
   Shipped: "Delivered",
   Delivered: null,
   Cancelled: null,
@@ -390,7 +393,7 @@ export default function StaffOrderDetailPage() {
                   ) : (
                     STATUS_ICON[nextStatus]
                   )}
-                  Chuyển sang "{STATUS_LABEL[nextStatus]}"
+                  Chuyển sang &ldquo;{STATUS_LABEL[nextStatus]}&rdquo;
                 </button>
               </div>
             </div>

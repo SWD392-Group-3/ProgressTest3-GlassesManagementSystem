@@ -26,6 +26,7 @@ namespace DataAccessLayer.Repositories.Implementations
         {
             return await _context
                 .Order.Include(o => o.OrderItems)
+                .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }
 
@@ -33,6 +34,7 @@ namespace DataAccessLayer.Repositories.Implementations
         {
             return await _context
                 .Order.Include(o => o.OrderItems)
+                .Include(o => o.Payments)
                 .Where(o => o.CustomerId == customerId)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
@@ -42,6 +44,7 @@ namespace DataAccessLayer.Repositories.Implementations
         {
             return await _context
                 .Order.Include(o => o.OrderItems)
+                .Include(o => o.Payments)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
         }

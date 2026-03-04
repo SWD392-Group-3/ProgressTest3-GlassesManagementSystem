@@ -44,13 +44,13 @@ namespace BusinessLogicLayer.Services.Implementations
             };
             await _paymentRepository.AddAsync(payment);
 
-            // Bước 3: Nếu thanh toán thành công → cập nhật Order.Status sang "Processing"
+            // Bước 3: Nếu thanh toán thành công → cập nhật Order.Status sang "Paid"
             if (notify.ResultCode == 0)
             {
                 var order = await _orderRepository.GetByIdAsync(orderId);
                 if (order != null)
                 {
-                    order.Status = "Processing";
+                    order.Status = "Paid";
                     _orderRepository.Update(order);
                 }
             }

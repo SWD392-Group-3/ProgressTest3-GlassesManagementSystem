@@ -12,24 +12,25 @@ namespace BusinessLogicLayer.Services.Implementations
     public class ProductManagerService : IProductManagerService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IProductRepository _productRepository;
 
-        public ProductManagerService(IUnitOfWork unitOfWork)
+        public ProductManagerService(IUnitOfWork unitOfWork, IProductRepository productRepository)
         {
             _unitOfWork = unitOfWork;
+            _productRepository = productRepository;
         }
 
         // ─── PRODUCT ──────────────────────────────────────────────────────────
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
-            var products = await _unitOfWork.GetRepository<Product>().GetAllAsync();
+            var products = await _productRepository.GetAllWithDetailsAsync();
             return products.Select(MapToProductDto);
         }
 
         public async Task<ProductDto?> GetProductByIdAsync(Guid id)
         {
-            var products = await _unitOfWork.GetRepository<Product>().FindAsync(p => p.Id == id);
-            var product = products.FirstOrDefault();
+            var product = await _productRepository.GetByIdWithDetailsAsync(id);
             return product == null ? null : MapToProductDto(product);
         }
 
@@ -43,6 +44,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 WarrantyPolicyId = request.WarrantyPolicyId ?? Guid.Empty,
                 Name = request.Name,
                 Description = request.Description,
+                UnitPrice = request.UnitPrice,
                 Status = request.Status ?? "Active",
                 ImageUrl = request.ImageUrl,
                 CreatedAt = DateTime.UtcNow,
@@ -65,6 +67,7 @@ namespace BusinessLogicLayer.Services.Implementations
             product.WarrantyPolicyId = request.WarrantyPolicyId ?? Guid.Empty;
             product.Name = request.Name;
             product.Description = request.Description;
+            product.UnitPrice = request.UnitPrice;
             product.ImageUrl = request.ImageUrl;
             if (request.Status != null) product.Status = request.Status;
             product.UpdatedAt = DateTime.UtcNow;
@@ -356,6 +359,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 WarrantyPolicyId = p.WarrantyPolicyId,
                 Name = p.Name,
                 Description = p.Description,
+                UnitPrice = p.UnitPrice,
                 Status = p.Status,
                 ImageUrl = p.ImageUrl,
                 CreatedAt = p.CreatedAt,

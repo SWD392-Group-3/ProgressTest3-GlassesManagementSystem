@@ -88,7 +88,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var rawHash =
                 $"accessKey={_settings.AccessKey}" +
                 $"&amount={callback.Amount}" +
-                $"&extraData={callback.ExtraData}" +
+                $"&extraData={callback.ExtraData ?? ""}" +
                 $"&message={callback.Message}" +
                 $"&orderId={callback.OrderId}" +
                 $"&orderInfo={callback.OrderInfo}" +

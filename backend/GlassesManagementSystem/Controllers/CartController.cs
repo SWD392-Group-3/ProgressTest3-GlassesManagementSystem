@@ -85,7 +85,8 @@ public class CartController : ControllerBase
         var userId = Guid.Parse(userIdStr);
 
         // Phải có ít nhất 1 loại item
-        if (request.ProductVariantId == null &&
+        if (request.ProductId == null &&
+            request.ProductVariantId == null &&
             request.LensesVariantId == null &&
             request.ComboItemId == null &&
             request.ServiceId == null)
@@ -97,6 +98,7 @@ public class CartController : ControllerBase
         {
             var cart = await _cartService.AddItemAsync(
                 userId,
+                request.ProductId,
                 request.ProductVariantId,
                 request.LensesVariantId,
                 request.ComboItemId,
