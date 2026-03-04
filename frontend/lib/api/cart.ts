@@ -3,6 +3,7 @@ import { apiRequest, API } from "./client";
 export interface CartItemDto {
   id: string;
   cartId: string;
+  productId: string | null;
   productVariantId: string | null;
   lensesVariantId: string | null;
   comboItemId: string | null;
