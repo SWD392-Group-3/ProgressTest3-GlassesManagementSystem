@@ -44,6 +44,22 @@ export const API = {
     getLensVariants: (productId: string) =>
       `/api/products/lens-variants?productId=${productId}`,
   },
+  services: {
+    getAll: "/api/manager/pricing-promotions/services",
+  },
+  prescription: {
+    create: "/api/Prescription",
+    getByCustomer: "/api/Prescription",
+    getById: (id: string) => `/api/Prescription/${id}`,
+    update: (id: string) => `/api/Prescription/${id}`,
+  },
+  returnExchange: {
+    create: "/api/ReturnExchange",
+    getById: (id: string) => `/api/ReturnExchange/${id}`,
+    getByCustomer: "/api/ReturnExchange/customer",
+    addImages: (id: string) => `/api/ReturnExchange/${id}/images`,
+    uploadImages: "/api/ReturnExchange/upload-images",
+  },
 } as const;
 
 export type ApiEndpoint = string;

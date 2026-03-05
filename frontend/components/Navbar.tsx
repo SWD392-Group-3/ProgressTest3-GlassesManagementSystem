@@ -26,6 +26,7 @@ const navLinks = [
   { name: "Sunglasses", href: "/products?category=sunglasses" },
   { name: "Optical", href: "/products?category=optical" },
   { name: "Blue-Light", href: "/products?category=blue-light" },
+  { name: "Prescriptions", href: "/prescriptions" },
 ];
 
 export default function Navbar() {
