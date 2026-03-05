@@ -73,6 +73,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPrescriptionService, PrescriptionService>();
         // Return Exchange Service
         services.AddScoped<IReturnExchangeService, ReturnExchangeService>();
+        // Combo Service
+        services.AddScoped<IComboService, ComboService>();
         return services;
     }
 }
