@@ -36,19 +36,19 @@ type StatusConfig = {
 };
 
 const STATUS_MAP: Record<string, StatusConfig> = {
-  Pending: {
+  PrescriptionPending: {
     label: "Chờ duyệt",
     color: "text-amber-600",
     bg: "bg-amber-50 border-amber-100",
     icon: <Clock className="w-3.5 h-3.5" />,
   },
-  Confirmed: {
+  PrescriptionConfirmed: {
     label: "Đã duyệt",
     color: "text-green-600",
     bg: "bg-green-50 border-green-100",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
-  Rejected: {
+  PrescriptionRejected: {
     label: "Từ chối",
     color: "text-red-500",
     bg: "bg-red-50 border-red-100",
@@ -237,7 +237,7 @@ export default function PrescriptionsPage() {
                   )}
 
                   <div className="flex items-center justify-end px-5 py-3 bg-[#F5F5F5] border-t border-[#E5E7EB]">
-                    {p.status === "Pending" && (
+                    {p.status === "PrescriptionPending" && (
                       <span className="text-xs text-amber-600 mr-auto flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" /> Có thể chỉnh sửa
                       </span>
@@ -246,7 +246,9 @@ export default function PrescriptionsPage() {
                       href={`/prescriptions/${p.id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                     >
-                      {p.status === "Pending" ? "Chỉnh sửa" : "Xem chi tiết"}
+                      {p.status === "PrescriptionPending"
+                        ? "Chỉnh sửa"
+                        : "Xem chi tiết"}
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>

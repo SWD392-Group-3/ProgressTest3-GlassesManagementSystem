@@ -50,8 +50,11 @@ export const API = {
   prescription: {
     create: "/api/Prescription",
     getByCustomer: "/api/Prescription",
+    getAll: "/api/Prescription/all",
     getById: (id: string) => `/api/Prescription/${id}`,
     update: (id: string) => `/api/Prescription/${id}`,
+    confirm: (id: string) => `/api/Prescription/${id}/confirm`,
+    reject: (id: string) => `/api/Prescription/${id}/reject`,
   },
   returnExchange: {
     create: "/api/ReturnExchange",
