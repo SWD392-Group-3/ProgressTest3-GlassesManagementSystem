@@ -138,9 +138,9 @@ VALUES
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
--- 10. LensVariant (tròng kính - bảng migration tạo tên "LensVariant", FK COMBO_ITEMS tham chiếu đây)
+-- 10. LENSES_VARIANTS (tròng kính - FK COMBO_ITEMS tham chiếu đây)
 -- -----------------------------------------------------------------------------
-INSERT INTO "LensVariant" ("Id", "ProductId", "DoCau", "DoTru", "ChiSoKhucXa", "Price", "Status", "ImageUrl")
+INSERT INTO "LENSES_VARIANTS" ("Id", "ProductId", "DoCau", "DoTru", "ChiSoKhucXa", "Price", "Status", "ImageUrl")
 VALUES
     ('b9000000-0000-0000-0000-000000000001'::uuid, 'b7000000-0000-0000-0000-000000000002'::uuid, -2.00, NULL, NULL, 250000.00, 'Active', NULL),
     ('b9000000-0000-0000-0000-000000000002'::uuid, 'b7000000-0000-0000-0000-000000000002'::uuid, -3.50, NULL, NULL, 280000.00, 'Active', NULL),
@@ -350,12 +350,140 @@ VALUES
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
--- 20. RETURN_EXCHANGES (OrderId) - tùy chọn
+-- 20. RETURN_EXCHANGES (OrderId) - seed mẫu
 -- -----------------------------------------------------------------------------
--- Không seed mặc định; thêm khi cần.
+INSERT INTO "RETURN_EXCHANGES"
+("Id", "OrderId", "CustomerId", "Reason", "Status", "RejectionReason",
+ "CreatedAt", "ReviewedBySalesAt", "ReceivedByOperationAt", "ResolvedAt")
+VALUES
+(
+    'c6000000-0000-0000-0000-000000000001'::uuid,
+    'c1000000-0000-0000-0000-000000000001'::uuid,
+    'bb000000-0000-0000-0000-000000000001'::uuid,
+    'Kính bị trầy xước nhẹ, muốn đổi sản phẩm khác.',
+    'ApprovedBySales',
+    NULL,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '3 days',
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days',
+    NULL,
+    NULL
+),
+(
+    'c6000000-0000-0000-0000-000000000002'::uuid,
+    'c1000000-0000-0000-0000-000000000002'::uuid,
+    'bb000000-0000-0000-0000-000000000002'::uuid,
+    'Không ưng mẫu, muốn trả hàng và hoàn tiền.',
+    'Pending',
+    NULL,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 days',
+    NULL,
+    NULL,
+    NULL
+)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- 21. RETURN_EXCHANGE_ITEMS
+-- -----------------------------------------------------------------------------
+INSERT INTO "RETURN_EXCHANGE_ITEMS"
+("Id", "ReturnExchangeId", "OrderItemId", "Quantity", "Reason", "Status",
+ "Note", "InspectionResult", "CreatedAt")
+VALUES
+(
+    'c7000000-0000-0000-0000-000000000001'::uuid,
+    'c6000000-0000-0000-0000-000000000001'::uuid,
+    'c2000000-0000-0000-0000-000000000001'::uuid,
+    1,
+    'Trầy xước mặt tròng, khách muốn đổi.',
+    'Approved',
+    'Chờ khách gửi hàng về cửa hàng.',
+    NULL,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '3 days'
+),
+(
+    'c7000000-0000-0000-0000-000000000002'::uuid,
+    'c6000000-0000-0000-0000-000000000002'::uuid,
+    'c2000000-0000-0000-0000-000000000002'::uuid,
+    1,
+    'Không vừa mặt, khách muốn trả hàng.',
+    'Pending',
+    NULL,
+    NULL,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 days'
+)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- 22. RETURN_EXCHANGE_IMAGES
+-- -----------------------------------------------------------------------------
+INSERT INTO "RETURN_EXCHANGE_IMAGES"
+("Id", "ReturnExchangeItemId", "ImageUrl", "UploadedByRole", "UploadedByUserId",
+ "UploadedAt", "Description")
+VALUES
+(
+    'c8000000-0000-0000-0000-000000000001'::uuid,
+    'c7000000-0000-0000-0000-000000000001'::uuid,
+    'https://example.com/returns/scratch-1.jpg',
+    'Customer',
+    'a0000000-0000-0000-0000-000000000003'::uuid,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '3 days',
+    'Ảnh chụp vết trầy trên tròng kính.'
+),
+(
+    'c8000000-0000-0000-0000-000000000002'::uuid,
+    'c7000000-0000-0000-0000-000000000002'::uuid,
+    'https://example.com/returns/not-fit-1.jpg',
+    'Customer',
+    'a0000000-0000-0000-0000-000000000004'::uuid,
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 days',
+    'Ảnh chụp kính khi đeo không vừa.'
+)
+ON CONFLICT ("Id") DO NOTHING;
+
+-- -----------------------------------------------------------------------------
+-- 23. RETURN_EXCHANGE_HISTORIES
+-- -----------------------------------------------------------------------------
+INSERT INTO "RETURN_EXCHANGE_HISTORIES"
+("Id", "ReturnExchangeId", "Action", "OldStatus", "NewStatus", "Comment",
+ "PerformedByUserId", "PerformedByRole", "PerformedAt")
+VALUES
+(
+    'c9000000-0000-0000-0000-000000000001'::uuid,
+    'c6000000-0000-0000-0000-000000000001'::uuid,
+    'Created',
+    NULL,
+    'Pending',
+    'Khách tạo yêu cầu đổi hàng.',
+    'a0000000-0000-0000-0000-000000000003'::uuid,
+    'Customer',
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '3 days'
+),
+(
+    'c9000000-0000-0000-0000-000000000002'::uuid,
+    'c6000000-0000-0000-0000-000000000001'::uuid,
+    'ReviewedBySales',
+    'Pending',
+    'ApprovedBySales',
+    'Nhân viên CSKH đã duyệt đổi hàng.',
+    'a0000000-0000-0000-0000-000000000002'::uuid,
+    'Sales',
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '2 days'
+),
+(
+    'c9000000-0000-0000-0000-000000000003'::uuid,
+    'c6000000-0000-0000-0000-000000000002'::uuid,
+    'Created',
+    NULL,
+    'Pending',
+    'Khách yêu cầu trả hàng và hoàn tiền.',
+    'a0000000-0000-0000-0000-000000000004'::uuid,
+    'Customer',
+    (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 days'
+)
+ON CONFLICT ("Id") DO NOTHING;
 
 -- =============================================================================
--- 23. ELITE LENS — Brand, Products & Variants (map với mock data frontend)
+-- 24. ELITE LENS — Brand, Products & Variants (map với mock data frontend)
 -- ProductVariant Id phải khớp với variantId trong frontend/constants/products.ts
 -- =============================================================================
 
