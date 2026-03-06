@@ -161,7 +161,8 @@ export default function SalesReturnsPage() {
       return;
     }
     fetchReturns();
-  }, [router, user, isSales, isOperation, fetchReturns]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Tránh phụ thuộc `user` (getUser() trả về object mới mỗi render → gây fetch liên tục). Chỉ cần userId + role.
+  }, [router, user?.userId, isSales, isOperation, fetchReturns]);
 
   function toggleExpand(re: ReturnExchange) {
     if (expandedId === re.id) {
