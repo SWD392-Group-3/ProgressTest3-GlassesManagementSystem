@@ -97,17 +97,20 @@ export interface CreateReturnExchangeRequest {
 export async function createReturnExchange(
   data: CreateReturnExchangeRequest,
 ): Promise<ReturnExchangeDto> {
-  return apiRequest<ReturnExchangeDto>(API.returnExchange.create, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+  return apiRequest<ReturnExchangeDto>(
+    API.returnExchange.create,
+    { method: "POST", body: JSON.stringify(data) },
+    { auth: true },
+  );
 }
 
 /** GET /api/ReturnExchange/customer — danh sách yêu cầu của chính khách hàng */
 export async function getMyReturnExchanges(): Promise<ReturnExchangeDto[]> {
-  return apiRequest<ReturnExchangeDto[]>(API.returnExchange.getByCustomer, {
-    method: "GET",
-  });
+  return apiRequest<ReturnExchangeDto[]>(
+    API.returnExchange.getByCustomer,
+    { method: "GET" },
+    { auth: true },
+  );
 }
 
 /** POST /api/ReturnExchange/upload-images (Multipart Form Data) */
