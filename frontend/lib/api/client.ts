@@ -44,6 +44,13 @@ export const API = {
     getLensVariants: (productId: string) =>
       `/api/products/lens-variants?productId=${productId}`,
   },
+  returnExchange: {
+    pending: "/api/ReturnExchange/pending",
+    approved: "/api/ReturnExchange/approved",
+    review: "/api/ReturnExchange/review",
+    receive: "/api/ReturnExchange/receive",
+    getById: (id: string) => `/api/ReturnExchange/${id}`,
+  },
 } as const;
 
 export type ApiEndpoint = string;
