@@ -43,8 +43,8 @@ namespace GlassesManagementSystem.Controllers
             CancellationToken cancellationToken
         )
         {
-            var customerId = GetCurrentUserId();
-            if (customerId == null)
+            var userId = GetCurrentUserId();
+            if (userId == null)
                 return Unauthorized();
 
             if (request.Items == null || !request.Items.Any())
@@ -52,7 +52,7 @@ namespace GlassesManagementSystem.Controllers
 
             var (response, error) = await _returnExchangeService.CreateReturnExchangeAsync(
                 request,
-                customerId.Value,
+                userId.Value,
                 cancellationToken
             );
 
@@ -96,12 +96,12 @@ namespace GlassesManagementSystem.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetCustomerReturnExchanges(CancellationToken cancellationToken)
         {
-            var customerId = GetCurrentUserId();
-            if (customerId == null)
+            var userId = GetCurrentUserId();
+            if (userId == null)
                 return Unauthorized();
 
             var (response, error) = await _returnExchangeService.GetCustomerReturnExchangesAsync(
-                customerId.Value,
+                userId.Value,
                 cancellationToken
             );
 
@@ -248,7 +248,8 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Upload hình ảnh lên Cloudinary cho sản phẩm hoàn hàng
+        /// Upload hình ảnh lên Cloudinary cho yêu cầu hoàn hàng.
+        /// Dùng cho khách hàng khi tạo yêu cầu (chỉ upload, chưa gắn với item cụ thể).
         /// </summary>
         [HttpPost("upload-images")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -256,10 +257,7 @@ namespace GlassesManagementSystem.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadImages(
-            [FromForm] Guid returnExchangeItemId,
-            [FromForm] List<IFormFile> images,
-            [FromForm] string role,
-            [FromForm] string? description,
+            [FromForm] List<IFormFile> files,
             CancellationToken cancellationToken
         )
         {
@@ -267,36 +265,27 @@ namespace GlassesManagementSystem.Controllers
             if (userId == null)
                 return Unauthorized();
 
-            if (images == null || !images.Any())
+            if (files == null || !files.Any())
                 return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
 
-            if (images.Count > 5)
+            if (files.Count > 5)
                 return BadRequest(new { message = "Tối đa 5 hình ảnh" });
 
-            // Upload to Cloudinary
+            // Xác định thư mục theo role hiện tại (Customer / Sales / Operation / Admin)
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";
+
+            // Upload lên Cloudinary, không gắn với item cụ thể (sẽ gắn khi tạo/ cập nhật ReturnExchange)
             var (urls, uploadError) = await _cloudinaryService.UploadMultipleImagesAsync(
-                images,
-                $"{role.ToLower()}/{returnExchangeItemId}",
+                files,
+                $"{role.ToLower()}/{userId.Value}",
                 cancellationToken
             );
 
             if (uploadError != null || urls == null)
                 return BadRequest(new { message = uploadError ?? "Lỗi khi upload ảnh" });
 
-            // Save URLs to database
-            var (success, error) = await _returnExchangeService.AddImagesAsync(
-                returnExchangeItemId,
-                urls,
-                role,
-                userId.Value,
-                description,
-                cancellationToken
-            );
-
-            if (!success)
-                return BadRequest(new { message = error });
-
-            return Ok(new { message = "Upload hình ảnh thành công", imageUrls = urls });
+            // Trả về danh sách URL cho frontend, frontend sẽ truyền lại vào Create/Review/Receive DTO
+            return Ok(urls);
         }
     }
 }

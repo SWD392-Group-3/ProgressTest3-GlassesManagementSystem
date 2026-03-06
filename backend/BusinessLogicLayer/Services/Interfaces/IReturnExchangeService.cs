@@ -7,7 +7,7 @@ namespace BusinessLogicLayer.Services.Interfaces
         // Customer actions
         Task<(ReturnExchangeResponse? Response, string? Error)> CreateReturnExchangeAsync(
             CreateReturnExchangeRequest request,
-            Guid customerId,
+            Guid userId,
             CancellationToken cancellationToken = default
         );
 
@@ -15,7 +15,7 @@ namespace BusinessLogicLayer.Services.Interfaces
             IEnumerable<ReturnExchangeResponse>? Response,
             string? Error
         )> GetCustomerReturnExchangesAsync(
-            Guid customerId,
+            Guid userId,
             CancellationToken cancellationToken = default
         );
 

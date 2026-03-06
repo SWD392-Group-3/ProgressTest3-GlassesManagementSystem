@@ -15,13 +15,15 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly IReturnExchangeItemRepository _returnExchangeItemRepository;
         private readonly IReturnExchangeImageRepository _returnExchangeImageRepository;
         private readonly IReturnExchangeHistoryRepository _returnExchangeHistoryRepository;
+        private readonly ICustomerRepository _customerRepository;
 
         public ReturnExchangeService(
             IUnitOfWork unitOfWork,
             IReturnExchangeRepository returnExchangeRepository,
             IReturnExchangeItemRepository returnExchangeItemRepository,
             IReturnExchangeImageRepository returnExchangeImageRepository,
-            IReturnExchangeHistoryRepository returnExchangeHistoryRepository
+            IReturnExchangeHistoryRepository returnExchangeHistoryRepository,
+            ICustomerRepository customerRepository
         )
         {
             _unitOfWork = unitOfWork;
@@ -29,6 +31,7 @@ namespace BusinessLogicLayer.Services.Implementations
             _returnExchangeItemRepository = returnExchangeItemRepository;
             _returnExchangeImageRepository = returnExchangeImageRepository;
             _returnExchangeHistoryRepository = returnExchangeHistoryRepository;
+            _customerRepository = customerRepository;
         }
 
         public async Task<(
@@ -36,12 +39,16 @@ namespace BusinessLogicLayer.Services.Implementations
             string? Error
         )> CreateReturnExchangeAsync(
             CreateReturnExchangeRequest request,
-            Guid customerId,
+            Guid userId,
             CancellationToken cancellationToken = default
         )
         {
             try
             {
+                var customer = await _customerRepository.GetByUserIdAsync(userId);
+                if (customer == null)
+                    return (null, "Tài khoản không tồn tại.");
+
                 // Validate order exists and belongs to customer
                 var orderRepo = _unitOfWork.GetRepository<Order>();
                 var order = await orderRepo.GetByIdAsync(request.OrderId, cancellationToken);
@@ -49,7 +56,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (order == null)
                     return (null, "Đơn hàng không tồn tại");
 
-                if (order.CustomerId != customerId)
+                if (order.CustomerId != customer.Id)
                     return (null, "Đơn hàng không thuộc về khách hàng này");
 
                 // Chỉ được hoàn hàng khi đơn đã giao
@@ -100,7 +107,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 {
                     Id = Guid.NewGuid(),
                     OrderId = request.OrderId,
-                    CustomerId = customerId,
+                    CustomerId = customer.Id,
                     Reason = request.Reason,
                     Status = "Pending",
                     CreatedAt = DateTime.UtcNow,
@@ -139,7 +146,7 @@ namespace BusinessLogicLayer.Services.Implementations
                                 ReturnExchangeItemId = returnItem.Id,
                                 ImageUrl = imageUrl,
                                 UploadedByRole = "Customer",
-                                UploadedByUserId = customerId,
+                                UploadedByUserId = userId,
                                 UploadedAt = DateTime.UtcNow,
                             };
 
@@ -156,7 +163,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     Action = "Created",
                     NewStatus = "Pending",
                     Comment = "Yêu cầu hoàn hàng được tạo bởi khách hàng",
-                    PerformedByUserId = customerId,
+                    PerformedByUserId = userId,
                     PerformedByRole = "Customer",
                     PerformedAt = DateTime.UtcNow,
                 };
@@ -530,14 +537,18 @@ namespace BusinessLogicLayer.Services.Implementations
             IEnumerable<ReturnExchangeResponse>? Response,
             string? Error
         )> GetCustomerReturnExchangesAsync(
-            Guid customerId,
+            Guid userId,
             CancellationToken cancellationToken = default
         )
         {
             try
             {
+                var customer = await _customerRepository.GetByUserIdAsync(userId);
+                if (customer == null)
+                    return (null, "Tài khoản không tồn tại.");
+
                 var returnExchanges = await _returnExchangeRepository.FindAsync(
-                    r => r.CustomerId == customerId,
+                    r => r.CustomerId == customer.Id,
                     cancellationToken
                 );
 
