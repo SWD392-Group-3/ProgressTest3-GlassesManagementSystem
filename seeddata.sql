@@ -6,6 +6,8 @@
 -- Mật khẩu cho tất cả user seed: password
 -- =============================================================================
 
+SELECT * FROM "PRODUCTS"
+
 -- -----------------------------------------------------------------------------
 -- 1. USERS (mật khẩu: password)
 -- -----------------------------------------------------------------------------
@@ -18,7 +20,7 @@ VALUES
      'Quản trị viên', NULL, 'Admin', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('a0000000-0000-0000-0000-000000000002'::uuid, 'staff@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-     'Nhân viên cửa hàng', '0901234567', 'Staff', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
+     'Nhân viên cửa hàng', '0901234567', 'Sales', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('a0000000-0000-0000-0000-000000000003'::uuid, 'customer@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
      'Khách hàng mẫu', '0912345678', 'Customer', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
@@ -358,11 +360,11 @@ ON CONFLICT ("Id") DO NOTHING;
 -- 23. ELITE LENS — Brand, Products & Variants (map với mock data frontend)
 -- ProductVariant Id phải khớp với variantId trong frontend/constants/products.ts
 -- =============================================================================
-
+SELECT * FROm "BRANDS"
 INSERT INTO "BRANDS" ("Id", "Name", "Description", "Country", "Status")
 VALUES ('ee000000-0000-0000-0000-000000000001'::uuid, 'Elite Lens', 'Premium eyewear brand', 'Vietnam', 'Active')
 ON CONFLICT ("Id") DO NOTHING;
-
+SELECT * FROM "PRODUCTS" 
 INSERT INTO "PRODUCTS" ("Id", "CategoryId", "BrandId", "WarrantyPolicyId", "Name", "Description", "Status", "ImageUrl", "CreatedAt", "UpdatedAt")
 VALUES
   ('ee100001-0000-0000-0000-000000000001'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
@@ -396,6 +398,7 @@ VALUES
    'Shadow Stealth', 'Premium stealth-black titanium aviators with mirror-coated lenses.', 'Active',
    'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Id") DO NOTHING;
+SELECT * FROM 
 
 -- ProductVariant Id = ee200001..ee200010, phải khớp với variantId trong constants/products.ts
 INSERT INTO "PRODUCT_VARIANTS" ("Id", "ProductId", "Color", "Size", "Material", "Price", "Status", "ImageUrl")

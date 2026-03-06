@@ -29,6 +29,7 @@ export const API = {
     fromCart: "/api/order/from-cart",
     manual: "/api/order/manual",
     updateStatus: (orderId: string) => `/api/order/${orderId}/status`,
+    confirm: (orderId: string) => `/api/order/${orderId}/confirm`,
     cancel: (orderId: string) => `/api/order/${orderId}/cancel`,
   },
   payment: {
@@ -60,6 +61,10 @@ export const API = {
     create: "/api/ReturnExchange",
     getById: (id: string) => `/api/ReturnExchange/${id}`,
     getByCustomer: "/api/ReturnExchange/customer",
+    getPending: "/api/ReturnExchange/pending",
+    getApproved: "/api/ReturnExchange/approved",
+    review: "/api/ReturnExchange/review",
+    receive: "/api/ReturnExchange/receive",
     addImages: (id: string) => `/api/ReturnExchange/${id}/images`,
     uploadImages: "/api/ReturnExchange/upload-images",
   },
