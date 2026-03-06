@@ -7,7 +7,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/users")]
     [ApiController]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "Admin,Manager")]
     public class UserStaffController : ControllerBase
     {
         private readonly IUserStaffService _userStaffService;

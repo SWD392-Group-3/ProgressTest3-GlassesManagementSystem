@@ -12,7 +12,7 @@ namespace GlassesManagementSystem.Controllers.Manager
     /// </summary>
     [Route("api/manager/return-exchanges")]
     [ApiController]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "Admin,Manager")]
     public class ReturnExchangeManagerController : ControllerBase
     {
         private readonly IReturnExchangeService _returnExchangeService;
