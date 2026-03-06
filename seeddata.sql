@@ -6,8 +6,6 @@
 -- Mật khẩu cho tất cả user seed: password
 -- =============================================================================
 
-SELECT * FROM "PRODUCTS"
-
 -- -----------------------------------------------------------------------------
 -- 1. USERS (mật khẩu: password)
 -- -----------------------------------------------------------------------------
@@ -275,10 +273,10 @@ VALUES
 ON CONFLICT ("Id") DO NOTHING;
 
 -- -----------------------------------------------------------------------------
--- 17. ORDERS (CustomerId, PromotionId?, ServiceId?)
+-- 17. ORDERS (CustomerId, PromotionId?)
 -- -----------------------------------------------------------------------------
 INSERT INTO "ORDERS"
-("Id", "CustomerId", "PromotionId", "ServiceId",
+("Id", "CustomerId", "PromotionId",
  "Status", "TotalAmount", "DiscountAmount",
  "OrderDate", "ShippingAddress", "ShippingPhone", "Note")
 VALUES
@@ -286,7 +284,6 @@ VALUES
     'c1000000-0000-0000-0000-000000000001'::uuid,
     'bb000000-0000-0000-0000-000000000001'::uuid,
     'b4000000-0000-0000-0000-000000000001'::uuid,
-    NULL,
     'Completed',
     935000.00,
     85000.00,
@@ -298,7 +295,6 @@ VALUES
 (
     'c1000000-0000-0000-0000-000000000002'::uuid,
     'bb000000-0000-0000-0000-000000000002'::uuid,
-    NULL,
     NULL,
     'Completed',
     780000.00,
@@ -312,7 +308,6 @@ VALUES
     'c1000000-0000-0000-0000-000000000003'::uuid,
     'bb000000-0000-0000-0000-000000000003'::uuid,
     'b4000000-0000-0000-0000-000000000002'::uuid,
-    NULL,
     'Processing',
     1450000.00,
     250000.00,
@@ -488,45 +483,43 @@ ON CONFLICT ("Id") DO NOTHING;
 -- 24. ELITE LENS — Brand, Products & Variants (map với mock data frontend)
 -- ProductVariant Id phải khớp với variantId trong frontend/constants/products.ts
 -- =============================================================================
-SELECT * FROm "BRANDS"
 INSERT INTO "BRANDS" ("Id", "Name", "Description", "Country", "Status")
 VALUES ('ee000000-0000-0000-0000-000000000001'::uuid, 'Elite Lens', 'Premium eyewear brand', 'Vietnam', 'Active')
 ON CONFLICT ("Id") DO NOTHING;
-SELECT * FROM "PRODUCTS" 
-INSERT INTO "PRODUCTS" ("Id", "CategoryId", "BrandId", "WarrantyPolicyId", "Name", "Description", "Status", "ImageUrl", "CreatedAt", "UpdatedAt")
+
+INSERT INTO "PRODUCTS" ("Id", "CategoryId", "BrandId", "WarrantyPolicyId", "Name", "Description", "UnitPrice", "Status", "ImageUrl", "CreatedAt", "UpdatedAt")
 VALUES
   ('ee100001-0000-0000-0000-000000000001'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Aurora Titanium', 'Ultra-lightweight titanium frame with a sleek modern silhouette.', 'Active',
+   'Aurora Titanium', 'Ultra-lightweight titanium frame with a sleek modern silhouette.', 1200000.00, 'Active',
    'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100002-0000-0000-0000-000000000002'::uuid, 'b1000000-0000-0000-0000-000000000003'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Noir Classic', 'Timeless black acetate sunglasses with premium polarized lenses.', 'Active',
+   'Noir Classic', 'Timeless black acetate sunglasses with premium polarized lenses.', 950000.00, 'Active',
    'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100003-0000-0000-0000-000000000003'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Crystal Blue Shield', 'Advanced blue-light filtering lenses in a minimalist TR-90 frame.', 'Active',
+   'Crystal Blue Shield', 'Advanced blue-light filtering lenses in a minimalist TR-90 frame.', 890000.00, 'Active',
    'https://images.unsplash.com/photo-1508296695146-257a814070b4?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100004-0000-0000-0000-000000000004'::uuid, 'b1000000-0000-0000-0000-000000000003'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Riviera Aviator', 'A modern take on the classic aviator with premium metal construction.', 'Active',
+   'Riviera Aviator', 'A modern take on the classic aviator with premium metal construction.', 1100000.00, 'Active',
    'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100005-0000-0000-0000-000000000005'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Vogue Cat-Eye', 'Bold tortoise acetate cat-eye frames for a fashion-forward look.', 'Active',
+   'Vogue Cat-Eye', 'Bold tortoise acetate cat-eye frames for a fashion-forward look.', 990000.00, 'Active',
    'https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100006-0000-0000-0000-000000000006'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Zen Round', 'Delicate round titanium frames with a rose gold finish.', 'Active',
+   'Zen Round', 'Delicate round titanium frames with a rose gold finish.', 1050000.00, 'Active',
    'https://images.unsplash.com/photo-1591076482161-42ce6da69f67?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100007-0000-0000-0000-000000000007'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Sport Flex Pro', 'Lightweight, impact-resistant sport frames for active lifestyles.', 'Active',
+   'Sport Flex Pro', 'Lightweight, impact-resistant sport frames for active lifestyles.', 970000.00, 'Active',
    'https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100008-0000-0000-0000-000000000008'::uuid, 'b1000000-0000-0000-0000-000000000003'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Milano Square', 'Bold rectangular acetate frames inspired by Italian craftsmanship.', 'Active',
+   'Milano Square', 'Bold rectangular acetate frames inspired by Italian craftsmanship.', 990000.00, 'Active',
    'https://images.unsplash.com/photo-1577803645773-f96470509666?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100009-0000-0000-0000-000000000009'::uuid, 'b1000000-0000-0000-0000-000000000001'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Aero Lite', 'Featherweight metal rounds with advanced blue-light filtering lenses.', 'Active',
+   'Aero Lite', 'Featherweight metal rounds with advanced blue-light filtering lenses.', 930000.00, 'Active',
    'https://images.unsplash.com/photo-1614715838608-dd527c46231d?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
   ('ee100010-0000-0000-0000-000000000010'::uuid, 'b1000000-0000-0000-0000-000000000003'::uuid, 'ee000000-0000-0000-0000-000000000001'::uuid, 'b3000000-0000-0000-0000-000000000001'::uuid,
-   'Shadow Stealth', 'Premium stealth-black titanium aviators with mirror-coated lenses.', 'Active',
+   'Shadow Stealth', 'Premium stealth-black titanium aviators with mirror-coated lenses.', 1250000.00, 'Active',
    'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Id") DO NOTHING;
-SELECT * FROM 
 
 -- ProductVariant Id = ee200001..ee200010, phải khớp với variantId trong constants/products.ts
 INSERT INTO "PRODUCT_VARIANTS" ("Id", "ProductId", "Color", "Size", "Material", "Price", "Status", "ImageUrl")
