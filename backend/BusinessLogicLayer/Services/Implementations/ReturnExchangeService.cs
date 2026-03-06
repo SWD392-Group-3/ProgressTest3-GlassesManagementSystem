@@ -219,7 +219,7 @@ namespace BusinessLogicLayer.Services.Implementations
                         var existingCount =
                             await _returnExchangeImageRepository.CountImagesByItemAndRoleAsync(
                                 imageRequest.ReturnExchangeItemId,
-                                "Staff"
+                                "Sales"
                             );
 
                         if (existingCount + imageRequest.ImageUrls.Count > 5)
@@ -232,7 +232,7 @@ namespace BusinessLogicLayer.Services.Implementations
                                 Id = Guid.NewGuid(),
                                 ReturnExchangeItemId = imageRequest.ReturnExchangeItemId,
                                 ImageUrl = imageUrl,
-                                UploadedByRole = "Staff",
+                                UploadedByRole = "Sales",
                                 UploadedByUserId = salesUserId,
                                 UploadedAt = DateTime.UtcNow,
                                 Description = imageRequest.Description,
@@ -253,7 +253,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     NewStatus = returnExchange.Status,
                     Comment = request.Comment,
                     PerformedByUserId = salesUserId,
-                    PerformedByRole = "Staff",
+                    PerformedByRole = "Sales",
                     PerformedAt = DateTime.UtcNow,
                 };
 
@@ -490,8 +490,8 @@ namespace BusinessLogicLayer.Services.Implementations
                             Note = i.Note,
                             InspectionResult = i.InspectionResult,
                             CreatedAt = i.CreatedAt,
-                            Images = i
-                                .Images.Select(img => new ReturnExchangeImageResponse
+                            Images = (i.Images ?? Enumerable.Empty<ReturnExchangeImage>())
+                                .Select(img => new ReturnExchangeImageResponse
                                 {
                                     Id = img.Id,
                                     ImageUrl = img.ImageUrl,

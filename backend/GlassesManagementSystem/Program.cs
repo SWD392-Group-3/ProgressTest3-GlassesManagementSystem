@@ -41,13 +41,11 @@ builder
         };
     });
 
-// Business Logic Layer
-builder.Services.AddBusinessLogic();
+// DI: DbContext, Services, Repositories (theo template AddDependencyInjection)
+builder.Services.AddService(builder.Configuration);
 
-// Momo Payment Service
+// Momo Payment Service (HttpClient)
 builder.Services.AddHttpClient<IMomoService, MomoService>();
-
-// Cloudinary Service
 
 // CORS (cho frontend Next.js)
 builder.Services.AddCors(options =>
@@ -85,10 +83,25 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Data Access (DbContext, UnitOfWork, Repositories)
-builder.Services.AddDataAccess(builder.Configuration);
-
 var app = builder.Build();
+
+// Bắt mọi exception chưa xử lý → trả 500 + message JSON (để frontend hiển thị lý do)
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (Exception ex)
+    {
+        if (!context.Response.HasStarted)
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+        }
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

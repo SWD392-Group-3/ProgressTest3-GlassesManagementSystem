@@ -144,7 +144,7 @@ export default function OperationDashboardPage() {
                 Đơn cắt kính (Prescription)
               </h2>
               <p className="text-xs text-[#6B7280]">
-                Quy trình xử lý đơn do Staff tạo từ thông số khách hàng.
+                Quy trình xử lý đơn do Sales tạo từ thông số khách hàng.
               </p>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function OperationDashboardPage() {
               1. Đơn mới &amp; chờ đóng gói
             </p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Kiểm tra các đơn mới được Staff/Admin xác nhận.</li>
+              <li>Kiểm tra các đơn mới được Sales/Admin xác nhận.</li>
               <li>Ưu tiên đơn gấp, đơn có lịch hẹn cụ thể.</li>
             </ul>
           </div>
@@ -292,7 +292,7 @@ export default function OperationDashboardPage() {
                 Nhận & kiểm tra hàng hoàn
               </p>
               <p className="text-xs text-[#6B7280]">
-                Xử lý yêu cầu đổi trả sau khi nhân viên Staff đã phê duyệt.
+                Xử lý yêu cầu đổi trả sau khi Sales đã phê duyệt.
               </p>
             </div>
           </div>

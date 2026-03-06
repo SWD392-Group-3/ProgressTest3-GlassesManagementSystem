@@ -19,10 +19,10 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách tất cả đơn hàng (dành cho operation/staff saler).
+    /// Lấy danh sách tất cả đơn hàng (dành cho Operation/Sales).
     /// </summary>
     [HttpGet("orders")]
-    [Authorize(Roles = "Operation,Staff")]
+    [Authorize(Roles = "Operation,Sales,Admin")]
     [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -44,7 +44,7 @@ public class OrderController : ControllerBase
     /// Lấy chi tiết một đơn hàng theo ID.
     /// </summary>
     [HttpGet("{orderId:guid}")]
-    [Authorize(Roles = "Customer,Staff,Operation")]
+    [Authorize(Roles = "Customer,Sales,Operation,Admin")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid orderId)
@@ -136,7 +136,7 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật trạng thái đơn hàng (dành cho Operation Staff).
+    /// Cập nhật trạng thái đơn hàng (dành cho Operation).
     /// Các trạng thái hợp lệ: Processing, Shipped, Delivered.
     /// </summary>
     [HttpPatch("{orderId:guid}/status")]
@@ -199,10 +199,10 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Staff (Saler) xác nhận đơn hàng thường.
+    /// Sales xác nhận đơn hàng thường.
     /// </summary>
     [HttpPatch("{orderId:guid}/confirm")]
-    [Authorize(Roles = "Staff")]
+    [Authorize(Roles = "Sales,Admin")]
     public async Task<IActionResult> Confirm(Guid orderId)
     {
         try
@@ -218,10 +218,10 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Staff (Saler) từ chối đơn hàng thường.
+    /// Sales từ chối đơn hàng thường.
     /// </summary>
     [HttpPatch("{orderId:guid}/reject")]
-    [Authorize(Roles = "Staff")]
+    [Authorize(Roles = "Sales,Admin")]
     public async Task<IActionResult> Reject(Guid orderId, [FromBody] string? reason)
     {
         try

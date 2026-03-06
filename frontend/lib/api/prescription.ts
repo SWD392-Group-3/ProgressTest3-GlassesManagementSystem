@@ -69,7 +69,7 @@ export async function getMyPrescriptions(): Promise<PrescriptionDto[]> {
 }
 
 /**
- * GET /api/Prescription/all  (Staff only)
+ * GET /api/Prescription/all  (Sales only)
  */
 export async function getAllPrescriptions(): Promise<PrescriptionDto[]> {
   return apiRequest<PrescriptionDto[]>(
@@ -107,7 +107,7 @@ export async function updatePrescription(
 }
 
 /**
- * PATCH /api/Prescription/{id}/confirm  (Staff only)
+ * PATCH /api/Prescription/{id}/confirm  (Sales only)
  */
 export async function confirmPrescription(
   id: string,
@@ -121,7 +121,7 @@ export async function confirmPrescription(
 }
 
 /**
- * PATCH /api/Prescription/{id}/reject  (Staff only)
+ * PATCH /api/Prescription/{id}/reject  (Sales only)
  */
 export async function rejectPrescription(
   id: string,

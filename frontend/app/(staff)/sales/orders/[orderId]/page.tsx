@@ -66,7 +66,7 @@ function fmtDate(dateStr: string) {
   });
 }
 
-export default function StaffOrderDetailPage() {
+export default function SalesOrderDetailPage() {
   const params = useParams();
   const orderId = params?.orderId as string;
   const router = useRouter();
@@ -98,7 +98,7 @@ export default function StaffOrderDetailPage() {
       return;
     }
     if (
-      user.role !== "Staff" &&
+      user.role !== "Sales" &&
       user.role !== "Admin" &&
       user.role !== "Operation"
     ) {
@@ -119,7 +119,7 @@ export default function StaffOrderDetailPage() {
     setSuccessMsg(null);
     setError(null);
     try {
-      // Staff dùng endpoint /confirm riêng (Paid → Confirmed)
+      // Sales dùng endpoint /confirm riêng (Paid → Confirmed)
       await confirmOrder(order.id);
       setOrder({ ...order, status: newStatus });
       setSuccessMsg(

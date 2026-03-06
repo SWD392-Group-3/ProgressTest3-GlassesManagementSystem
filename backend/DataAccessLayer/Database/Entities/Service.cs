@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +17,5 @@ namespace DataAccessLayer.Database.Entities
 
         public virtual ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
         public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
-        public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }
