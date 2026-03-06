@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
+  PackageSearch,
   RotateCcw,
   FileText,
   LogOut,
@@ -15,18 +16,29 @@ import {
 } from "lucide-react";
 import { getUser, clearAuth } from "@/lib/auth-storage";
 
-const STAFF_ROLES = ["Staff", "Admin"];
+const STAFF_ROLES = ["Staff", "Admin", "Operation"];
 
 function isStaffRole(role: string | null): boolean {
   return role != null && STAFF_ROLES.includes(role);
 }
 
-const navItems = [
-  { href: "/staff", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/staff/orders", label: "Quản lý đơn hàng", icon: Package },
-  { href: "/staff/prescriptions", label: "Đơn gọng kính", icon: FileText },
-  { href: "/staff/returns", label: "Đổi trả hàng", icon: RotateCcw },
+const staffNavItems = [
+  { href: "/sales", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/sales/orders", label: "Quản lý đơn hàng", icon: Package },
+  { href: "/sales/prescriptions", label: "Đơn gọng kính", icon: FileText },
+  { href: "/sales/returns", label: "Đổi trả hàng", icon: RotateCcw },
 ];
+
+const operationNavItems = [
+  { href: "/operation", label: "Tổng quan", icon: LayoutDashboard },
+  { href: "/operation/orders", label: "Quản lý đơn hàng", icon: PackageSearch },
+  { href: "/operation/returns", label: "Đổi trả hàng", icon: RotateCcw },
+];
+
+function getNavItems(role: string | null) {
+  if (role === "Operation") return operationNavItems;
+  return staffNavItems;
+}
 
 export default function StaffLayout({
   children,
@@ -38,6 +50,10 @@ export default function StaffLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const user = getUser();
+  const navItems = getNavItems(user?.role ?? null);
+  const isOperation = user?.role === "Operation";
+  const homeHref = isOperation ? "/operation" : "/sales";
+  const areaLabel = isOperation ? "Khu vực Operation" : "Khu vực nhân viên";
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
@@ -47,7 +63,9 @@ export default function StaffLayout({
   useEffect(() => {
     if (!mounted) return;
     if (!user) {
-      router.replace("/login?redirect=/staff");
+      router.replace(
+        `/login?redirect=${isOperation ? "/operation" : "/sales"}`,
+      );
       return;
     }
     if (!isStaffRole(user.role)) {
@@ -79,13 +97,13 @@ export default function StaffLayout({
       >
         <div className="flex items-center justify-between h-16 px-5 border-b border-white/10">
           <Link
-            href="/staff"
+            href={homeHref}
             className="text-lg font-bold tracking-tight"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             ELITE<span className="text-[#D4AF37]"> LENS</span>
             <span className="block text-[10px] font-normal text-white/60 tracking-widest uppercase mt-0.5">
-              Khu vực nhân viên
+              {areaLabel}
             </span>
           </Link>
           <button
@@ -101,7 +119,7 @@ export default function StaffLayout({
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/staff" && pathname.startsWith(item.href));
+              (item.href !== homeHref && pathname.startsWith(item.href));
             const Icon = item.icon;
             return (
               <Link

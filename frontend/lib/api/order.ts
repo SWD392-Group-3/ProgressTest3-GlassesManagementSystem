@@ -75,7 +75,7 @@ export async function cancelOrder(orderId: string): Promise<void> {
   );
 }
 
-/** PATCH /api/order/{orderId}/status — Staff/Admin cập nhật trạng thái đơn hàng */
+/** PATCH /api/order/{orderId}/status — Operation cập nhật trạng thái đơn hàng */
 export async function updateOrderStatus(
   orderId: string,
   status: string,
@@ -83,6 +83,15 @@ export async function updateOrderStatus(
   await apiRequest<void>(
     API.order.updateStatus(orderId),
     { method: "PATCH", body: JSON.stringify({ status }) },
+    { auth: true },
+  );
+}
+
+/** PATCH /api/order/{orderId}/confirm — Staff xác nhận đơn hàng (Paid → Confirmed) */
+export async function confirmOrder(orderId: string): Promise<void> {
+  await apiRequest<void>(
+    API.order.confirm(orderId),
+    { method: "PATCH" },
     { auth: true },
   );
 }
