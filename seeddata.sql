@@ -16,7 +16,7 @@ VALUES
     ('a0000000-0000-0000-0000-000000000001'::uuid, 'admin@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
      'Quản trị viên', NULL, 'Admin', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
-    ('a0000000-0000-0000-0000-000000000002'::uuid, 'staff@example.com',
+    ('a0000000-0000-0000-0000-000000000002'::uuid, 'sales@example.com',
      '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
      'Nhân viên cửa hàng', '0901234567', 'Sales', 'Active', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC'),
     ('a0000000-0000-0000-0000-000000000003'::uuid, 'customer@example.com',
