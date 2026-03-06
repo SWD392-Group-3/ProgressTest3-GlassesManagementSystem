@@ -490,8 +490,8 @@ namespace BusinessLogicLayer.Services.Implementations
                             Note = i.Note,
                             InspectionResult = i.InspectionResult,
                             CreatedAt = i.CreatedAt,
-                            Images = i
-                                .Images.Select(img => new ReturnExchangeImageResponse
+                            Images = (i.Images ?? Enumerable.Empty<ReturnExchangeImage>())
+                                .Select(img => new ReturnExchangeImageResponse
                                 {
                                     Id = img.Id,
                                     ImageUrl = img.ImageUrl,
