@@ -36,7 +36,7 @@ export default function LoginPage() {
       } else if (role === "manager") {
         router.push("/manager/dashboard");
       } else if (["staff", "admin"].includes(role)) {
-        router.push("/staff");
+        router.push("/sales");
       } else {
         router.push("/");
       }

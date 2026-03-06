@@ -29,6 +29,7 @@ export const API = {
     fromCart: "/api/order/from-cart",
     manual: "/api/order/manual",
     updateStatus: (orderId: string) => `/api/order/${orderId}/status`,
+    confirm: (orderId: string) => `/api/order/${orderId}/confirm`,
     cancel: (orderId: string) => `/api/order/${orderId}/cancel`,
   },
   payment: {
@@ -44,12 +45,28 @@ export const API = {
     getLensVariants: (productId: string) =>
       `/api/products/lens-variants?productId=${productId}`,
   },
+  services: {
+    getAll: "/api/manager/pricing-promotions/services",
+  },
+  prescription: {
+    create: "/api/Prescription",
+    getByCustomer: "/api/Prescription",
+    getAll: "/api/Prescription/all",
+    getById: (id: string) => `/api/Prescription/${id}`,
+    update: (id: string) => `/api/Prescription/${id}`,
+    confirm: (id: string) => `/api/Prescription/${id}/confirm`,
+    reject: (id: string) => `/api/Prescription/${id}/reject`,
+  },
   returnExchange: {
-    pending: "/api/ReturnExchange/pending",
-    approved: "/api/ReturnExchange/approved",
+    create: "/api/ReturnExchange",
+    getById: (id: string) => `/api/ReturnExchange/${id}`,
+    getByCustomer: "/api/ReturnExchange/customer",
+    getPending: "/api/ReturnExchange/pending",
+    getApproved: "/api/ReturnExchange/approved",
     review: "/api/ReturnExchange/review",
     receive: "/api/ReturnExchange/receive",
-    getById: (id: string) => `/api/ReturnExchange/${id}`,
+    addImages: (id: string) => `/api/ReturnExchange/${id}/images`,
+    uploadImages: "/api/ReturnExchange/upload-images",
   },
 } as const;
 

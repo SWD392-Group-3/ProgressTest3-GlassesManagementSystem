@@ -69,7 +69,11 @@ export default function StaffOrdersPage() {
       router.push("/login");
       return;
     }
-    if (user.role !== "Staff" && user.role !== "Operation") {
+    if (
+      user.role !== "Staff" &&
+      user.role !== "Admin" &&
+      user.role !== "Operation"
+    ) {
       router.push("/");
       return;
     }
@@ -225,7 +229,7 @@ export default function StaffOrdersPage() {
                       <td className="px-4 py-3 text-center">
                         <button
                           onClick={() =>
-                            router.push(`/staff/orders/${order.id}`)
+                            router.push(`/sales/orders/${order.id}`)
                           }
                           className="text-[#D4AF37] hover:text-[#C9A030] font-medium text-xs underline"
                         >

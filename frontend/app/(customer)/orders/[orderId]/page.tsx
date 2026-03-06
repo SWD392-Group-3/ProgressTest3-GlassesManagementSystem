@@ -185,10 +185,7 @@ export default function OrderDetailPage() {
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
                 Chi tiết đơn hàng
               </span>
-              <h1
-                className="text-2xl sm:text-3xl font-bold text-[#1A1A1A]"
-                style={{ fontFamily: "var(--font-heading)" }}
-              >
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] font-heading">
                 #{orderId?.slice(0, 8).toUpperCase()}
               </h1>
             </div>
@@ -422,6 +419,15 @@ export default function OrderDetailPage() {
                       </>
                     )}
                   </button>
+                )}
+                {order?.status === "Delivered" && (
+                  <Link
+                    href={`/orders/${order.id}/return`}
+                    className="flex-1 h-12 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] font-semibold text-sm hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Yêu cầu đổi / trả hàng
+                  </Link>
                 )}
               </div>
             </div>

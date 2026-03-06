@@ -16,7 +16,7 @@ import {
   XCircle,
   RefreshCw,
 } from "lucide-react";
-import { getOrderById, updateOrderStatus, OrderDto } from "@/lib/api/order";
+import { getOrderById, confirmOrder, OrderDto } from "@/lib/api/order";
 import { getUser } from "@/lib/auth-storage";
 
 const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
@@ -39,12 +39,12 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   Cancelled: <XCircle className="w-4 h-4" />,
 };
 
-// Bước tiếp theo hợp lệ cho từng trạng thái
+// Sales chỉ xử lý tới Confirmed, sau đó chuyển cho Operations
 const NEXT_STATUS: Record<string, string | null> = {
   Pending: null,
   Paid: "Confirmed",
-  Confirmed: "Shipped",
-  Shipped: "Delivered",
+  Confirmed: null, // Chuyển giao cho Operations xử lý tiếp
+  Shipped: null,
   Delivered: null,
   Cancelled: null,
 };
@@ -97,7 +97,11 @@ export default function StaffOrderDetailPage() {
       router.push("/login");
       return;
     }
-    if (user.role !== "Staff" && user.role !== "Operation") {
+    if (
+      user.role !== "Staff" &&
+      user.role !== "Admin" &&
+      user.role !== "Operation"
+    ) {
       router.push("/");
       return;
     }
@@ -115,7 +119,8 @@ export default function StaffOrderDetailPage() {
     setSuccessMsg(null);
     setError(null);
     try {
-      await updateOrderStatus(order.id, newStatus);
+      // Staff dùng endpoint /confirm riêng (Paid → Confirmed)
+      await confirmOrder(order.id);
       setOrder({ ...order, status: newStatus });
       setSuccessMsg(
         `Đã cập nhật trạng thái thành "${STATUS_LABEL[newStatus]}".`,
