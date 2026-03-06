@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Package,
   RotateCcw,
+  FileText,
   LogOut,
   Menu,
   X,
@@ -23,6 +24,7 @@ function isStaffRole(role: string | null): boolean {
 const navItems = [
   { href: "/staff", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/staff/orders", label: "Quản lý đơn hàng", icon: Package },
+  { href: "/staff/prescriptions", label: "Đơn gọng kính", icon: FileText },
   { href: "/staff/returns", label: "Đổi trả hàng", icon: RotateCcw },
 ];
 
@@ -89,6 +91,7 @@ export default function StaffLayout({
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-lg hover:bg-white/10"
+            aria-label="Đóng menu"
           >
             <X className="w-5 h-5" />
           </button>
