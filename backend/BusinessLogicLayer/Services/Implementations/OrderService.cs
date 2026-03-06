@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
@@ -430,7 +430,7 @@ namespace BusinessLogicLayer.Services.Implementations
             if (order == null)
                 return false;
 
-            // Staff cập nhật theo flow: Paid -> Confirmed -> ProcessingTemplate -> Manufacturing -> Shipped -> Delivered
+            // Sales cập nhật theo flow: Paid -> Confirmed -> ProcessingTemplate -> Manufacturing -> Shipped -> Delivered
             var validTransitions = new Dictionary<string, string[]>
             {
                 { "Paid", new[] { "Confirmed" } },

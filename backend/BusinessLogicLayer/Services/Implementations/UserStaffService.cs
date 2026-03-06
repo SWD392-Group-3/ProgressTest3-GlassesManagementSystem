@@ -19,6 +19,19 @@ namespace BusinessLogicLayer.Services.Implementations
             _unitOfWork = unitOfWork;
         }
 
+        private static string NormalizeRole(string? role)
+        {
+            if (string.IsNullOrWhiteSpace(role)) return role ?? "Sales";
+            var r = role.Trim();
+            if (r.Equals("sales", StringComparison.OrdinalIgnoreCase) || r.Equals("staff", StringComparison.OrdinalIgnoreCase))
+                return "Sales";
+            if (r.Equals("admin", StringComparison.OrdinalIgnoreCase)) return "Admin";
+            if (r.Equals("operation", StringComparison.OrdinalIgnoreCase)) return "Operation";
+            if (r.Equals("manager", StringComparison.OrdinalIgnoreCase)) return "Manager";
+            if (r.Equals("customer", StringComparison.OrdinalIgnoreCase)) return "Customer";
+            return r;
+        }
+
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _unitOfWork.GetRepository<User>().GetAllAsync();
@@ -69,7 +82,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 FullName = request.FullName,
                 Phone = request.Phone,
-                Role = request.Role,
+                Role = NormalizeRole(request.Role),
                 Status = request.Status ?? "Active",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
@@ -98,7 +111,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
             user.FullName = request.FullName ?? user.FullName;
             user.Phone = request.Phone ?? user.Phone;
-            user.Role = request.Role ?? user.Role;
+            user.Role = request.Role != null ? NormalizeRole(request.Role) : user.Role;
             user.Status = request.Status ?? user.Status;
             user.UpdatedAt = DateTime.UtcNow;
 
