@@ -39,7 +39,7 @@ export interface CreateOrderRequest {
 }
 
 /**
- * GET /api/Order/orders — Staff/Operation lấy tất cả đơn hàng
+ * GET /api/Order/orders — Sales/Operation lấy tất cả đơn hàng
  */
 export async function getOrders(): Promise<OrderDto[]> {
   return apiRequest<OrderDto[]>(API.order.getOrders, {}, { auth: true });
@@ -87,7 +87,7 @@ export async function updateOrderStatus(
   );
 }
 
-/** PATCH /api/order/{orderId}/confirm — Staff xác nhận đơn hàng (Paid → Confirmed) */
+/** PATCH /api/order/{orderId}/confirm — Sales xác nhận đơn hàng (Paid → Confirmed) */
 export async function confirmOrder(orderId: string): Promise<void> {
   await apiRequest<void>(
     API.order.confirm(orderId),

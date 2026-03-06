@@ -29,7 +29,7 @@ export default function ManagerLayout({
           <NavItem href="/manager/policies" icon={<FileText size={20} />} label="Policies" />
           <NavItem href="/manager/products" icon={<Package size={20} />} label="Products" />
           <NavItem href="/manager/promotions-combos" icon={<Tag size={20} />} label="Pricing & Promos" />
-          <NavItem href="/manager/users" icon={<Users size={20} />} label="Users & Staff" />
+          <NavItem href="/manager/users" icon={<Users size={20} />} label="Users & Sales" />
         </nav>
         
         <div className="p-4 border-t border-border">

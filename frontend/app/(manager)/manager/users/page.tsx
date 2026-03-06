@@ -24,7 +24,7 @@ export default function UsersPage() {
         password: "",
         fullName: "",
         phone: "",
-        role: "staff"
+        role: "sales"
     });
 
     useEffect(() => {
@@ -60,7 +60,7 @@ export default function UsersPage() {
             if (res.ok) {
                 fetchUsers();
                 handleCloseModal();
-                setFormData({ email: "", password: "", fullName: "", phone: "", role: "staff" });
+                setFormData({ email: "", password: "", fullName: "", phone: "", role: "sales" });
             } else {
                 alert("Failed to create user account.");
             }
@@ -90,9 +90,9 @@ export default function UsersPage() {
                 return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200"><Shield size={12} /> Admin</span>;
             case 'manager':
                 return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200"><Shield size={12} /> Manager</span>;
-            case 'staff':
+            case 'sales':
             default:
-                return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200"><User size={12} /> Staff</span>;
+                return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200"><User size={12} /> Sales</span>;
         }
     };
 
@@ -100,7 +100,7 @@ export default function UsersPage() {
         <div className="p-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-heading font-bold text-primary mb-2">User & Staff Management</h1>
+                    <h1 className="text-3xl font-heading font-bold text-primary mb-2">User & Sales Management</h1>
                     <p className="text-muted">Manage system access, employee accounts, and roles.</p>
                 </div>
                 <button
@@ -108,7 +108,7 @@ export default function UsersPage() {
                     className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md hover:bg-black transition-colors"
                 >
                     <UserPlus size={18} />
-                    <span>Add Staff</span>
+                    <span>Add Sales</span>
                 </button>
             </div>
 
@@ -194,12 +194,12 @@ export default function UsersPage() {
                 )}
             </div>
 
-            {/* Create Staff Modal */}
+            {/* Create Sales Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
                         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-primary text-white">
-                            <h2 className="text-xl font-heading font-bold">Register New Staff Account</h2>
+                            <h2 className="text-xl font-heading font-bold">Register New Sales Account</h2>
                             <button onClick={handleCloseModal} className="text-gray-300 hover:text-white">
                                 <X size={20} />
                             </button>
@@ -248,7 +248,7 @@ export default function UsersPage() {
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
                                         className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent"
                                     >
-                                        <option value="staff">Sales Staff</option>
+                                        <option value="sales">Sales</option>
                                         <option value="customer_service">Customer Service</option>
                                         <option value="manager">Store Manager</option>
                                         <option value="admin">System Admin</option>

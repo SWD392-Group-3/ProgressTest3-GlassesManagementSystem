@@ -435,7 +435,7 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function StaffPrescriptionsPage() {
+export default function SalesPrescriptionsPage() {
   const router = useRouter();
   const [prescriptions, setPrescriptions] = useState<PrescriptionDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -468,7 +468,7 @@ export default function StaffPrescriptionsPage() {
       router.push("/login");
       return;
     }
-    if (user.role !== "Staff" && user.role !== "Admin") {
+    if (user.role !== "Sales" && user.role !== "Admin") {
       router.push("/");
       return;
     }

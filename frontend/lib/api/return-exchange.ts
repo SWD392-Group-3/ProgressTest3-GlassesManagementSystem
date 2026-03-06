@@ -1,130 +1,6 @@
 import { apiRequest, API, getApiUrl } from "./client";
 import { getToken } from "../auth-storage";
 
-export interface ReturnExchangeItemDto {
-  id: string;
-  returnExchangeId?: string;
-  orderItemId: string;
-  isReturned: boolean;
-  isExchanged: boolean;
-  quantity: number;
-  reason: string;
-  images: string[];
-}
-
-export interface ReturnExchangeDto {
-  id: string;
-  orderId: string;
-  customerId: string;
-  type: string; // 'Return' or 'Exchange'
-  status: string; // 'Pending', 'ApprovedBySales', 'ReceivedByOperation', 'Rejected', 'Completed'
-  totalRefundAmount: number | null;
-  reason: string;
-  images: string[];
-  createdAt: string;
-  resolvedAt: string | null;
-  items: ReturnExchangeItemDto[];
-}
-
-export interface CreateReturnExchangeItemRequest {
-  orderItemId: string;
-  isReturned: boolean;
-  isExchanged: boolean;
-  quantity: number;
-  reason: string;
-  images: string[];
-}
-
-export interface CreateReturnExchangeRequest {
-  orderId: string;
-  type: string;
-  reason: string;
-  items: CreateReturnExchangeItemRequest[];
-}
-
-/**
- * POST /api/ReturnExchange
- */
-export async function createReturnExchange(
-  data: CreateReturnExchangeRequest,
-): Promise<ReturnExchangeDto> {
-  return apiRequest<ReturnExchangeDto>(
-    API.returnExchange.create,
-    { method: "POST", body: JSON.stringify(data) },
-    { auth: true },
-  );
-}
-
-/**
- * GET /api/ReturnExchange/customer
- */
-export async function getMyReturnExchanges(): Promise<ReturnExchangeDto[]> {
-  return apiRequest<ReturnExchangeDto[]>(
-    API.returnExchange.getByCustomer,
-    { method: "GET" },
-    { auth: true },
-  );
-}
-
-/**
- * GET /api/ReturnExchange/{id}
- */
-export async function getReturnExchangeById(
-  id: string,
-): Promise<ReturnExchangeDto> {
-  return apiRequest<ReturnExchangeDto>(
-    API.returnExchange.getById(id),
-    { method: "GET" },
-    { auth: true },
-  );
-}
-
-/**
- * POST /api/ReturnExchange/{id}/images
- */
-export async function addImagesToReturnExchange(
-  id: string,
-  imageUrls: string[],
-): Promise<void> {
-  await apiRequest<void>(
-    API.returnExchange.addImages(id),
-    { method: "POST", body: JSON.stringify(imageUrls) },
-    { auth: true },
-  );
-}
-
-/**
- * POST /api/ReturnExchange/upload-images (Multipart Form Data)
- */
-export async function uploadReturnImages(
-  formData: FormData,
-): Promise<string[]> {
-  const base = getApiUrl();
-  const url = `${base}${API.returnExchange.uploadImages}`;
-
-  const headers: HeadersInit = {};
-  const token = getToken();
-  if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-  }
-
-  // Not passing Content-Type here, browser sets it to multipart/form-data with the correct boundary
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    body: formData,
-  });
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || `Lỗi upload ảnh (${res.status})`);
-  }
-
-  return await res.json();
-}
-
-import { apiRequest, API } from "./client";
-
 /** DTO khớp backend ReturnExchangeResponse */
 export interface ReturnExchangeImageDto {
   id: string;
@@ -137,14 +13,13 @@ export interface ReturnExchangeImageDto {
 
 export interface ReturnExchangeItemDto {
   id: string;
+  returnExchangeId?: string;
   orderItemId: string;
+  isReturned: boolean;
+  isExchanged: boolean;
   quantity: number;
-  reason: string | null;
-  status: string;
-  note: string | null;
-  inspectionResult: string | null;
-  createdAt: string;
-  images: ReturnExchangeImageDto[];
+  reason: string;
+  images: string[];
 }
 
 export interface ReturnExchangeHistoryDto {
@@ -162,18 +37,17 @@ export interface ReturnExchangeDto {
   id: string;
   orderId: string;
   customerId: string;
-  reason: string | null;
-  status: string;
-  rejectionReason: string | null;
+  type: string; // 'Return' or 'Exchange'
+  status: string; // 'Pending', 'ApprovedBySales', 'ReceivedByOperation', 'Rejected', 'Completed'
+  totalRefundAmount: number | null;
+  reason: string;
+  images: string[];
   createdAt: string;
-  reviewedBySalesAt: string | null;
-  receivedByOperationAt: string | null;
   resolvedAt: string | null;
   items: ReturnExchangeItemDto[];
-  histories: ReturnExchangeHistoryDto[];
 }
 
-/** POST /api/ReturnExchange/review — Staff phê duyệt/từ chối */
+/** POST /api/ReturnExchange/review — Sales phê duyệt/từ chối */
 export interface ReviewReturnExchangeRequest {
   returnExchangeId: string;
   isApproved: boolean;
@@ -203,12 +77,73 @@ export interface ReceiveReturnExchangeRequest {
   items: ReceiveItemRequest[];
 }
 
-/** GET /api/ReturnExchange/pending — Staff xem yêu cầu chờ xử lý */
+export interface CreateReturnExchangeItemRequest {
+  orderItemId: string;
+  isReturned: boolean;
+  isExchanged: boolean;
+  quantity: number;
+  reason: string;
+  images: string[];
+}
+
+export interface CreateReturnExchangeRequest {
+  orderId: string;
+  type: string;
+  reason: string;
+  items: CreateReturnExchangeItemRequest[];
+}
+
+/** POST /api/ReturnExchange — Customer tạo yêu cầu đổi / trả */
+export async function createReturnExchange(
+  data: CreateReturnExchangeRequest,
+): Promise<ReturnExchangeDto> {
+  return apiRequest<ReturnExchangeDto>(API.returnExchange.create, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+/** GET /api/ReturnExchange/customer — danh sách yêu cầu của chính khách hàng */
+export async function getMyReturnExchanges(): Promise<ReturnExchangeDto[]> {
+  return apiRequest<ReturnExchangeDto[]>(API.returnExchange.getByCustomer, {
+    method: "GET",
+  });
+}
+
+/** POST /api/ReturnExchange/upload-images (Multipart Form Data) */
+export async function uploadReturnImages(
+  formData: FormData,
+): Promise<string[]> {
+  const base = getApiUrl();
+  const url = `${base}${API.returnExchange.uploadImages}`;
+
+  const headers: HeadersInit = {};
+  const token = getToken();
+  if (token) {
+    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  }
+
+  // Không set Content-Type để browser tự thêm boundary
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || `Lỗi upload ảnh (${res.status})`);
+  }
+
+  return await res.json();
+}
+
+/** GET /api/ReturnExchange/pending — Sales xem yêu cầu chờ xử lý */
 export async function getPendingReturnExchanges(): Promise<
   ReturnExchangeDto[]
 > {
   return apiRequest<ReturnExchangeDto[]>(
-    API.returnExchange.pending,
+    API.returnExchange.getPending,
     {},
     { auth: true },
   );
@@ -219,7 +154,7 @@ export async function getApprovedReturnExchanges(): Promise<
   ReturnExchangeDto[]
 > {
   return apiRequest<ReturnExchangeDto[]>(
-    API.returnExchange.approved,
+    API.returnExchange.getApproved,
     {},
     { auth: true },
   );
@@ -236,7 +171,7 @@ export async function getReturnExchangeById(
   );
 }
 
-/** POST /api/ReturnExchange/review — Staff phê duyệt hoặc từ chối */
+/** POST /api/ReturnExchange/review — Sales phê duyệt hoặc từ chối */
 export async function reviewReturnExchange(
   body: ReviewReturnExchangeRequest,
 ): Promise<ReturnExchangeDto> {

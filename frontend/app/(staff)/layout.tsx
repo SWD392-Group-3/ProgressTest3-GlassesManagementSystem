@@ -16,10 +16,10 @@ import {
 } from "lucide-react";
 import { getUser, clearAuth } from "@/lib/auth-storage";
 
-const STAFF_ROLES = ["Staff", "Admin", "Operation"];
+const SALES_AREA_ROLES = ["Sales", "Admin", "Operation"];
 
-function isStaffRole(role: string | null): boolean {
-  return role != null && STAFF_ROLES.includes(role);
+function isSalesAreaRole(role: string | null): boolean {
+  return role != null && SALES_AREA_ROLES.includes(role);
 }
 
 const staffNavItems = [
@@ -68,7 +68,7 @@ export default function StaffLayout({
       );
       return;
     }
-    if (!isStaffRole(user.role)) {
+    if (!isSalesAreaRole(user.role)) {
       router.replace("/");
       return;
     }
@@ -79,7 +79,7 @@ export default function StaffLayout({
     router.push("/login");
   }
 
-  if (!mounted || !user || !isStaffRole(user.role)) {
+  if (!mounted || !user || !isSalesAreaRole(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F5F5F5]">
         <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />

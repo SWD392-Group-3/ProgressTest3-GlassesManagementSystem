@@ -40,7 +40,7 @@ function fmtDate(dateStr: string) {
   });
 }
 
-export default function StaffOrdersPage() {
+export default function SalesOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,7 +70,7 @@ export default function StaffOrdersPage() {
       return;
     }
     if (
-      user.role !== "Staff" &&
+      user.role !== "Sales" &&
       user.role !== "Admin" &&
       user.role !== "Operation"
     ) {

@@ -97,10 +97,10 @@ function fmtDate(d: string) {
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
-export default function StaffReturnsPage() {
+export default function SalesReturnsPage() {
   const router = useRouter();
   const user = getUser();
-  const isStaff = user?.role === "Staff";
+  const isSales = user?.role === "Sales";
   const isOperation = user?.role === "Operation";
 
   const [returns, setReturns] = useState<ReturnExchange[]>([]);
@@ -111,7 +111,7 @@ export default function StaffReturnsPage() {
   // Expanded row id
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Staff review form state
+  // Sales review form state
   const [reviewForm, setReviewForm] = useState<{
     comment: string;
     rejectionReason: string;
@@ -135,7 +135,7 @@ export default function StaffReturnsPage() {
     setError(null);
     setSuccess(null);
     try {
-      const endpoint = isStaff
+      const endpoint = isSales
         ? API.returnExchange.getPending
         : API.returnExchange.getApproved;
       const data = await apiRequest<ReturnExchange[]>(
@@ -149,19 +149,19 @@ export default function StaffReturnsPage() {
     } finally {
       setLoading(false);
     }
-  }, [isStaff]);
+  }, [isSales]);
 
   useEffect(() => {
     if (!user) {
       router.push("/login");
       return;
     }
-    if (!isStaff && !isOperation) {
+    if (!isSales && !isOperation) {
       router.push("/");
       return;
     }
     fetchReturns();
-  }, [router, user, isStaff, isOperation, fetchReturns]);
+  }, [router, user, isSales, isOperation, fetchReturns]);
 
   function toggleExpand(re: ReturnExchange) {
     if (expandedId === re.id) {
@@ -273,7 +273,7 @@ export default function StaffReturnsPage() {
             Đổi trả hàng
           </h1>
           <p className="text-[#6B7280] mt-1 text-sm">
-            {isStaff
+            {isSales
               ? "Xem xét và phê duyệt / từ chối yêu cầu đổi trả từ khách hàng."
               : "Nhận hàng hoàn và kiểm tra tình trạng sản phẩm."}
           </p>
@@ -316,7 +316,7 @@ export default function StaffReturnsPage() {
         <div className="bg-white rounded-2xl border border-[#E5E7EB] p-12 text-center">
           <RotateCcw className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-[#6B7280] font-medium">
-            {isStaff
+            {isSales
               ? "Không có yêu cầu đổi trả nào đang chờ xét duyệt."
               : "Không có yêu cầu đổi trả nào đang chờ nhận hàng."}
           </p>
@@ -518,8 +518,8 @@ export default function StaffReturnsPage() {
                       </div>
                     </div>
 
-                    {/* Staff: Review form */}
-                    {isStaff && (
+                    {/* Sales: Review form */}
+                    {isSales && (
                       <div className="space-y-3 pt-2 border-t border-[#E5E7EB]">
                         <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
                           Xét duyệt yêu cầu
