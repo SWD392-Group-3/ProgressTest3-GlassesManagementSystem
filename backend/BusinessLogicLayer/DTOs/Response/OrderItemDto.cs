@@ -23,5 +23,8 @@ namespace BusinessLogicLayer.DTOs.Response
         public decimal TotalPrice { get; set; }
 
         public string? Note { get; set; }
+
+        public string? ProductName { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }

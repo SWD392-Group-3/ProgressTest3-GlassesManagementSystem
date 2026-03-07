@@ -9,15 +9,21 @@ namespace BusinessLogicLayer.Services.Implementations
     {
         private readonly IPaymentRepository _paymentRepository;
         private readonly IOrderRepository _orderRepository;
+        private readonly ICustomerRepository _customerRepository;
+        private readonly INotificationService _notificationService;
         private readonly IUnitOfWork _unitOfWork;
 
         public PaymentService(
             IPaymentRepository paymentRepository,
             IOrderRepository orderRepository,
+            ICustomerRepository customerRepository,
+            INotificationService notificationService,
             IUnitOfWork unitOfWork)
         {
             _paymentRepository = paymentRepository;
             _orderRepository = orderRepository;
+            _customerRepository = customerRepository;
+            _notificationService = notificationService;
             _unitOfWork = unitOfWork;
         }
 
@@ -52,6 +58,14 @@ namespace BusinessLogicLayer.Services.Implementations
                 {
                     order.Status = "Paid";
                     _orderRepository.Update(order);
+
+                    await _unitOfWork.SaveChangesAsync();
+
+                    // Bước 4: Gửi thông báo real-time tới nhóm Sales
+                    var customer = await _customerRepository.GetByIdAsync(order.CustomerId);
+                    var customerName = customer?.FullName ?? "Khách hàng";
+                    await _notificationService.SendNewOrderPaidToSalesAsync(orderId, customerName, notify.Amount);
+                    return;
                 }
             }
 

@@ -24,5 +24,11 @@ namespace BusinessLogicLayer.Services.Interfaces
         Task<bool> ConfirmOrderAsync(Guid orderId);
         Task<bool> RejectOrderAsync(Guid orderId, string? reason);
         Task<bool> CancelOrderAsync(Guid orderId, Guid userId);
+
+        /// <summary>
+        /// Khách hàng xác nhận đã nhận hàng: Delivered → Completed.
+        /// Chỉ customer sở hữu đơn mới được gọi.
+        /// </summary>
+        Task<bool> CompleteOrderAsync(Guid orderId, Guid userId);
     }
 }

@@ -17,6 +17,7 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly ICartItemRepository _cartItemRepository;
         private readonly IPromotionRepository _promotionRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly INotificationService _notificationService;
 
         public OrderService(
             IOrderRepository orderRepository,
@@ -25,7 +26,8 @@ namespace BusinessLogicLayer.Services.Implementations
             ICartRepository cartRepository,
             ICartItemRepository cartItemRepository,
             IPromotionRepository promotionRepository,
-            ICustomerRepository customerRepository
+            ICustomerRepository customerRepository,
+            INotificationService notificationService
         )
         {
             _orderRepository = orderRepository;
@@ -35,6 +37,7 @@ namespace BusinessLogicLayer.Services.Implementations
             _cartItemRepository = cartItemRepository;
             _promotionRepository = promotionRepository;
             _customerRepository = customerRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> CancelOrderAsync(Guid orderId, Guid userId)
@@ -55,6 +58,10 @@ namespace BusinessLogicLayer.Services.Implementations
             order.Status = "Cancelled";
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
+
+            // Thông báo real-time
+            await _notificationService.SendOrderStatusChangedAsync(order.CustomerId, orderId, "Cancelled");
+
             return true;
         }
 
@@ -419,6 +426,14 @@ namespace BusinessLogicLayer.Services.Implementations
                         UnitPrice = oi.UnitPrice,
                         TotalPrice = oi.TotalPrice,
                         Note = oi.Note,
+                        ProductName = oi.ProductVariant?.Product?.Name
+                            ?? oi.LensesVariant?.Product?.Name
+                            ?? oi.ComboItem?.Combo?.Name
+                            ?? oi.Service?.Name
+                            ?? oi.Product?.Name,
+                        ImageUrl = oi.ProductVariant?.ImageUrl
+                            ?? oi.ProductVariant?.Product?.ImageUrl
+                            ?? oi.LensesVariant?.ImageUrl,
                     })
                     .ToList(),
             };
@@ -453,6 +468,10 @@ namespace BusinessLogicLayer.Services.Implementations
             order.Status = newStatus;
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
+
+            // Thông báo real-time tới khách hàng
+            await _notificationService.SendOrderStatusChangedAsync(order.CustomerId, orderId, newStatus);
+
             return true;
         }
 
@@ -470,6 +489,10 @@ namespace BusinessLogicLayer.Services.Implementations
             order.Status = "Confirmed";
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
+
+            // Thông báo real-time
+            await _notificationService.SendOrderStatusChangedAsync(order.CustomerId, orderId, "Confirmed");
+
             return true;
         }
 
@@ -490,6 +513,35 @@ namespace BusinessLogicLayer.Services.Implementations
 
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
+
+            // Thông báo real-time
+            await _notificationService.SendOrderStatusChangedAsync(order.CustomerId, orderId, "Rejected");
+
+            return true;
+        }
+
+        public async Task<bool> CompleteOrderAsync(Guid orderId, Guid userId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+                return false;
+
+            // Chỉ customer sở hữu đơn mới được xác nhận
+            var customer = await _customerRepository.GetByIdAsync(order.CustomerId);
+            if (customer == null || customer.UserId != userId)
+                throw new Exception("Bạn không có quyền xác nhận đơn hàng này.");
+
+            if (order.Status != "Delivered")
+                throw new Exception("Chỉ có thể xác nhận khi đơn hàng đang ở trạng thái 'Đã giao'.");
+
+            order.Status = "Completed";
+            _orderRepository.Update(order);
+            await _unitOfWork.SaveChangesAsync();
+
+            // Thông báo cho Operation
+            var customerName = customer.FullName ?? "Khách hàng";
+            await _notificationService.SendDeliveryConfirmedToOperationAsync(orderId, customerName);
+
             return true;
         }
     }

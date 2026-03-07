@@ -1,6 +1,7 @@
 using BusinessLogicLayer.Services;
 using BusinessLogicLayer.Services.Interfaces;
 using BusinessLogicLayer.Services.Implementations;
+using GlassesManagementSystem.Services;
 using DataAccessLayer.Database;
 using DataAccessLayer.Repositories;
 using DataAccessLayer.Repositories.Interfaces;
@@ -45,6 +46,7 @@ public static class AddDependencyInjection
         serviceCollection.AddScoped<IUserStaffService, UserStaffService>();
         serviceCollection.AddScoped<IRevenueService, RevenueService>();
         serviceCollection.AddScoped<ICategoryService, CategoryService>();
+        serviceCollection.AddScoped<INotificationService, NotificationService>();
 
         // Repositories
         serviceCollection.AddScoped<IUserRepository, UserRepository>();
@@ -63,5 +65,6 @@ public static class AddDependencyInjection
         serviceCollection.AddScoped<IReturnExchangeHistoryRepository, ReturnExchangeHistoryRepository>();
         serviceCollection.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
         serviceCollection.AddScoped<ICategoryRepository, CategoryRepository>();
+        serviceCollection.AddScoped<INotificationRepository, NotificationRepository>();
     }
 }

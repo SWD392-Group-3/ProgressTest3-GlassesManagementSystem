@@ -85,6 +85,7 @@ export default function RegisterPage() {
       });
       saveAuth(res.token, {
         userId: res.userId,
+        customerId: res.customerId ?? null,
         email: res.email,
         fullName: res.fullName ?? null,
         role: res.role ?? null,

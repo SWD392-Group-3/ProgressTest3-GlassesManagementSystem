@@ -18,6 +18,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getUser } from "@/lib/auth-storage";
 import { getMyOrders, cancelOrder, OrderDto } from "@/lib/api";
+import { useNotifications } from "@/lib/NotificationContext";
 
 function fmt(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -106,6 +107,8 @@ export default function OrdersPage() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const { notifications } = useNotifications();
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -128,6 +131,18 @@ export default function OrdersPage() {
     fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Cập nhật status đơn hàng real-time khi nhận thông báo SignalR
+  useEffect(() => {
+    if (notifications.length === 0) return;
+    const latest = notifications[0];
+    if (!latest.orderId || !latest.newStatus) return;
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === latest.orderId ? { ...o, status: latest.newStatus! } : o,
+      ),
+    );
+  }, [notifications]);
 
   async function handleCancel(orderId: string) {
     if (!confirm("Bạn có chắc chắn muốn huỷ đơn hàng này?")) return;
