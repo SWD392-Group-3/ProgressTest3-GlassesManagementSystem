@@ -11,6 +11,14 @@ type WarrantyPolicy = {
     termsAndConditions: string;
 };
 
+const getToken = () =>
+    typeof window !== "undefined" ? localStorage.getItem("auth_token") ?? "" : "";
+
+const authHeaders = () => ({
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${getToken()}`,
+});
+
 export default function PoliciesPage() {
     const [policies, setPolicies] = useState<WarrantyPolicy[]>([]);
     const [loading, setLoading] = useState(true);
@@ -76,7 +84,7 @@ export default function PoliciesPage() {
 
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: authHeaders(),
                 body: JSON.stringify(formData)
             });
 
@@ -96,7 +104,8 @@ export default function PoliciesPage() {
 
         try {
             const res = await fetch(`http://localhost:5000/api/manager/policies/${id}`, {
-                method: "DELETE"
+                method: "DELETE",
+                headers: authHeaders()
             });
 
             if (res.ok) {

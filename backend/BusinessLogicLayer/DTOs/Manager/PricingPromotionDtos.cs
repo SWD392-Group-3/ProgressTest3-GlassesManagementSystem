@@ -71,6 +71,43 @@ namespace BusinessLogicLayer.DTOs.Manager
         public Guid? ProductVariantId { get; set; }
         public Guid? LensesVariantId { get; set; }
         public int Quantity { get; set; }
+
+        // Thông tin chi tiết gọng kính (nếu item là ProductVariant)
+        public ComboFrameVariantDto? FrameVariant { get; set; }
+        // Thông tin chi tiết tròng kính (nếu item là LensVariant)
+        public ComboLensVariantDto? LensVariant { get; set; }
+    }
+
+    /// <summary>Gọng kính (ProductVariant) kèm tên sản phẩm</summary>
+    public class ComboFrameVariantDto
+    {
+        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public decimal? UnitPrice { get; set; }
+        public string? ProductImageUrl { get; set; }
+        public string? Color { get; set; }
+        public string? Size { get; set; }
+        public string? Material { get; set; }
+        public decimal Price { get; set; }
+        public string? Status { get; set; }
+        public string? ImageUrl { get; set; }
+    }
+
+    /// <summary>Tròng kính (LensVariant) kèm tên sản phẩm</summary>
+    public class ComboLensVariantDto
+    {
+        public Guid Id { get; set; }
+        public Guid ProductId { get; set; }
+        public string? ProductName { get; set; }
+        public decimal? UnitPrice { get; set; }
+        public string? ProductImageUrl { get; set; }
+        public decimal? DoCau { get; set; }
+        public decimal? DoTru { get; set; }
+        public decimal? ChiSoKhucXa { get; set; }
+        public decimal Price { get; set; }
+        public string? Status { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class ComboDto

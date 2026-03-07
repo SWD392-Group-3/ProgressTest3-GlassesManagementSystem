@@ -7,7 +7,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/products")]
     [ApiController]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "Admin,Manager")]
     public class ProductManagerController : ControllerBase
     {
         private readonly IProductManagerService _productManagerService;

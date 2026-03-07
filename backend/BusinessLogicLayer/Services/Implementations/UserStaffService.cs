@@ -35,17 +35,19 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
         {
             var users = await _unitOfWork.GetRepository<User>().GetAllAsync();
-            return users.Select(u => new UserDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                FullName = u.FullName,
-                Phone = u.Phone,
-                Role = u.Role,
-                Status = u.Status,
-                CreatedAt = u.CreatedAt,
-                UpdatedAt = u.UpdatedAt
-            });
+            return users
+                .Where(u => u.Role != "Admin" && u.Role != "Manager")
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FullName = u.FullName,
+                    Phone = u.Phone,
+                    Role = u.Role,
+                    Status = u.Status,
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt
+                });
         }
 
         public async Task<UserDto?> GetUserByIdAsync(Guid id)
