@@ -11,6 +11,7 @@ import {
   X,
   LogOut,
   Package,
+  Eye,
 } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
@@ -27,6 +28,7 @@ const navLinks = [
   { name: "Sunglasses", href: "/products?category=sunglasses" },
   { name: "Optical", href: "/products?category=optical" },
   { name: "Blue-Light", href: "/products?category=blue-light" },
+  { name: "Services", href: "/services" },
   { name: "Prescriptions", href: "/prescriptions" },
 ];
 
@@ -172,6 +174,16 @@ export default function Navbar() {
                           <Package className="w-4 h-4 text-[#6B7280]" />
                           Đơn hàng của tôi
                         </Link>
+                        {!isSalesUser(user) && !isOperationUser(user) && (
+                          <Link
+                            href="/eye-results"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
+                          >
+                            <Eye className="w-4 h-4 text-[#6B7280]" />
+                            Kết quả khám mắt
+                          </Link>
+                        )}
                         {isSalesUser(user) && (
                           <Link
                             href="/sales"
@@ -272,6 +284,15 @@ export default function Navbar() {
               >
                 Đơn hàng
               </Link>
+              {!isSalesUser(user) && !isOperationUser(user) && (
+                <Link
+                  href="/eye-results"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+                >
+                  Kết quả khám mắt
+                </Link>
+              )}
               {isSalesUser(user) && (
                 <Link
                   href="/sales"

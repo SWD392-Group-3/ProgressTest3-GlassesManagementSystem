@@ -143,8 +143,7 @@ public class NotificationService : INotificationService
 
     /// <inheritdoc />
     public async Task SendDeliveryConfirmedToOperationAsync(Guid orderId, string customerName)
-    {
-        var title   = "Khách hàng đã xác nhận nhận hàng";
+    {        var title   = "Khách hàng đã xác nhận nhận hàng";
         var message = $"Khách hàng {customerName} đã xác nhận nhận đơn hàng. Đơn hàng đã hoàn thành.";
         var linkTo  = $"/operation/orders/{orderId}";
         var now     = DateTime.UtcNow;
@@ -182,6 +181,38 @@ public class NotificationService : INotificationService
     // ──────────────────────────────────────────────────────────────────────────
     // Public: Query / Mark read
     // ──────────────────────────────────────────────────────────────────────────
+
+    /// <inheritdoc />
+    public async Task SendEyeResultReadyAsync(Guid customerId, Guid orderId)
+    {
+        const string title   = "Kết quả khám mắt đã sẵn sàng";
+        var          message = "Nhân viên đã ghi nhận kết quả khám mắt cho đơn hàng của bạn. Nhấn để xem chi tiết.";
+        var          linkTo  = $"/orders/{orderId}?tab=eye-result";
+        var          now     = DateTime.UtcNow;
+
+        // 1. Lưu vào DB (lookup UserId từ CustomerId)
+        var userId = await GetUserIdByCustomerIdAsync(customerId);
+        if (userId.HasValue)
+        {
+            await SaveNotificationAsync(
+                userId.Value,
+                title:   title,
+                content: message,
+                type:    "eye_result_ready",
+                linkTo:  linkTo,
+                now:     now);
+        }
+
+        // 2. Gửi real-time qua SignalR tới customer group
+        await _hubContext.Clients
+            .Group($"customer_{customerId}")
+            .SendAsync("EyeResultReady", new
+            {
+                orderId   = orderId.ToString(),
+                message,
+                timestamp = now
+            });
+    }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(Guid userId, int limit = 50)

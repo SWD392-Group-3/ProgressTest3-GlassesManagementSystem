@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, X, CheckCheck, Package, ShoppingBag } from "lucide-react";
+import { Bell, X, CheckCheck, Package, ShoppingBag, Eye } from "lucide-react";
 import { useNotifications, OrderNotification } from "@/lib/NotificationContext";
 
 function timeAgo(timestamp: string): string {
@@ -28,6 +28,8 @@ function statusColor(status?: string): string {
     case "Rejected":
     case "PrescriptionRejected":
       return "text-red-500";
+    case "EyeResultReady":
+      return "text-purple-600";
     default:
       return "text-amber-500";
   }
@@ -105,6 +107,11 @@ export default function NotificationBell({ mode = "customer" }: Props) {
   function handleNotificationClick(n: OrderNotification) {
     onMarkRead(n.id);
     setOpen(false);
+    // If the notification carries an explicit link, use it (e.g. EyeResultReady → /orders/…?tab=eye-result)
+    if (n.linkTo) {
+      router.push(n.linkTo);
+      return;
+    }
     if (isOperation) {
       router.push(`/operation/orders/${n.orderId}`);
     } else if (isSales) {
@@ -181,9 +188,13 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   }`}
                 >
                   <div className="mt-0.5 shrink-0">
-                    <Package
-                      className={`w-4 h-4 ${statusColor(n.newStatus)}`}
-                    />
+                    {n.newStatus === "EyeResultReady" ? (
+                      <Eye className={`w-4 h-4 ${statusColor(n.newStatus)}`} />
+                    ) : (
+                      <Package
+                        className={`w-4 h-4 ${statusColor(n.newStatus)}`}
+                      />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-800 leading-snug">

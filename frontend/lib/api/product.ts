@@ -159,3 +159,18 @@ export async function getLensVariants(
 export async function getLensVariant(id: string): Promise<LensesVariantDto> {
   return apiRequest<LensesVariantDto>(`/api/products/lens-variants/${id}`);
 }
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
+export interface ServiceDto {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  status: string | null;
+}
+
+/** GET /api/manager/pricing-promotions/services  (AllowAnonymous) */
+export async function getServices(): Promise<ServiceDto[]> {
+  return apiRequest<ServiceDto[]>("/api/manager/pricing-promotions/services");
+}
