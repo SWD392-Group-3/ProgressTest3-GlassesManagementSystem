@@ -13,7 +13,6 @@ namespace DataAccessLayer.Database
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<WarrantyPolicy> WarrantyPolicies { get; set; }
-        public DbSet<Promotion> Promotions { get; set; }
         public DbSet<Combo> Combos { get; set; }
         public DbSet<User> User { get; set; }
         public DbSet<Customer> Customer { get; set; }
@@ -37,6 +36,8 @@ namespace DataAccessLayer.Database
         public DbSet<ComboItem> ComboItem { get; set; }
 
         public DbSet<ProductVariant> ProductVariant { get; set; }
+
+        public DbSet<LensVariant> LensVariant { get; set; }
 
         public DbSet<Notification> Notification { get; set; }
 

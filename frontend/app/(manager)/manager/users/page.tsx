@@ -123,6 +123,7 @@ export default function UsersPage() {
             if (res.ok) {
                 fetchUsers();
                 handleCloseModal();
+
             } else {
                 const text = await res.text();
                 setFormError(text || "Tạo tài khoản thất bại.");
@@ -166,8 +167,9 @@ export default function UsersPage() {
             case "manager":
                 return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200"><Shield size={12} /> Manager</span>;
             case "staff":
+            case "sales":
             default:
-                return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200"><User size={12} /> Staff</span>;
+                return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200"><User size={12} /> Sales</span>;
         }
     };
 
@@ -290,7 +292,7 @@ export default function UsersPage() {
                 </div>
             </div>
 
-            {/* Create Staff Modal */}
+            {/* Create Sales Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
@@ -344,8 +346,12 @@ export default function UsersPage() {
                                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                         className="w-full px-3 py-2 border border-border rounded-lg focus:ring-2 focus:ring-accent/50 focus:border-accent bg-white"
                                     >
-                                        <option value="Staff">Nhân viên bán hàng</option>
-                                        <option value="Customer">Khách hàng</option>
+                                        <option value="Staff">Nhân viên bán hàng (Staff)</option>
+                                        <option value="sales">Sales</option>
+                                        <option value="customer_service">Customer Service</option>
+                                        <option value="manager">Quản lý (Manager)</option>
+                                        <option value="admin">Quản trị viên (Admin)</option>
+                                        <option value="Customer">Khách hàng (Customer)</option>
                                     </select>
                                 </div>
                                 {formError && (

@@ -20,7 +20,7 @@ namespace BusinessLogicLayer.DTOs.Manager
         public string Password { get; set; } = null!;
         public string? FullName { get; set; }
         public string? Phone { get; set; }
-        public string Role { get; set; } = "staff"; // admin, staff, customer_service
+        public string Role { get; set; } = "sales"; // admin, sales, manager, customer_service
         public string? Status { get; set; }
     }
 

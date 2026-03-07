@@ -15,9 +15,9 @@ import {
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
 
-const STAFF_ROLES = ["Staff", "Admin"];
-const isStaffUser = (u: StoredUser | null) =>
-  u?.role != null && STAFF_ROLES.includes(u.role);
+const SALES_ROLES = ["Sales", "Admin"];
+const isSalesUser = (u: StoredUser | null) =>
+  u?.role != null && SALES_ROLES.includes(u.role);
 const isOperationUser = (u: StoredUser | null) => u?.role === "Operation";
 
 const navLinks = [
@@ -26,6 +26,7 @@ const navLinks = [
   { name: "Sunglasses", href: "/products?category=sunglasses" },
   { name: "Optical", href: "/products?category=optical" },
   { name: "Blue-Light", href: "/products?category=blue-light" },
+  { name: "Prescriptions", href: "/prescriptions" },
 ];
 
 export default function Navbar() {
@@ -165,16 +166,16 @@ export default function Navbar() {
                           <Package className="w-4 h-4 text-[#6B7280]" />
                           Đơn hàng của tôi
                         </Link>
-                        {isStaffUser(user) && (
+                        {isSalesUser(user) && (
                           <Link
-                            href="/staff"
+                            href="/sales"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
                           >
                             Khu vực nhân viên
                           </Link>
                         )}
-                        {!isStaffUser(user) && isOperationUser(user) && (
+                        {!isSalesUser(user) && isOperationUser(user) && (
                           <Link
                             href="/operation"
                             onClick={() => setUserMenuOpen(false)}
@@ -265,16 +266,16 @@ export default function Navbar() {
               >
                 Đơn hàng
               </Link>
-              {isStaffUser(user) && (
+              {isSalesUser(user) && (
                 <Link
-                  href="/staff"
+                  href="/sales"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                 >
                   Khu vực nhân viên
                 </Link>
               )}
-              {!isStaffUser(user) && isOperationUser(user) && (
+              {!isSalesUser(user) && isOperationUser(user) && (
                 <Link
                   href="/operation"
                   onClick={() => setMobileMenuOpen(false)}

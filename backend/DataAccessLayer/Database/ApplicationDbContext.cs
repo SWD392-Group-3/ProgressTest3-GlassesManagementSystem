@@ -42,6 +42,8 @@ namespace DataAccessLayer.Database
 
         public DbSet<ProductVariant> ProductVariant { get; set; }
 
+        public DbSet<LensVariant> LensVariant { get; set; }
+
         public DbSet<Notification> Notification { get; set; }
 
         public new DbSet<T> Set<T>()
@@ -82,6 +84,7 @@ namespace DataAccessLayer.Database
             modelBuilder.ApplyConfiguration<Brand>(new BrandConfiguration());
             modelBuilder.ApplyConfiguration<ComboItem>(new ComboItemConfiguration());
             modelBuilder.ApplyConfiguration<ProductVariant>(new ProductVariantConfiguration());
+            modelBuilder.ApplyConfiguration<LensVariant>(new LensVariantConfiguration());
             modelBuilder.ApplyConfiguration<Notification>(new NotificationConfiguration());
         }
 

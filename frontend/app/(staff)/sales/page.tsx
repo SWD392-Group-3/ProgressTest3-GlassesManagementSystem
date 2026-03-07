@@ -7,22 +7,23 @@ import { getUser } from "@/lib/auth-storage";
 const cards = [
   {
     title: "Quản lý đơn hàng",
-    description: "Tra cứu đơn hàng theo mã, xem chi tiết và cập nhật trạng thái đơn.",
-    href: "/staff/orders",
+    description:
+      "Tra cứu đơn hàng theo mã, xem chi tiết và cập nhật trạng thái đơn.",
+    href: "/sales/orders",
     icon: Package,
     accent: "bg-[#D4AF37]/10 text-[#D4AF37]",
   },
   {
     title: "Đổi trả hàng",
     description:
-      "Xử lý yêu cầu hoàn hàng (Staff: phê duyệt/từ chối, Operation: nhận hàng & kiểm tra).",
-    href: "/staff/returns",
+      "Xử lý yêu cầu hoàn hàng (Sales: phê duyệt/từ chối, Operation: nhận hàng & kiểm tra).",
+    href: "/sales/returns",
     icon: RotateCcw,
     accent: "bg-indigo-500/10 text-indigo-600",
   },
 ];
 
-export default function StaffDashboardPage() {
+export default function SalesDashboardPage() {
   const user = getUser();
 
   return (
@@ -83,11 +84,11 @@ export default function StaffDashboardPage() {
             <p className="text-sm text-[#6B7280]">
               {user?.role === "Admin"
                 ? "Quản trị viên: toàn quyền quản lý đơn hàng và hệ thống."
-                  : user?.role === "Staff"
-                    ? "Nhân viên cửa hàng: tra cứu đơn hàng, cập nhật trạng thái, phê duyệt/từ chối đổi trả."
-                    : user?.role === "Operation"
-                      ? "Nhân viên vận hành: nhận hàng hoàn, kiểm tra và cập nhật kết quả."
-                      : "Bạn có quyền truy cập khu vực nhân viên."}
+                : user?.role === "Sales"
+                  ? "Nhân viên cửa hàng: tra cứu đơn hàng, cập nhật trạng thái, phê duyệt/từ chối đổi trả."
+                  : user?.role === "Operation"
+                    ? "Nhân viên vận hành: nhận hàng hoàn, kiểm tra và cập nhật kết quả."
+                    : "Bạn có quyền truy cập khu vực nhân viên."}
             </p>
           </div>
         </div>

@@ -1,4 +1,4 @@
-﻿using BusinessLogicLayer.DTOs.Request;
+using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -55,10 +55,10 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Staff (Saler) xem toàn bộ danh sách Prescription của tất cả khách hàng.
+        /// Sales xem toàn bộ danh sách Prescription của tất cả khách hàng.
         /// </summary>
         [HttpGet("all")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Sales,Admin")]
         public async Task<IActionResult> GetAll()
         {
             var results = await _prescriptionService.GetAllAsync();
@@ -69,7 +69,7 @@ namespace GlassesManagementSystem.Controllers
         /// Lấy chi tiết một đơn Prescription theo ID.
         /// </summary>
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = "Customer,Staff")]
+        [Authorize(Roles = "Customer,Sales,Admin")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _prescriptionService.GetByIdAsync(id);
@@ -100,10 +100,10 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Staff (Saler) duyệt Prescription. Hệ thống sẽ tự động tạo Order tương ứng với Gọng và Tròng đã chọn.
+        /// Sales duyệt Prescription. Hệ thống sẽ tự động tạo Order tương ứng với Gọng và Tròng đã chọn.
         /// </summary>
         [HttpPatch("{id:guid}/confirm")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Sales,Admin")]
         public async Task<IActionResult> Confirm(Guid id, [FromBody] ConfirmPrescriptionRequest request)
         {
             try
@@ -118,10 +118,10 @@ namespace GlassesManagementSystem.Controllers
         }
 
         /// <summary>
-        /// Staff (Saler) từ chối yêu cầu Prescription.
+        /// Sales từ chối yêu cầu Prescription.
         /// </summary>
         [HttpPatch("{id:guid}/reject")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Sales,Admin")]
         public async Task<IActionResult> Reject(Guid id, [FromBody] RejectPrescriptionRequest request)
         {
             try

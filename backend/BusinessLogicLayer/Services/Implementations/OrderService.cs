@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.DTOs.Response;
@@ -81,7 +81,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 ShippingAddress = request.ShippingAddress,
                 ShippingPhone = request.ShippingPhone,
                 OrderItems = new List<OrderItem>(),
-                Note = request.Note
+                Note = request.Note,
             };
 
             foreach (var item in cart.CartItems)
@@ -430,17 +430,24 @@ namespace BusinessLogicLayer.Services.Implementations
             if (order == null)
                 return false;
 
-            // Staff cập nhật theo flow: Paid -> Confirmed -> Shipped -> Delivered
+            // Sales cập nhật theo flow: Paid -> Confirmed -> ProcessingTemplate -> Manufacturing -> Shipped -> Delivered
             var validTransitions = new Dictionary<string, string[]>
             {
                 { "Paid", new[] { "Confirmed" } },
-                { "Confirmed", new[] { "Shipped" } },
-                { "Shipped", new[] { "Delivered" } }
+                { "Confirmed", new[] { "ProcessingTemplate", "Shipped" } },
+                { "ProcessingTemplate", new[] { "Manufacturing" } },
+                { "Manufacturing", new[] { "Shipped" } },
+                { "Shipped", new[] { "Delivered" } },
             };
 
-            if (!validTransitions.ContainsKey(order.Status!) || !validTransitions[order.Status!].Contains(newStatus))
+            if (
+                !validTransitions.ContainsKey(order.Status!)
+                || !validTransitions[order.Status!].Contains(newStatus)
+            )
             {
-                throw new Exception($"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng đúng là: Paid -> Confirmed -> Shipped -> Delivered.");
+                throw new Exception(
+                    $"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng đúng là: Paid -> Confirmed -> ProcessingTemplate -> Manufacturing -> Shipped -> Delivered."
+                );
             }
 
             order.Status = newStatus;
@@ -452,10 +459,13 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> ConfirmOrderAsync(Guid orderId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null) return false;
+            if (order == null)
+                return false;
 
-            if (order.Status != "Pending")
-                throw new Exception("Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Pending'.");
+            if (order.Status != "Pending" && order.Status != "Paid")
+                throw new Exception(
+                    "Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Pending' hoặc 'Paid'."
+                );
 
             order.Status = "Confirmed";
             _orderRepository.Update(order);
@@ -466,14 +476,17 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<bool> RejectOrderAsync(Guid orderId, string? reason)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null) return false;
+            if (order == null)
+                return false;
 
             if (order.Status != "Pending")
                 throw new Exception("Chỉ có thể từ chối đơn hàng đang ở trạng thái 'Pending'.");
 
             order.Status = "Rejected";
             if (!string.IsNullOrEmpty(reason))
-                order.Note = string.IsNullOrEmpty(order.Note) ? reason : $"{order.Note} | Saler rejecting reason: {reason}";
+                order.Note = string.IsNullOrEmpty(order.Note)
+                    ? reason
+                    : $"{order.Note} | Saler rejecting reason: {reason}";
 
             _orderRepository.Update(order);
             await _unitOfWork.SaveChangesAsync();
