@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Search, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, X, AlertTriangle } from "lucide-react";
 
 type WarrantyPolicy = {
     id: string;
@@ -19,12 +19,30 @@ const authHeaders = () => ({
     Authorization: `Bearer ${getToken()}`,
 });
 
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+                <div className="flex items-start gap-3 mb-5">
+                    <div className="p-2 bg-red-100 rounded-full shrink-0"><AlertTriangle size={20} className="text-red-500" /></div>
+                    <p className="text-sm font-medium text-primary leading-relaxed">{message}</p>
+                </div>
+                <div className="flex justify-end gap-3">
+                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Hủy</button>
+                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Xóa</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function PoliciesPage() {
     const [policies, setPolicies] = useState<WarrantyPolicy[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPolicy, setEditingPolicy] = useState<WarrantyPolicy | null>(null);
+    const [deletePolicyId, setDeletePolicyId] = useState<string | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -99,11 +117,11 @@ export default function PoliciesPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this policy?")) return;
+    const handleDelete = async () => {
+        if (!deletePolicyId) return;
 
         try {
-            const res = await fetch(`http://localhost:5000/api/manager/policies/${id}`, {
+            const res = await fetch(`http://localhost:5000/api/manager/policies/${deletePolicyId}`, {
                 method: "DELETE",
                 headers: authHeaders()
             });
@@ -115,6 +133,8 @@ export default function PoliciesPage() {
             }
         } catch (error) {
             console.error("Error deleting policy", error);
+        } finally {
+            setDeletePolicyId(null);
         }
     };
 
@@ -125,6 +145,13 @@ export default function PoliciesPage() {
 
     return (
         <div className="p-8">
+            {deletePolicyId && (
+                <ConfirmModal
+                    message="Bạn có chắc chắn muốn xóa chính sách này?"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeletePolicyId(null)}
+                />
+            )}
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl font-heading font-bold text-primary mb-2">Policy Management</h1>
@@ -204,7 +231,7 @@ export default function PoliciesPage() {
                                                 <Edit2 size={18} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(policy.id)}
+                                                onClick={() => setDeletePolicyId(policy.id)}
                                                 className="text-muted hover:text-red-500 p-1 transition-colors"
                                                 title="Delete"
                                             >
