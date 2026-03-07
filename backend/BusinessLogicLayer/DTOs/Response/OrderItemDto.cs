@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,5 +26,7 @@ namespace BusinessLogicLayer.DTOs.Response
 
         public string? ProductName { get; set; }
         public string? ImageUrl { get; set; }
+        /// <summary>Dành cho item dịch vụ: hiển thị ngày giờ slot, ví dụ "07/03/2025 09:00 - 09:30".</summary>
+        public string? SlotDisplay { get; set; }
     }
 }

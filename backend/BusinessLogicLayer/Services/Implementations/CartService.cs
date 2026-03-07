@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -105,6 +105,19 @@ namespace BusinessLogicLayer.Services.Implementations
                 var service = await _unitOfWork.GetRepository<Service>()
                     .GetByIdAsync(serviceId.Value);
                 unitPrice += service?.Price ?? 0;
+            }
+
+            // Khi chọn dịch vụ kèm slot: kiểm tra slot tồn tại và còn trống
+            if (slotId.HasValue)
+            {
+                var slot = await _unitOfWork.GetRepository<Slot>()
+                    .GetByIdAsync(slotId.Value);
+                if (slot == null)
+                    throw new Exception("Khung giờ không tồn tại.");
+                if (slot.Status != null && slot.Status != "Available")
+                    throw new Exception("Khung giờ này không còn trống. Vui lòng chọn khung giờ khác.");
+                if (slot.Date < DateOnly.FromDateTime(DateTime.UtcNow))
+                    throw new Exception("Không thể đặt khung giờ trong quá khứ.");
             }
 
             var cartItem = new CartItem
