@@ -136,13 +136,15 @@ public class OrderController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật trạng thái đơn hàng (dành cho Operation).
-    /// Các trạng thái hợp lệ: Processing, Shipped, Delivered.
+    /// Cập nhật trạng thái đơn hàng.
+    /// Operation: đơn giao hàng (Shipped, Delivered, ...).
+    /// Sales: đơn dịch vụ có thể chuyển Confirmed → Completed (không qua Operation).
     /// </summary>
     [HttpPatch("{orderId:guid}/status")]
-    [Authorize(Roles = "Operation")]
+    [Authorize(Roles = "Operation,Sales,Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStatus(
         Guid orderId,
@@ -151,6 +153,15 @@ public class OrderController : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
+
+        var order = await _orderService.GetByIdAsync(orderId);
+        if (order == null)
+            return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+        var isServiceOrder =
+            string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone);
+        if (isServiceOrder && User.IsInRole("Operation") && !User.IsInRole("Admin"))
+            return StatusCode(403, new { message = "Đơn dịch vụ chỉ do Sales xác nhận, Operation không xử lý." });
 
         try
         {

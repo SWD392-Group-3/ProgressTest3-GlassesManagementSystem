@@ -208,10 +208,10 @@ export default function SalesOrdersPage() {
                         {fmtDate(order.orderDate)}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
-                        {order.shippingPhone}
+                        {order.shippingPhone ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
-                        {order.shippingAddress}
+                        {order.shippingAddress ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900">
                         {fmt(order.finalAmount ?? order.totalAmount)}

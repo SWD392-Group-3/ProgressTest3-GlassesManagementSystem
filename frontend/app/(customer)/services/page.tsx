@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { getServices, ServiceDto } from "@/lib/api/product";
+import {
+  getServices,
+  getAvailableSlots,
+  ServiceDto,
+  SlotDto,
+} from "@/lib/api/product";
 import { useCart } from "@/lib/CartContext";
 import { getUser } from "@/lib/auth-storage";
 import {
@@ -13,6 +18,9 @@ import {
   CheckCircle2,
   ShoppingBag,
   Sparkles,
+  Calendar,
+  Clock,
+  X,
 } from "lucide-react";
 
 function fmt(amount: number) {
@@ -20,6 +28,16 @@ function fmt(amount: number) {
     style: "currency",
     currency: "VND",
   }).format(amount);
+}
+
+function formatSlotTime(start: string, end: string) {
+  const s = start.slice(0, 5);
+  const e = end.slice(0, 5);
+  return `${s} - ${e}`;
+}
+
+function toDateString(d: Date) {
+  return d.toISOString().slice(0, 10);
 }
 
 // Map service name to a relevant icon / color accent
@@ -37,6 +55,13 @@ export default function ServicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [addedId, setAddedId] = useState<string | null>(null);
+
+  // Book slot modal
+  const [modalService, setModalService] = useState<ServiceDto | null>(null);
+  const [slotDate, setSlotDate] = useState(() => toDateString(new Date()));
+  const [slots, setSlots] = useState<SlotDto[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<SlotDto | null>(null);
 
   const { addItem } = useCart();
   const router = useRouter();
@@ -58,27 +83,86 @@ export default function ServicesPage() {
     load();
   }, []);
 
+  // Khi mở modal hoặc đổi ngày → load slots
+  useEffect(() => {
+    if (!modalService) {
+      setSlots([]);
+      setSelectedSlot(null);
+      return;
+    }
+    const today = toDateString(new Date());
+    if (slotDate < today) {
+      setSlots([]);
+      setSelectedSlot(null);
+      return;
+    }
+    let cancelled = false;
+    setSlotsLoading(true);
+    setSlots([]);
+    setSelectedSlot(null);
+    getAvailableSlots(slotDate)
+      .then((data) => {
+        if (!cancelled) setSlots(data);
+      })
+      .catch(() => {
+        if (!cancelled) setSlots([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSlotsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [modalService, slotDate]);
+
+  function openBookSlotModal(service: ServiceDto) {
+    setModalService(service);
+    setSlotDate(toDateString(new Date()));
+    setSelectedSlot(null);
+  }
+
+  function closeModal() {
+    setModalService(null);
+    setSlots([]);
+    setSelectedSlot(null);
+  }
+
   async function handleAddToCart(service: ServiceDto) {
     const user = getUser();
     if (!user) {
       router.push("/login");
       return;
     }
+    openBookSlotModal(service);
+  }
 
-    setAddingId(service.id);
+  async function confirmBookSlot() {
+    if (!modalService || !selectedSlot) return;
+    const user = getUser();
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setAddingId(modalService.id);
     try {
       await addItem({
-        serviceId: service.id,
+        serviceId: modalService.id,
+        slotId: selectedSlot.id,
         quantity: 1,
       });
-      setAddedId(service.id);
+      setAddedId(modalService.id);
       setTimeout(() => setAddedId(null), 2000);
+      closeModal();
     } catch (e) {
       alert((e as Error).message);
     } finally {
       setAddingId(null);
     }
   }
+
+  const today = toDateString(new Date());
+  const minDate = today;
 
   return (
     <>
@@ -202,6 +286,108 @@ export default function ServicesPage() {
               * Kết quả đo mắt sẽ được nhân viên ghi nhận sau khi bạn hoàn tất
               dịch vụ và có thể xem lại trong trang chi tiết đơn hàng.
             </p>
+          )}
+
+          {/* Book slot modal */}
+          {modalService && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+              onClick={closeModal}
+            >
+              <div
+                className="bg-white rounded-2xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-[#1A1A1A]">
+                      Đặt lịch: {modalService.name}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="p-1 rounded-full hover:bg-gray-100 text-[#6B7280]"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      <Calendar className="w-4 h-4 inline mr-1" />
+                      Chọn ngày
+                    </label>
+                    <input
+                      type="date"
+                      min={minDate}
+                      value={slotDate}
+                      onChange={(e) => setSlotDate(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                    />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-[#374151] mb-2">
+                      <Clock className="w-4 h-4 inline mr-1" />
+                      Chọn khung giờ
+                    </label>
+                    {slotsLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-[#D4AF37]" />
+                      </div>
+                    ) : slots.length === 0 ? (
+                      <p className="text-sm text-[#6B7280] py-4 text-center">
+                        {slotDate < today
+                          ? "Vui lòng chọn ngày hiện tại hoặc tương lai."
+                          : "Không có khung giờ trống trong ngày này. Vui lòng chọn ngày khác."}
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {slots.map((slot) => (
+                          <button
+                            key={slot.id}
+                            type="button"
+                            onClick={() => setSelectedSlot(slot)}
+                            className={`py-2.5 px-3 rounded-lg text-sm font-medium border transition-all ${
+                              selectedSlot?.id === slot.id
+                                ? "bg-[#D4AF37] text-white border-[#D4AF37]"
+                                : "bg-white text-[#374151] border-gray-300 hover:border-[#D4AF37]"
+                            }`}
+                          >
+                            {formatSlotTime(slot.startTime, slot.endTime)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="flex-1 py-2.5 rounded-lg border border-gray-300 text-[#374151] font-medium hover:bg-gray-50"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmBookSlot}
+                      disabled={!selectedSlot || addingId === modalService.id}
+                      className="flex-1 py-2.5 rounded-lg bg-[#1A1A1A] text-white font-medium hover:bg-[#333] disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {addingId === modalService.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          Xác nhận đặt lịch
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </main>

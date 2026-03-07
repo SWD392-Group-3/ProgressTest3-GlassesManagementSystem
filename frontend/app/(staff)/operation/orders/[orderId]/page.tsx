@@ -46,6 +46,13 @@ const REGULAR_NEXT: Record<string, string | null> = {
   Completed: null,
 };
 
+// Luồng cho đơn chỉ dịch vụ (không giao hàng): Confirmed -> Completed
+const SERVICE_STEPS = ["Confirmed", "Completed"];
+const SERVICE_NEXT: Record<string, string | null> = {
+  Confirmed: "Completed",
+  Completed: null,
+};
+
 // Phát hiện đơn prescription: kiểm tra orderItem có lensesVariantId
 // hoặc note bắt đầu bằng "Prescription #" (đặt bởi PrescriptionService.ConfirmAsync)
 function isPrescriptionOrder(order: OrderDto | null): boolean {
@@ -54,6 +61,14 @@ function isPrescriptionOrder(order: OrderDto | null): boolean {
     (item) =>
       item.lensesVariantId != null ||
       (item.note ?? "").startsWith("Prescription #"),
+  );
+}
+
+function isServiceOrder(order: OrderDto | null): boolean {
+  if (!order) return false;
+  return (
+    (order.shippingAddress == null || order.shippingAddress === "") &&
+    (order.shippingPhone == null || order.shippingPhone === "")
   );
 }
 
@@ -161,8 +176,17 @@ export default function OperationOrderProcessingPage() {
 
   // Tự động chọn luồng phù hợp theo loại đơn
   const isPrescription = isPrescriptionOrder(order);
-  const STATUS_STEPS = isPrescription ? PRESCRIPTION_STEPS : REGULAR_STEPS;
-  const NEXT_MAP = isPrescription ? PRESCRIPTION_NEXT : REGULAR_NEXT;
+  const isService = isServiceOrder(order);
+  const STATUS_STEPS = isPrescription
+    ? PRESCRIPTION_STEPS
+    : isService
+      ? SERVICE_STEPS
+      : REGULAR_STEPS;
+  const NEXT_MAP = isPrescription
+    ? PRESCRIPTION_NEXT
+    : isService
+      ? SERVICE_NEXT
+      : REGULAR_NEXT;
 
   const isCancelled = order?.status === "Cancelled";
   const isCompleted = order?.status === "Completed";
@@ -229,12 +253,18 @@ export default function OperationOrderProcessingPage() {
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                isPrescription
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-emerald-100 text-emerald-700"
+                isService
+                  ? "bg-amber-100 text-amber-800"
+                  : isPrescription
+                    ? "bg-indigo-100 text-indigo-700"
+                    : "bg-emerald-100 text-emerald-700"
               }`}
             >
-              {isPrescription ? (
+              {isService ? (
+                <>
+                  <Package className="w-3 h-3" /> Đơn dịch vụ — Sales/Customer xử lý, Operation không thao tác
+                </>
+              ) : isPrescription ? (
                 <>
                   <Wrench className="w-3 h-3" /> Đơn Prescription (Gia công
                   kính)
@@ -246,6 +276,21 @@ export default function OperationOrderProcessingPage() {
               )}
             </span>
           </div>
+
+          {/* Đơn dịch vụ: chỉ xem, không cho cập nhật trạng thái */}
+          {isService && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+              <Package className="w-5 h-5 text-amber-500 shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-amber-800">
+                  Đơn dịch vụ — không cần xử lý bởi Operation
+                </p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Trạng thái do Sales xác nhận và khách hàng hoàn thành. Bạn chỉ có thể xem thông tin.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Progress bar dành cho Operation */}
           {!isCancelled ? (
@@ -322,8 +367,8 @@ export default function OperationOrderProcessingPage() {
             </div>
           )}
 
-          {/* Action: Cập nhật trạng thái ngay lập tức trên đầu */}
-          {!isCancelled && !isCompleted && nextStatus && (
+          {/* Action: Cập nhật trạng thái — ẩn với đơn dịch vụ (Sales xử lý) */}
+          {!isCancelled && !isCompleted && nextStatus && !isService && (
             <div className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent rounded-2xl border border-[#D4AF37]/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-bold text-[#111827]">
@@ -363,13 +408,13 @@ export default function OperationOrderProcessingPage() {
                 <div className="flex px-3 py-2.5 bg-gray-50 rounded-lg">
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0 mr-3" />
                   <span className="text-sm text-gray-800 font-medium">
-                    {order.shippingAddress}
+                    {order.shippingAddress ?? "—"}
                   </span>
                 </div>
                 <div className="flex items-center px-3 py-2.5 bg-gray-50 rounded-lg">
                   <Phone className="w-4 h-4 text-gray-400 shrink-0 mr-3" />
                   <span className="text-sm text-gray-800 font-bold">
-                    {order.shippingPhone}
+                    {order.shippingPhone ?? "—"}
                   </span>
                 </div>
                 <div className="flex items-center px-3 py-2.5 bg-gray-50 rounded-lg">

@@ -56,6 +56,7 @@ const STATUS_STEPS = [
   "Delivered",
   "Completed",
 ];
+const STATUS_STEPS_SERVICE = ["Pending", "Paid", "Confirmed", "Completed"];
 
 const STATUS_LABEL: Record<string, string> = {
   Pending: "Chờ xác nhận",
@@ -177,13 +178,14 @@ export default function OrderDetailPage() {
   }
 
   async function handleComplete() {
-    if (
-      !order ||
-      !confirm(
-        "Bạn xác nhận đã nhận được hàng?\nSau khi xác nhận, đơn hàng sẽ hoàn thành và bạn có thể yêu cầu đổi/trả nếu cần.",
-      )
-    )
-      return;
+    if (!order) return;
+    const isService =
+      (order.shippingAddress == null || order.shippingAddress === "") &&
+      (order.shippingPhone == null || order.shippingPhone === "");
+    const msg = isService
+      ? "Bạn xác nhận đã hoàn thành dịch vụ?\nSau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái Hoàn thành."
+      : "Bạn xác nhận đã nhận được hàng?\nSau khi xác nhận, đơn hàng sẽ hoàn thành và bạn có thể yêu cầu đổi/trả nếu cần.";
+    if (!confirm(msg)) return;
     setCompleteLoading(true);
     try {
       await completeOrder(order.id);
@@ -197,12 +199,19 @@ export default function OrderDetailPage() {
 
   const canCancel = order?.status === "Pending";
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
-  const canComplete = order?.status === "Delivered";
-  const canReturn = order?.status === "Completed";
+  const isServiceOrder =
+    order != null &&
+    (order.shippingAddress == null || order.shippingAddress === "") &&
+    (order.shippingPhone == null || order.shippingPhone === "");
+  const canComplete = isServiceOrder
+    ? order?.status === "Confirmed"
+    : order?.status === "Delivered";
+  const canReturn = order?.status === "Completed" && !isServiceOrder;
   const isCancelled = order?.status === "Cancelled";
+  const steps = isServiceOrder ? STATUS_STEPS_SERVICE : STATUS_STEPS;
   const currentStepIndex = isCancelled
     ? -1
-    : STATUS_STEPS.indexOf(order?.status ?? "");
+    : steps.indexOf(order?.status ?? "");
 
   return (
     <>
@@ -265,7 +274,7 @@ export default function OrderDetailPage() {
               {!isCancelled ? (
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <div className="flex items-center justify-between">
-                    {STATUS_STEPS.map((step, idx) => {
+                    {steps.map((step, idx) => {
                       const done = idx <= currentStepIndex;
                       const active = idx === currentStepIndex;
                       return (
@@ -273,7 +282,7 @@ export default function OrderDetailPage() {
                           key={step}
                           className="flex-1 flex flex-col items-center relative"
                         >
-                          {idx < STATUS_STEPS.length - 1 && (
+                          {idx < steps.length - 1 && (
                             <div
                               className={`absolute top-4 left-1/2 w-full h-0.5 transition-colors ${
                                 idx < currentStepIndex
@@ -313,25 +322,33 @@ export default function OrderDetailPage() {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Shipping info */}
+                {/* Shipping info — ẩn hoặc hiển thị "Đơn dịch vụ" khi không có giao hàng */}
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    Thông tin giao hàng
+                    {order.shippingAddress != null && order.shippingPhone != null
+                      ? "Thông tin giao hàng"
+                      : "Đơn dịch vụ"}
                   </h2>
                   <div className="space-y-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
-                      <span className="text-[#1A1A1A]">
-                        {order.shippingAddress}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-[#6B7280] shrink-0" />
-                      <span className="text-[#1A1A1A]">
-                        {order.shippingPhone}
-                      </span>
-                    </div>
+                    {order.shippingAddress != null && order.shippingPhone != null ? (
+                      <>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
+                          <span className="text-[#1A1A1A]">
+                            {order.shippingAddress}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-[#6B7280] shrink-0" />
+                          <span className="text-[#1A1A1A]">
+                            {order.shippingPhone}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-[#6B7280]">Đơn chỉ gồm dịch vụ đặt lịch — không giao hàng.</p>
+                    )}
                     {order.note && (
                       <div className="flex items-start gap-2">
                         <FileText className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
@@ -381,12 +398,18 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
-              {/* Order items */}
+              {/* Order items — sản phẩm và/hoặc dịch vụ */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    Sản phẩm ({(order.orderItems ?? []).length})
+                    {order.orderItems?.some((i) => i.serviceId) && !order.orderItems?.every((i) => i.serviceId)
+                      ? "Sản phẩm & Dịch vụ"
+                      : order.orderItems?.every((i) => i.serviceId)
+                        ? "Dịch vụ đã đặt"
+                        : "Sản phẩm"}
+                    {" "}
+                    ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
                 <div className="divide-y divide-[#E5E7EB]">
@@ -396,7 +419,6 @@ export default function OrderDetailPage() {
                       className="px-6 py-4 flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3">
-                        {/* Ảnh sản phẩm */}
                         <div className="w-14 h-14 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0 overflow-hidden border border-[#E5E7EB]">
                           {item.imageUrl ? (
                             <Image
@@ -421,12 +443,17 @@ export default function OrderDetailPage() {
                                     ? "Combo"
                                     : "Dịch vụ")}
                           </p>
-                          {(() => {
+                          {item.serviceId && (
+                            <span className="text-xs text-[#6B7280] font-medium">
+                              Dịch vụ
+                              {item.slotDisplay ? ` · ${item.slotDisplay}` : ""}
+                            </span>
+                          )}
+                          {!item.serviceId && (() => {
                             const rawId =
                               item.productVariantId ??
                               item.lensesVariantId ??
-                              item.comboItemId ??
-                              item.serviceId;
+                              item.comboItemId;
                             return rawId ? (
                               <p className="text-xs text-[#6B7280]">
                                 #{rawId.slice(0, 8).toUpperCase()}
@@ -434,7 +461,7 @@ export default function OrderDetailPage() {
                             ) : null;
                           })()}
                           {item.note && (
-                            <p className="text-xs text-[#9CA3AF] italic">
+                            <p className="text-xs text-[#9CA3AF] italic mt-0.5">
                               {item.note}
                             </p>
                           )}
@@ -499,7 +526,9 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        Xác nhận đã nhận hàng
+                        {isServiceOrder
+                          ? "Xác nhận đã hoàn thành dịch vụ"
+                          : "Xác nhận đã nhận hàng"}
                       </>
                     )}
                   </button>

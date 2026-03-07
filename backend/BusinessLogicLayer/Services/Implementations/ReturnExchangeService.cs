@@ -63,6 +63,10 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (order.Status != "Delivered")
                     return (null, "Chỉ có thể hoàn hàng khi đơn hàng đã được giao");
 
+                // Đơn dịch vụ (không giao hàng) không hỗ trợ đổi trả
+                if (string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone))
+                    return (null, "Đơn dịch vụ không hỗ trợ yêu cầu đổi trả.");
+
                 // Lấy tất cả OrderItem thuộc order này để validate
                 var orderItemRepo = _unitOfWork.GetRepository<OrderItem>();
                 var orderItems = await orderItemRepo.FindAsync(

@@ -75,6 +75,9 @@ export const API = {
       `/api/notification/${notificationId}/read`,
     markAllRead: "/api/notification/read-all",
   },
+  slots: {
+    available: (date: string) => `/api/slot/available?date=${date}`,
+  },
 } as const;
 
 export type ApiEndpoint = string;

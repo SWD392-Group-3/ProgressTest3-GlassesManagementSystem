@@ -260,7 +260,7 @@ export default function OrdersPage() {
                           Địa chỉ
                         </p>
                         <p className="text-[#1A1A1A] font-medium truncate">
-                          {order.shippingAddress}
+                          {order.shippingAddress ?? "Đơn dịch vụ"}
                         </p>
                       </div>
                       <div>
