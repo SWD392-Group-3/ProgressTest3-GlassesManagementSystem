@@ -135,6 +135,13 @@ export default function OrderDetailPage() {
     }
   }, [notifications, orderId]);
 
+  // Auto-redirect to /eye-results when ?tab=eye-result is in the URL
+  useEffect(() => {
+    if (searchParams.get("tab") === "eye-result") {
+      router.replace("/eye-results");
+    }
+  }, [searchParams, router]);
+
   async function handlePayMomo() {
     if (!order) return;
     setPayLoading(true);
@@ -448,6 +455,7 @@ export default function OrderDetailPage() {
 
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
+                {" "}
                 {canPay && (
                   <button
                     onClick={handlePayMomo}

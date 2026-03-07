@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import { getUser, clearAuth } from "@/lib/auth-storage";
 import { NotificationProvider } from "@/lib/NotificationContext";
@@ -27,6 +28,7 @@ function isSalesAreaRole(role: string | null): boolean {
 const staffNavItems = [
   { href: "/sales", label: "Tổng quan", icon: LayoutDashboard },
   { href: "/sales/orders", label: "Quản lý đơn hàng", icon: Package },
+  { href: "/sales/eye-results", label: "Kết quả khám mắt", icon: Eye },
   { href: "/sales/prescriptions", label: "Đơn gọng kính", icon: FileText },
   { href: "/sales/returns", label: "Đổi trả hàng", icon: RotateCcw },
 ];
