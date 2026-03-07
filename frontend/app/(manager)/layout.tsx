@@ -5,7 +5,8 @@ import {
   Package, 
   Tag, 
   Users, 
-  LogOut 
+  LogOut,
+  Calendar
 } from "lucide-react";
 
 export default function ManagerLayout({
@@ -29,6 +30,7 @@ export default function ManagerLayout({
           <NavItem href="/manager/policies" icon={<FileText size={20} />} label="Policies" />
           <NavItem href="/manager/products" icon={<Package size={20} />} label="Products" />
           <NavItem href="/manager/promotions-combos" icon={<Tag size={20} />} label="Pricing & Promos" />
+          <NavItem href="/manager/slots" icon={<Calendar size={20} />} label="Slots & Schedule" />
           <NavItem href="/manager/users" icon={<Users size={20} />} label="Users & Sales" />
         </nav>
         

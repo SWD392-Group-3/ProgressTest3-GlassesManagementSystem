@@ -60,6 +60,12 @@ export default function OrderReturnPage() {
       if (data.status !== "Delivered") {
         throw new Error("Chỉ có thể đổi trả cho đơn hàng Đã Giao (Delivered).");
       }
+      const isServiceOrder =
+        (data.shippingAddress == null || data.shippingAddress === "") &&
+        (data.shippingPhone == null || data.shippingPhone === "");
+      if (isServiceOrder) {
+        throw new Error("Đơn dịch vụ không hỗ trợ yêu cầu đổi trả.");
+      }
       setOrder(data);
 
       const initialForm: Record<string, UIItemData> = {};

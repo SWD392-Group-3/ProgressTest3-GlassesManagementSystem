@@ -29,6 +29,19 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Đơn chỉ gồm dịch vụ + slot: không hiển thị giao hàng và mã khuyến mãi
+  const isServiceOnly =
+    cart != null &&
+    cart.cartItems.length > 0 &&
+    cart.cartItems.every(
+      (i) =>
+        i.serviceId &&
+        !i.productId &&
+        !i.productVariantId &&
+        !i.lensesVariantId &&
+        !i.comboItemId
+    );
+
   useEffect(() => {
     if (!user) router.replace("/login");
   }, [user, router]);
@@ -63,9 +76,9 @@ export default function CheckoutPage() {
     try {
       const order = await createOrderFromCart({
         cartId: cart.id,
-        promotionId: promotionId.trim() || null,
-        shippingAddress: shippingAddress.trim(),
-        shippingPhone: shippingPhone.trim(),
+        promotionId: isServiceOnly ? null : (promotionId.trim() || null),
+        shippingAddress: isServiceOnly ? "" : shippingAddress.trim(),
+        shippingPhone: isServiceOnly ? "" : shippingPhone.trim(),
         note: note.trim() || null,
       });
       await fetchCart(); // làm mới giỏ (đã rỗng sau khi đặt)
@@ -105,72 +118,95 @@ export default function CheckoutPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-              {/* Left — Form */}
+              {/* Left — Form (ẩn giao hàng + mã KM khi đơn chỉ gồm dịch vụ + slot) */}
               <div className="lg:col-span-3 space-y-6">
-                {/* Shipping info */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
-                  <h2 className="text-base font-bold text-[#1A1A1A] mb-5">
-                    Thông tin giao hàng
-                  </h2>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
-                        Địa chỉ giao hàng *
-                      </label>
+                {!isServiceOnly && (
+                  <>
+                    {/* Shipping info */}
+                    <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
+                      <h2 className="text-base font-bold text-[#1A1A1A] mb-5">
+                        Thông tin giao hàng
+                      </h2>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
+                            Địa chỉ giao hàng *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={shippingAddress}
+                            onChange={(e) => setShippingAddress(e.target.value)}
+                            placeholder="Số nhà, tên đường, phường, quận, thành phố..."
+                            className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
+                            Số điện thoại *
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            value={shippingPhone}
+                            onChange={(e) => setShippingPhone(e.target.value)}
+                            placeholder="0912 345 678"
+                            className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
+                            Ghi chú (tuỳ chọn)
+                          </label>
+                          <textarea
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            rows={3}
+                            placeholder="Ghi chú cho người giao hàng..."
+                            className="w-full px-4 py-3 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors resize-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Promotion code */}
+                    <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
+                      <h2 className="text-base font-bold text-[#1A1A1A] mb-5 flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-[#D4AF37]" />
+                        Mã khuyến mãi
+                      </h2>
                       <input
                         type="text"
-                        required
-                        value={shippingAddress}
-                        onChange={(e) => setShippingAddress(e.target.value)}
-                        placeholder="Số nhà, tên đường, phường, quận, thành phố..."
+                        value={promotionId}
+                        onChange={(e) => setPromotionId(e.target.value)}
+                        placeholder="Nhập Promotion ID (nếu có)..."
                         className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
                       />
+                      <p className="text-xs text-[#9CA3AF] mt-2">
+                        * Nhập ID của mã giảm giá do admin cung cấp
+                      </p>
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
-                        Số điện thoại *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={shippingPhone}
-                        onChange={(e) => setShippingPhone(e.target.value)}
-                        placeholder="0912 345 678"
-                        className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
-                      />
-                    </div>
-                    <div>
+                  </>
+                )}
+                {isServiceOnly && (
+                  <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
+                    <p className="text-sm text-[#6B7280]">
+                      Đơn của bạn chỉ gồm dịch vụ đặt lịch. Xác nhận để thanh toán — không cần địa chỉ giao hàng hay mã khuyến mãi.
+                    </p>
+                    <div className="mt-4">
                       <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
                         Ghi chú (tuỳ chọn)
                       </label>
                       <textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        rows={3}
-                        placeholder="Ghi chú cho người giao hàng..."
+                        rows={2}
+                        placeholder="Ghi chú..."
                         className="w-full px-4 py-3 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors resize-none"
                       />
                     </div>
                   </div>
-                </div>
-
-                {/* Promotion code */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
-                  <h2 className="text-base font-bold text-[#1A1A1A] mb-5 flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-[#D4AF37]" />
-                    Mã khuyến mãi
-                  </h2>
-                  <input
-                    type="text"
-                    value={promotionId}
-                    onChange={(e) => setPromotionId(e.target.value)}
-                    placeholder="Nhập Promotion ID (nếu có)..."
-                    className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
-                  />
-                  <p className="text-xs text-[#9CA3AF] mt-2">
-                    * Nhập ID của mã giảm giá do admin cung cấp
-                  </p>
-                </div>
+                )}
               </div>
 
               {/* Right — Summary */}
@@ -180,7 +216,19 @@ export default function CheckoutPage() {
                     className="text-base font-bold text-[#1A1A1A] mb-5"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
-                    Đơn hàng ({cart.cartItems.length} sản phẩm)
+                    Đơn hàng (
+                    {isServiceOnly
+                      ? `${cart.cartItems.length} dịch vụ`
+                      : cart.cartItems.every(
+                          (i) =>
+                            i.productId ||
+                            i.productVariantId ||
+                            i.lensesVariantId ||
+                            i.comboItemId
+                        )
+                        ? `${cart.cartItems.length} sản phẩm`
+                        : `${cart.cartItems.length} món`}
+                    )
                   </h2>
 
                   {/* Items */}

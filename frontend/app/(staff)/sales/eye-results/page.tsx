@@ -105,8 +105,8 @@ export default function EyeResultsPage() {
     return orders.filter(
       (o) =>
         o.id.toLowerCase().includes(q) ||
-        o.shippingPhone.includes(q) ||
-        o.shippingAddress.toLowerCase().includes(q),
+        (o.shippingPhone ?? "").includes(q) ||
+        (o.shippingAddress ?? "").toLowerCase().includes(q),
     );
   }, [orders, search]);
 
@@ -235,7 +235,7 @@ export default function EyeResultsPage() {
 
                   {/* Phone */}
                   <p className="text-sm text-[#1A1A1A]">
-                    {order.shippingPhone}
+                    {order.shippingPhone ?? "—"}
                   </p>
 
                   {/* Status */}

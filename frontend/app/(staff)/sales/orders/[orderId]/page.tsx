@@ -20,7 +20,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { getOrderById, confirmOrder, OrderDto } from "@/lib/api/order";
+import { getOrderById, confirmOrder, updateOrderStatus, OrderDto } from "@/lib/api/order";
 import {
   getEyeResultsByOrder,
   createEyeResult,
@@ -31,6 +31,7 @@ import {
 import { getUser } from "@/lib/auth-storage";
 
 const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
+const STATUS_STEPS_SERVICE = ["Pending", "Paid", "Confirmed", "Completed"];
 
 const STATUS_LABEL: Record<string, string> = {
   Pending: "Chờ xác nhận",
@@ -38,6 +39,7 @@ const STATUS_LABEL: Record<string, string> = {
   Confirmed: "Đã xác nhận",
   Shipped: "Đang giao",
   Delivered: "Đã giao",
+  Completed: "Hoàn thành",
   Cancelled: "Đã huỷ",
 };
 
@@ -47,16 +49,24 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   Confirmed: <RefreshCw className="w-4 h-4" />,
   Shipped: <Truck className="w-4 h-4" />,
   Delivered: <CheckCircle2 className="w-4 h-4" />,
+  Completed: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
 };
 
-// Sales chỉ xử lý tới Confirmed, sau đó chuyển cho Operations
+// Sales: đơn giao hàng chỉ chuyển tới Confirmed; đơn dịch vụ có thể chuyển Confirmed -> Completed
 const NEXT_STATUS: Record<string, string | null> = {
   Pending: null,
   Paid: "Confirmed",
   Confirmed: null,
   Shipped: null,
   Delivered: null,
+  Cancelled: null,
+};
+const NEXT_STATUS_SERVICE: Record<string, string | null> = {
+  Pending: null,
+  Paid: "Confirmed",
+  Confirmed: "Completed",
+  Completed: null,
   Cancelled: null,
 };
 
@@ -282,8 +292,11 @@ export default function SalesOrderDetailPage() {
     setSuccessMsg(null);
     setError(null);
     try {
-      // Sales dùng endpoint /confirm riêng (Paid → Confirmed)
-      await confirmOrder(order.id);
+      if (newStatus === "Confirmed") {
+        await confirmOrder(order.id);
+      } else {
+        await updateOrderStatus(order.id, newStatus);
+      }
       setOrder({ ...order, status: newStatus });
       setSuccessMsg(
         `Đã cập nhật trạng thái thành "${STATUS_LABEL[newStatus]}".`,
@@ -296,10 +309,16 @@ export default function SalesOrderDetailPage() {
   }
 
   const isCancelled = order?.status === "Cancelled";
+  const isServiceOrder =
+    order != null &&
+    (order.shippingAddress == null || order.shippingAddress === "") &&
+    (order.shippingPhone == null || order.shippingPhone === "");
+  const steps = isServiceOrder ? STATUS_STEPS_SERVICE : STATUS_STEPS;
+  const nextStatusMap = isServiceOrder ? NEXT_STATUS_SERVICE : NEXT_STATUS;
   const currentStepIndex = isCancelled
     ? -1
-    : STATUS_STEPS.indexOf(order?.status ?? "");
-  const nextStatus = order ? NEXT_STATUS[order.status] : null;
+    : steps.indexOf(order?.status ?? "");
+  const nextStatus = order ? (nextStatusMap[order.status] ?? null) : null;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -390,7 +409,7 @@ export default function SalesOrderDetailPage() {
                     Tiến trình đơn hàng
                   </h2>
                   <div className="flex items-center justify-between">
-                    {STATUS_STEPS.map((step, idx) => {
+                    {steps.map((step, idx) => {
                       const done = idx <= currentStepIndex;
                       const active = idx === currentStepIndex;
                       return (
@@ -398,7 +417,7 @@ export default function SalesOrderDetailPage() {
                           key={step}
                           className="flex-1 flex flex-col items-center relative"
                         >
-                          {idx < STATUS_STEPS.length - 1 && (
+                          {idx < steps.length - 1 && (
                             <div
                               className={`absolute top-4 left-1/2 w-full h-0.5 transition-colors ${
                                 idx < currentStepIndex
@@ -448,13 +467,13 @@ export default function SalesOrderDetailPage() {
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                       <span className="text-gray-700">
-                        {order.shippingAddress}
+                        {order.shippingAddress ?? "—"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-gray-400 shrink-0" />
                       <span className="text-gray-700">
-                        {order.shippingPhone}
+                        {order.shippingPhone ?? "—"}
                       </span>
                     </div>
                     {order.note && (

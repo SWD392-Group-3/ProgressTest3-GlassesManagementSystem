@@ -44,6 +44,13 @@ function fmtDate(dateStr: string) {
   });
 }
 
+function isServiceOrder(o: OrderDto): boolean {
+  return (
+    (o.shippingAddress == null || o.shippingAddress === "") &&
+    (o.shippingPhone == null || o.shippingPhone === "")
+  );
+}
+
 export default function OperationOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -57,12 +64,13 @@ export default function OperationOrdersPage() {
     setError(null);
     try {
       const data = await getOrders();
-      // Operation thường chỉ quan tâm các đơn đã Confirmed trở đi
+      // Operation chỉ xử lý đơn có giao hàng; loại trừ đơn dịch vụ (Sales + Customer xử lý)
       const operationOrders = data.filter(
         (o) =>
           o.status !== "Pending" &&
           o.status !== "Paid" &&
-          o.status !== "Cancelled",
+          o.status !== "Cancelled" &&
+          !isServiceOrder(o),
       );
       setOrders(operationOrders);
     } catch (err: unknown) {
@@ -216,10 +224,10 @@ export default function OperationOrdersPage() {
                         {fmtDate(order.orderDate)}
                       </td>
                       <td className="px-4 py-3 text-gray-700 font-medium">
-                        {order.shippingPhone}
+                        {order.shippingPhone ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
-                        {order.shippingAddress}
+                        {order.shippingAddress ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900">
                         {fmt(order.finalAmount ?? order.totalAmount)}
