@@ -4,18 +4,22 @@ using System.Linq;
 using System.Threading.Tasks;
 using BusinessLogicLayer.DTOs.Manager;
 using BusinessLogicLayer.Services.Interfaces;
+using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BusinessLogicLayer.Services.Implementations
 {
     public class PricingPromotionService : IPricingPromotionService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IApplicationDbContext _dbContext;
 
-        public PricingPromotionService(IUnitOfWork unitOfWork)
+        public PricingPromotionService(IUnitOfWork unitOfWork, IApplicationDbContext dbContext)
         {
             _unitOfWork = unitOfWork;
+            _dbContext = dbContext;
         }
 
         // ─── PROMOTIONS ───────────────────────────────────────────────────────
@@ -134,7 +138,15 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<IEnumerable<ComboDto>> GetAllCombosAsync()
         {
-            var combos = await _unitOfWork.GetRepository<Combo>().GetAllAsync();
+            var combos = await _dbContext.Combos
+                .Include(c => c.ComboItems)
+                    .ThenInclude(ci => ci.ProductVariant)
+                        .ThenInclude(pv => pv.Product)
+                .Include(c => c.ComboItems)
+                    .ThenInclude(ci => ci.LensesVariant)
+                        .ThenInclude(lv => lv.Product)
+                .ToListAsync();
+                
             return combos.Select(MapToComboDto);
         }
 
@@ -187,7 +199,13 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<IEnumerable<ComboItemDto>> GetComboItemsAsync(Guid comboId)
         {
-            var items = await _unitOfWork.GetRepository<ComboItem>().FindAsync(ci => ci.ComboId == comboId);
+            var items = await _dbContext.ComboItem
+                .Include(ci => ci.ProductVariant)
+                    .ThenInclude(pv => pv.Product)
+                .Include(ci => ci.LensesVariant)
+                    .ThenInclude(lv => lv.Product)
+                .Where(ci => ci.ComboId == comboId)
+                .ToListAsync();
             return items.Select(MapToComboItemDto);
         }
 
@@ -249,7 +267,35 @@ namespace BusinessLogicLayer.Services.Implementations
             ComboId = ci.ComboId,
             ProductVariantId = ci.ProductVariantId,
             LensesVariantId = ci.LensesVariantId,
-            Quantity = ci.Quantity
+            Quantity = ci.Quantity,
+            FrameVariant = ci.ProductVariant != null ? new ComboFrameVariantDto
+            {
+                Id = ci.ProductVariant.Id,
+                ProductId = ci.ProductVariant.ProductId,
+                ProductName = ci.ProductVariant.Product?.Name,
+                UnitPrice = ci.ProductVariant.Product?.UnitPrice,
+                ProductImageUrl = ci.ProductVariant.Product?.ImageUrl,
+                Color = ci.ProductVariant.Color,
+                Size = ci.ProductVariant.Size,
+                Material = ci.ProductVariant.Material,
+                Price = ci.ProductVariant.Price,
+                Status = ci.ProductVariant.Status,
+                ImageUrl = ci.ProductVariant.ImageUrl
+            } : null,
+            LensVariant = ci.LensesVariant != null ? new ComboLensVariantDto
+            {
+                Id = ci.LensesVariant.Id,
+                ProductId = ci.LensesVariant.ProductId,
+                ProductName = ci.LensesVariant.Product?.Name,
+                UnitPrice = ci.LensesVariant.Product?.UnitPrice,
+                ProductImageUrl = ci.LensesVariant.Product?.ImageUrl,
+                DoCau = ci.LensesVariant.DoCau,
+                DoTru = ci.LensesVariant.DoTru,
+                ChiSoKhucXa = ci.LensesVariant.ChiSoKhucXa,
+                Price = ci.LensesVariant.Price,
+                Status = ci.LensesVariant.Status,
+                ImageUrl = ci.LensesVariant.ImageUrl
+            } : null
         };
     }
 }

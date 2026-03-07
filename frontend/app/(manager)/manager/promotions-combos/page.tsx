@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
     Plus, Edit2, Trash2, Tag, Percent, Clock, Box,
-    Wrench, X, AlertTriangle, ChevronDown, ChevronUp, Package
+    Wrench, X, AlertTriangle, ChevronDown, ChevronUp, Package, Settings
 } from "lucide-react";
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -16,6 +16,7 @@ const authHeaders = () => ({
 });
 
 const BASE = "http://localhost:5000/api/manager/pricing-promotions";
+const BASE_PRODUCTS = "http://localhost:5000/api/manager/products";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Promotion = {
@@ -144,7 +145,7 @@ function PromotionForm({ initial, onSaved, onClose }: {
                 </Field>
                 <div className="grid grid-cols-2 gap-4">
                     <Field label="Giá trị giảm (VND) *">
-                        <input className={inputCls} required type="number" min="0" step="1000" value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} />
+                        <input className={inputCls} required type="number" min="0" value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} />
                     </Field>
                     <Field label="Trạng thái">
                         <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
@@ -279,7 +280,7 @@ function ServiceForm({ initial, onSaved, onClose }: {
                 </Field>
                 <div className="grid grid-cols-2 gap-4">
                     <Field label="Giá (VND) *">
-                        <input className={inputCls} required type="number" min="0" step="1000" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+                        <input className={inputCls} required type="number" min="0" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
                     </Field>
                     <Field label="Trạng thái">
                         <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
@@ -406,7 +407,7 @@ function ComboForm({ initial, onSaved, onClose }: {
                 </Field>
                 <div className="grid grid-cols-2 gap-4">
                     <Field label="Giá gốc (VND) *">
-                        <input className={inputCls} required type="number" min="0" step="1000" value={form.basePrice} onChange={e => setForm({ ...form, basePrice: e.target.value })} />
+                        <input className={inputCls} required type="number" min="0" value={form.basePrice} onChange={e => setForm({ ...form, basePrice: e.target.value })} />
                     </Field>
                     <Field label="Trạng thái">
                         <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
@@ -435,7 +436,124 @@ function ComboForm({ initial, onSaved, onClose }: {
     );
 }
 
-function ComboCard({ combo, onEdit, onDelete }: { combo: Combo; onEdit: () => void; onDelete: () => void }) {
+function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose: () => void; onRefresh: () => void }) {
+    const [products, setProducts] = useState<any[]>([]);
+    const [loadingProducts, setLoadingProducts] = useState(false);
+    const [itemType, setItemType] = useState<"frame" | "lens">("frame");
+    const [selectedVariantId, setSelectedVariantId] = useState("");
+    const [quantity, setQuantity] = useState(1);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            setLoadingProducts(true);
+            try {
+                const res = await fetch(`${BASE_PRODUCTS}`, { headers: authHeaders() });
+                if (res.ok) setProducts(await res.json());
+            } catch { /* ignore */ } finally {
+                setLoadingProducts(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    const frames = products.flatMap(p => p.productVariants?.map((v: any) => ({ ...v, productName: p.name })) || []);
+    const lenses = products.flatMap(p => p.lensesVariants?.map((v: any) => ({ ...v, productName: p.name })) || []);
+
+    const handleAddItem = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedVariantId) return;
+        setSaving(true);
+        const body = {
+            productVariantId: itemType === "frame" ? selectedVariantId : null,
+            lensesVariantId: itemType === "lens" ? selectedVariantId : null,
+            quantity: quantity
+        };
+        const res = await fetch(`${BASE}/combos/${combo.id}/items`, {
+            method: "POST", headers: authHeaders(), body: JSON.stringify(body)
+        });
+        setSaving(false);
+        if (res.ok) onRefresh();
+        else alert("Lỗi khi thêm: " + await res.text());
+    };
+
+    const handleRemoveItem = async (itemId: string) => {
+        if (!confirm("Bạn có chắc muốn xóa sản phẩm này khỏi combo?")) return;
+        const res = await fetch(`${BASE}/combos/${combo.id}/items/${itemId}`, { method: "DELETE", headers: authHeaders() });
+        if (res.ok) onRefresh();
+        else alert("Lỗi khi xóa: " + await res.text());
+    };
+
+    return (
+        <ModalShell title={`Chi tiết combo: ${combo.name}`} onClose={onClose}>
+            <div className="space-y-6">
+                <div>
+                    <h3 className="font-bold text-primary mb-3">Sản phẩm trong combo ({combo.comboItems.length})</h3>
+                    {combo.comboItems.length === 0 ? (
+                        <p className="text-sm text-muted italic">Chưa có sản phẩm nào.</p>
+                    ) : (
+                        <div className="space-y-2 border border-border rounded-lg p-2 max-h-60 overflow-y-auto">
+                            {combo.comboItems.map((item: any) => (
+                                <div key={item.id} className="flex items-center justify-between p-2 bg-secondary/30 rounded-md">
+                                    <div className="flex items-center gap-3">
+                                        <Package size={16} className="text-muted" />
+                                        <div className="text-sm">
+                                            {item.frameVariant ? (
+                                                <span><span className="font-medium text-primary">[Gọng]</span> {item.frameVariant.productName} {item.frameVariant.color && `(${item.frameVariant.color})`}</span>
+                                            ) : item.lensVariant ? (
+                                                <span><span className="font-medium text-primary">[Tròng]</span> {item.lensVariant.productName}</span>
+                                            ) : "Không xác định"}
+                                            <span className="mx-2 text-xs text-muted">x{item.quantity}</span>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => handleRemoveItem(item.id)} className="text-red-500 p-1 hover:bg-red-50 rounded">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <form onSubmit={handleAddItem} className="bg-secondary/20 p-4 rounded-lg border border-border">
+                    <h3 className="font-bold text-primary mb-3 text-sm">Thêm sản phẩm</h3>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                        <select className={inputCls} value={itemType} onChange={e => { setItemType(e.target.value as any); setSelectedVariantId(""); }}>
+                            <option value="frame">Thêm Gọng kính</option>
+                            <option value="lens">Thêm Tròng kính</option>
+                        </select>
+                        <select className={inputCls} required value={selectedVariantId} onChange={e => setSelectedVariantId(e.target.value)} disabled={loadingProducts}>
+                            <option value="">-- Chọn sản phẩm --</option>
+                            {itemType === "frame" ? (
+                                frames.map(f => (
+                                    <option key={f.id} value={f.id}>{f.productName} {f.color && `- ${f.color}`} ({f.price?.toLocaleString()}đ)</option>
+                                ))
+                            ) : (
+                                lenses.map(l => (
+                                    <option key={l.id} value={l.id}>{l.productName} ({l.price?.toLocaleString()}đ)</option>
+                                ))
+                            )}
+                        </select>
+                    </div>
+                    <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                            <label className="block text-xs font-medium mb-1">Số lượng</label>
+                            <input type="number" min="1" required className={inputCls} value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} />
+                        </div>
+                        <button type="submit" disabled={saving || !selectedVariantId} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-black disabled:opacity-50 h-[38px] flex items-center">
+                            {saving ? "..." : "Thêm vào Combo"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div className="flex justify-end pt-4 mt-2 border-t border-border">
+                <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-black transition-colors">Đóng</button>
+            </div>
+        </ModalShell>
+    );
+}
+
+function ComboCard({ combo, onEdit, onDelete, onManageItems }: { combo: Combo; onEdit: () => void; onDelete: () => void; onManageItems: () => void }) {
     const [expanded, setExpanded] = useState(false);
     return (
         <div className="bg-white rounded-xl border border-border hover:shadow-md transition-shadow group">
@@ -457,12 +575,16 @@ function ComboCard({ combo, onEdit, onDelete }: { combo: Combo; onEdit: () => vo
                 {combo.comboItems.length > 0 && (
                     <button
                         onClick={() => setExpanded(!expanded)}
-                        className="flex items-center gap-1 text-xs text-accent hover:underline"
+                        className="flex items-center gap-1 text-xs text-accent hover:underline mb-2"
                     >
                         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         {combo.comboItems.length} sản phẩm trong combo
                     </button>
                 )}
+
+                <button onClick={onManageItems} className="w-full mt-2 py-1.5 text-sm font-medium border border-border rounded-md text-primary hover:bg-secondary/50 flex items-center justify-center gap-2 transition-colors">
+                    <Settings size={14} /> Quản lý sản phẩm
+                </button>
             </div>
             {expanded && combo.comboItems.length > 0 && (
                 <div className="border-t border-border px-5 pb-4 pt-3 space-y-2">
@@ -498,6 +620,29 @@ function CombosTab({ combos, loading, onRefresh }: { combos: Combo[]; loading: b
     const [editTarget, setEditTarget] = useState<Combo | null>(null);
     const [showCreate, setShowCreate] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<Combo | null>(null);
+    const [manageItemsTarget, setManageItemsTarget] = useState<Combo | null>(null);
+
+    // Refresh combo items dynamically when modified
+    const handleRefreshItems = () => {
+        onRefresh();
+        // Since onRefresh fetches combos list, the selected combo will update soon via props.
+        // We'll trust the parent re-render to update the items in manageItemsTarget,
+        // but since `manageItemsTarget` is a separate state copy, we should update it:
+        if (manageItemsTarget) {
+            const updated = combos.find(c => c.id === manageItemsTarget.id);
+            if (updated) setManageItemsTarget(updated);
+        }
+    };
+
+    // Watch for `combos` updates and sync `manageItemsTarget` to reflect changes immediately
+    useEffect(() => {
+        if (manageItemsTarget) {
+            const updated = combos.find(c => c.id === manageItemsTarget.id);
+            if (updated && JSON.stringify(updated.comboItems) !== JSON.stringify(manageItemsTarget.comboItems)) {
+                setManageItemsTarget(updated);
+            }
+        }
+    }, [combos]);
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
@@ -519,6 +664,13 @@ function CombosTab({ combos, loading, onRefresh }: { combos: Combo[]; loading: b
                     message={`Xóa combo "${deleteTarget.name}"?`}
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteTarget(null)}
+                />
+            )}
+            {manageItemsTarget && (
+                <ComboItemsModal
+                    combo={manageItemsTarget}
+                    onClose={() => setManageItemsTarget(null)}
+                    onRefresh={onRefresh}
                 />
             )}
             <div className="flex justify-end mb-4">
@@ -543,6 +695,7 @@ function CombosTab({ combos, loading, onRefresh }: { combos: Combo[]; loading: b
                             combo={c}
                             onEdit={() => setEditTarget(c)}
                             onDelete={() => setDeleteTarget(c)}
+                            onManageItems={() => setManageItemsTarget(c)}
                         />
                     ))}
                 </div>
@@ -603,8 +756,8 @@ export default function PromotionsPage() {
                         key={t.key}
                         onClick={() => setActiveTab(t.key)}
                         className={`flex items-center gap-2 px-4 pb-3 pt-1 text-sm font-medium transition-colors ${activeTab === t.key
-                                ? "text-accent border-b-2 border-accent"
-                                : "text-muted hover:text-primary"
+                            ? "text-accent border-b-2 border-accent"
+                            : "text-muted hover:text-primary"
                             }`}
                     >
                         {t.icon}{t.label}
