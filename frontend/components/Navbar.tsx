@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
+import NotificationBell from "@/components/NotificationBell";
 
 const SALES_ROLES = ["Sales", "Admin"];
 const isSalesUser = (u: StoredUser | null) =>
@@ -129,6 +130,11 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
+
+            {/* Notification bell — chỉ hiển thị cho Customer */}
+            <div suppressHydrationWarning>
+              {user?.role === "Customer" && <NotificationBell />}
+            </div>
 
             {/* User — suppressHydrationWarning prevents mismatch because
                 user is read from localStorage (null on SSR, set after mount) */}

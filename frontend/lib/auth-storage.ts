@@ -3,6 +3,7 @@ const USER_KEY = "auth_user";
 
 export interface StoredUser {
   userId: string;
+  customerId?: string | null; // Customer.Id — chỉ có khi role = "Customer"
   email: string;
   fullName: string | null;
   role: string | null;

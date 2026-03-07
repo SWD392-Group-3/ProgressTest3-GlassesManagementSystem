@@ -13,12 +13,18 @@ namespace BusinessLogicLayer.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ICustomerRepository _customerRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly JwtSettings _jwtSettings;
 
-    public AuthService(IUserRepository userRepository, IUnitOfWork unitOfWork, IOptions<JwtSettings> jwtSettings)
+    public AuthService(
+        IUserRepository userRepository,
+        ICustomerRepository customerRepository,
+        IUnitOfWork unitOfWork,
+        IOptions<JwtSettings> jwtSettings)
     {
         _userRepository = userRepository;
+        _customerRepository = customerRepository;
         _unitOfWork = unitOfWork;
         _jwtSettings = jwtSettings.Value;
     }
@@ -36,6 +42,14 @@ public class AuthService : IAuthService
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return (null, "Email hoặc mật khẩu không đúng.");
 
+        // Lấy customerId nếu là Customer (dùng cho SignalR notification group)
+        Guid? customerId = null;
+        if (string.Equals(user.Role, "Customer", StringComparison.OrdinalIgnoreCase))
+        {
+            var customer = await _customerRepository.GetByUserIdAsync(user.Id);
+            customerId = customer?.Id;
+        }
+
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
         var token = GenerateJwt(user, expiresAt);
 
@@ -44,6 +58,7 @@ public class AuthService : IAuthService
             Token = token,
             ExpiresAt = expiresAt,
             UserId = user.Id,
+            CustomerId = customerId,
             Email = user.Email,
             FullName = user.FullName,
             Role = user.Role
@@ -80,6 +95,18 @@ public class AuthService : IAuthService
         await _userRepository.AddAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Tạo Customer record mới cho user vừa đăng ký
+        var customer = new Customer
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            FullName = user.FullName ?? email,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+        await _customerRepository.AddAsync(customer, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
         var expiresAt = now.AddMinutes(_jwtSettings.ExpirationMinutes);
         var token = GenerateJwt(user, expiresAt);
 
@@ -88,6 +115,7 @@ public class AuthService : IAuthService
             Token = token,
             ExpiresAt = expiresAt,
             UserId = user.Id,
+            CustomerId = customer.Id,
             Email = user.Email,
             FullName = user.FullName,
             Role = user.Role

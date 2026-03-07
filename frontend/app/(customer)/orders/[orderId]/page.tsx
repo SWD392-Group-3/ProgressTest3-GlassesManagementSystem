@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -24,9 +25,11 @@ import { getUser } from "@/lib/auth-storage";
 import {
   getOrderById,
   cancelOrder,
+  completeOrder,
   createMomoPayment,
   OrderDto,
 } from "@/lib/api";
+import { useNotifications } from "@/lib/NotificationContext";
 
 function fmt(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -45,7 +48,14 @@ function fmtDate(dateStr: string) {
   });
 }
 
-const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
+const STATUS_STEPS = [
+  "Pending",
+  "Paid",
+  "Confirmed",
+  "Shipped",
+  "Delivered",
+  "Completed",
+];
 
 const STATUS_LABEL: Record<string, string> = {
   Pending: "Chờ xác nhận",
@@ -53,6 +63,7 @@ const STATUS_LABEL: Record<string, string> = {
   Confirmed: "Đã xác nhận",
   Shipped: "Đang giao",
   Delivered: "Đã giao",
+  Completed: "Hoàn thành",
   Cancelled: "Đã huỷ",
 };
 
@@ -62,6 +73,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   Confirmed: <RefreshCw className="w-4 h-4" />,
   Shipped: <Truck className="w-4 h-4" />,
   Delivered: <CheckCircle2 className="w-4 h-4" />,
+  Completed: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
 };
 
@@ -76,7 +88,10 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [payLoading, setPayLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [completeLoading, setCompleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { notifications } = useNotifications();
 
   const fetchOrder = useCallback(async () => {
     if (!orderId) return;
@@ -108,6 +123,17 @@ export default function OrderDetailPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentStatus]);
+
+  // Cập nhật status real-time khi nhận thông báo SignalR cho đơn hàng này
+  useEffect(() => {
+    if (notifications.length === 0) return;
+    const latest = notifications[0];
+    if (latest.orderId === orderId && latest.newStatus) {
+      setOrder((prev) =>
+        prev ? { ...prev, status: latest.newStatus! } : prev,
+      );
+    }
+  }, [notifications, orderId]);
 
   async function handlePayMomo() {
     if (!order) return;
@@ -143,8 +169,29 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleComplete() {
+    if (
+      !order ||
+      !confirm(
+        "Bạn xác nhận đã nhận được hàng?\nSau khi xác nhận, đơn hàng sẽ hoàn thành và bạn có thể yêu cầu đổi/trả nếu cần.",
+      )
+    )
+      return;
+    setCompleteLoading(true);
+    try {
+      await completeOrder(order.id);
+      setOrder({ ...order, status: "Completed" });
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setCompleteLoading(false);
+    }
+  }
+
   const canCancel = order?.status === "Pending";
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
+  const canComplete = order?.status === "Delivered";
+  const canReturn = order?.status === "Completed";
   const isCancelled = order?.status === "Cancelled";
   const currentStepIndex = isCancelled
     ? -1
@@ -342,30 +389,43 @@ export default function OrderDetailPage() {
                       className="px-6 py-4 flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0">
-                          <Package className="w-5 h-5 text-[#D4AF37]" />
+                        {/* Ảnh sản phẩm */}
+                        <div className="w-14 h-14 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0 overflow-hidden border border-[#E5E7EB]">
+                          {item.imageUrl ? (
+                            <Image
+                              src={item.imageUrl}
+                              alt={item.productName ?? "Sản phẩm"}
+                              width={56}
+                              height={56}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Package className="w-6 h-6 text-[#D4AF37]" />
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-[#1A1A1A]">
-                            {item.productVariantId
-                              ? "Gọng kính"
-                              : item.lensesVariantId
-                                ? "Tròng kính"
-                                : item.comboItemId
-                                  ? "Combo"
-                                  : "Dịch vụ"}
+                            {item.productName ??
+                              (item.productVariantId
+                                ? "Gọng kính"
+                                : item.lensesVariantId
+                                  ? "Tròng kính"
+                                  : item.comboItemId
+                                    ? "Combo"
+                                    : "Dịch vụ")}
                           </p>
-                          <p className="text-xs text-[#6B7280]">
-                            ID:{" "}
-                            {(
+                          {(() => {
+                            const rawId =
                               item.productVariantId ??
                               item.lensesVariantId ??
                               item.comboItemId ??
-                              item.serviceId ??
-                              "—"
-                            ).slice(0, 8)}
-                            ...
-                          </p>
+                              item.serviceId;
+                            return rawId ? (
+                              <p className="text-xs text-[#6B7280]">
+                                #{rawId.slice(0, 8).toUpperCase()}
+                              </p>
+                            ) : null;
+                          })()}
                           {item.note && (
                             <p className="text-xs text-[#9CA3AF] italic">
                               {item.note}
@@ -420,7 +480,23 @@ export default function OrderDetailPage() {
                     )}
                   </button>
                 )}
-                {order?.status === "Delivered" && (
+                {canComplete && (
+                  <button
+                    onClick={handleComplete}
+                    disabled={completeLoading}
+                    className="flex-1 h-12 rounded-full bg-green-500 text-white font-semibold text-sm hover:bg-green-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {completeLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Xác nhận đã nhận hàng
+                      </>
+                    )}
+                  </button>
+                )}
+                {canReturn && (
                   <Link
                     href={`/orders/${order.id}/return`}
                     className="flex-1 h-12 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] font-semibold text-sm hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"

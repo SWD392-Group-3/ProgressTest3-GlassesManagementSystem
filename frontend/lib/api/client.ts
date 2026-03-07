@@ -31,6 +31,7 @@ export const API = {
     updateStatus: (orderId: string) => `/api/order/${orderId}/status`,
     confirm: (orderId: string) => `/api/order/${orderId}/confirm`,
     cancel: (orderId: string) => `/api/order/${orderId}/cancel`,
+    complete: (orderId: string) => `/api/order/${orderId}/complete`,
   },
   payment: {
     momoCreate: "/api/payment/momo",
@@ -67,6 +68,12 @@ export const API = {
     receive: "/api/ReturnExchange/receive",
     addImages: (id: string) => `/api/ReturnExchange/${id}/images`,
     uploadImages: "/api/ReturnExchange/upload-images",
+  },
+  notification: {
+    getMyNotifications: "/api/notification",
+    markRead: (notificationId: string) =>
+      `/api/notification/${notificationId}/read`,
+    markAllRead: "/api/notification/read-all",
   },
 } as const;
 

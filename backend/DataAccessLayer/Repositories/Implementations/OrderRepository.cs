@@ -26,6 +26,16 @@ namespace DataAccessLayer.Repositories.Implementations
         {
             return await _context
                 .Order.Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(pv => pv!.Product)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.LensesVariant)
+                        .ThenInclude(lv => lv!.Product)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Service)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.ComboItem)
+                        .ThenInclude(ci => ci!.Combo)
                 .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }

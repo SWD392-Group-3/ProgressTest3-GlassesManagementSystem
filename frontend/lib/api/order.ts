@@ -12,6 +12,8 @@ export interface OrderItemDto {
   unitPrice: number;
   totalPrice: number;
   note: string | null;
+  productName: string | null;
+  imageUrl: string | null;
 }
 
 export interface OrderDto {
@@ -92,6 +94,15 @@ export async function confirmOrder(orderId: string): Promise<void> {
   await apiRequest<void>(
     API.order.confirm(orderId),
     { method: "PATCH" },
+    { auth: true },
+  );
+}
+
+/** POST /api/order/{orderId}/complete — Customer xác nhận đã nhận hàng (Delivered → Completed) */
+export async function completeOrder(orderId: string): Promise<void> {
+  await apiRequest<void>(
+    API.order.complete(orderId),
+    { method: "POST" },
     { auth: true },
   );
 }

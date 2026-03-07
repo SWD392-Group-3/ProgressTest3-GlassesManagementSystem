@@ -235,4 +235,33 @@ public class OrderController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Khách hàng xác nhận đã nhận hàng: Delivered → Completed.
+    /// Sau đó mới có thể yêu cầu đổi/trả hàng.
+    /// </summary>
+    [HttpPost("{orderId:guid}/complete")]
+    [Authorize(Roles = "Customer")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Complete(Guid orderId)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr))
+                return Unauthorized();
+
+            var userId = Guid.Parse(userIdStr);
+            var result = await _orderService.CompleteOrderAsync(orderId, userId);
+            if (!result) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            return Ok(new { message = "Đã xác nhận nhận hàng. Cảm ơn bạn!" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

@@ -26,6 +26,7 @@ const PRESCRIPTION_STEPS = [
   "Manufacturing",
   "Shipped",
   "Delivered",
+  "Completed",
 ];
 const PRESCRIPTION_NEXT: Record<string, string | null> = {
   Confirmed: "ProcessingTemplate",
@@ -33,14 +34,16 @@ const PRESCRIPTION_NEXT: Record<string, string | null> = {
   Manufacturing: "Shipped",
   Shipped: "Delivered",
   Delivered: null,
+  Completed: null,
 };
 
 // Luồng cho đơn thông thường (đóng gói & giao hàng)
-const REGULAR_STEPS = ["Confirmed", "Shipped", "Delivered"];
+const REGULAR_STEPS = ["Confirmed", "Shipped", "Delivered", "Completed"];
 const REGULAR_NEXT: Record<string, string | null> = {
   Confirmed: "Shipped",
   Shipped: "Delivered",
   Delivered: null,
+  Completed: null,
 };
 
 // Phát hiện đơn prescription: kiểm tra orderItem có lensesVariantId
@@ -69,6 +72,7 @@ const STATUS_LABEL: Record<string, string> = {
   Manufacturing: "Đang mài kính",
   Shipped: "Đang giao",
   Delivered: "Đã giao",
+  Completed: "Hoàn thành",
   Cancelled: "Đã huỷ",
 };
 
@@ -80,15 +84,9 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   Manufacturing: <Wrench className="w-4 h-4" />,
   Shipped: <Truck className="w-4 h-4" />,
   Delivered: <CheckCircle2 className="w-4 h-4" />,
+  Completed: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
 };
-
-function fmt(amount: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(amount);
-}
 
 function fmtDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("vi-VN", {
@@ -167,9 +165,13 @@ export default function OperationOrderProcessingPage() {
   const NEXT_MAP = isPrescription ? PRESCRIPTION_NEXT : REGULAR_NEXT;
 
   const isCancelled = order?.status === "Cancelled";
-  const currentStepIndex = isCancelled
-    ? -1
-    : STATUS_STEPS.indexOf(order?.status ?? "");
+  const isCompleted = order?.status === "Completed";
+  const currentStepIndex =
+    isCancelled || isCompleted
+      ? isCompleted
+        ? STATUS_STEPS.length - 1
+        : -1
+      : STATUS_STEPS.indexOf(order?.status ?? "");
   const nextStatus = order
     ? (NEXT_MAP[order.status] ?? FALLBACK_NEXT[order.status] ?? null)
     : null;
@@ -271,16 +273,22 @@ export default function OperationOrderProcessingPage() {
                       )}
                       <div
                         className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                          done
-                            ? "bg-[#D4AF37] text-white shadow-md shadow-[#D4AF37]/30"
-                            : "bg-gray-50 text-gray-300 border border-gray-200"
+                          step === "Completed" && done
+                            ? "bg-green-500 text-white shadow-md shadow-green-300"
+                            : done
+                              ? "bg-[#D4AF37] text-white shadow-md shadow-[#D4AF37]/30"
+                              : "bg-gray-50 text-gray-300 border border-gray-200"
                         } ${active ? "ring-4 ring-[#D4AF37]/20 scale-110" : ""}`}
                       >
                         {STATUS_ICON[step]}
                       </div>
                       <p
                         className={`text-xs font-bold mt-3 text-center ${
-                          done ? "text-[#D4AF37]" : "text-gray-400"
+                          step === "Completed" && done
+                            ? "text-green-600"
+                            : done
+                              ? "text-[#D4AF37]"
+                              : "text-gray-400"
                         }`}
                       >
                         {STATUS_LABEL[step]}
@@ -299,8 +307,23 @@ export default function OperationOrderProcessingPage() {
             </div>
           )}
 
+          {/* Banner hoàn thành — khách hàng đã xác nhận nhận hàng */}
+          {isCompleted && (
+            <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-green-700">
+                  Đơn hàng đã hoàn thành
+                </p>
+                <p className="text-xs text-green-600 mt-0.5">
+                  Khách hàng đã xác nhận nhận hàng thành công.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Action: Cập nhật trạng thái ngay lập tức trên đầu */}
-          {!isCancelled && nextStatus && (
+          {!isCancelled && !isCompleted && nextStatus && (
             <div className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent rounded-2xl border border-[#D4AF37]/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-bold text-[#111827]">

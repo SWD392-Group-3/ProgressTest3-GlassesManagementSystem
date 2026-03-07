@@ -4,6 +4,7 @@ export interface LoginResponse {
   token: string;
   expiresAt: string;
   userId: string;
+  customerId?: string | null; // Customer.Id — chỉ có khi role = "Customer"
   email: string;
   fullName: string | null;
   role: string | null;
