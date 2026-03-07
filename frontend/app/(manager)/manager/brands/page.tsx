@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Edit2, Trash2, Search, Layers, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, Layers, X, AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const API = "http://localhost:5000/api/manager/products/brands";
@@ -36,6 +36,23 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
                     </button>
                 </div>
                 <div className="px-6 py-5">{children}</div>
+            </div>
+        </div>
+    );
+}
+
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+                <div className="flex items-start gap-3 mb-5">
+                    <div className="p-2 bg-red-100 rounded-full shrink-0"><AlertTriangle size={20} className="text-red-500" /></div>
+                    <p className="text-sm font-medium text-primary leading-relaxed">{message}</p>
+                </div>
+                <div className="flex justify-end gap-3">
+                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Hủy</button>
+                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Xóa</button>
+                </div>
             </div>
         </div>
     );
@@ -137,6 +154,7 @@ export default function BrandsPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [modalBrand, setModalBrand] = useState<Brand | null | undefined>(undefined); // undefined = closed
+    const [deleteBrandId, setDeleteBrandId] = useState<string | null>(null);
 
     const fetchBrands = useCallback(async () => {
         try {
@@ -152,9 +170,10 @@ export default function BrandsPage() {
 
     useEffect(() => { fetchBrands(); }, [fetchBrands]);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Xóa thương hiệu này?")) return;
-        await fetch(`${API}/${id}`, { method: "DELETE", headers: authHeaders() });
+    const handleDelete = async () => {
+        if (!deleteBrandId) return;
+        await fetch(`${API}/${deleteBrandId}`, { method: "DELETE", headers: authHeaders() });
+        setDeleteBrandId(null);
         fetchBrands();
     };
 
@@ -173,6 +192,14 @@ export default function BrandsPage() {
                     brand={modalBrand ?? undefined}
                     onClose={() => setModalBrand(undefined)}
                     onSaved={fetchBrands}
+                />
+            )}
+
+            {deleteBrandId && (
+                <ConfirmModal
+                    message="Bạn có chắc chắn muốn xóa thương hiệu này?"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteBrandId(null)}
                 />
             )}
 
@@ -256,8 +283,8 @@ export default function BrandsPage() {
                                         <h3 className="font-bold text-primary truncate">{brand.name}</h3>
                                     </div>
                                     <span className={`ml-2 shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${brand.status === "Active"
-                                            ? "bg-green-100 text-green-700"
-                                            : "bg-gray-100 text-gray-500"
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-gray-100 text-gray-500"
                                         }`}>
                                         {brand.status === "Active" ? "Hoạt động" : "Dừng"}
                                     </span>
@@ -278,7 +305,7 @@ export default function BrandsPage() {
                                         <Edit2 size={14} /> Sửa
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(brand.id)}
+                                        onClick={() => setDeleteBrandId(brand.id)}
                                         className="flex items-center gap-1 px-3 py-1.5 text-xs text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                     >
                                         <Trash2 size={14} /> Xóa

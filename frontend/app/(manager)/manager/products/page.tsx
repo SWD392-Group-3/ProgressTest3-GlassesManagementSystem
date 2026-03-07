@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Edit2, Trash2, Search, Package, X, Tag, Layers } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, Package, X, Tag, Layers, AlertTriangle, UploadCloud } from "lucide-react";
 
 const API = "http://localhost:5000/api/manager/products";
 const TOKEN_KEY = "auth_token"; // matches lib/auth-storage.ts
@@ -25,6 +25,8 @@ type Product = {
     imageUrl?: string;
     category?: Category;
     brand?: Brand;
+    productVariants?: any[];
+    lensesVariants?: any[];
 };
 
 type Modal =
@@ -36,7 +38,8 @@ type Modal =
     | { type: "addCategory" }
     | { type: "editCategory"; category: Category }
     | { type: "addBrand" }
-    | { type: "editBrand"; brand: Brand };
+    | { type: "editBrand"; brand: Brand }
+    | { type: "variants"; product: Product };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -48,12 +51,66 @@ const authHeaders = () => ({
     Authorization: `Bearer ${getToken()}`,
 });
 
+const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.8): Promise<File> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                        (blob) => {
+                            if (blob) {
+                                const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                                    type: "image/webp",
+                                    lastModified: Date.now(),
+                                });
+                                resolve(newFile);
+                            } else {
+                                reject(new Error("Chuyển đổi ảnh thất bại"));
+                            }
+                        },
+                        "image/webp",
+                        quality
+                    );
+                } else {
+                    reject(new Error("Lỗi Canvas"));
+                }
+            };
+            img.onerror = (error) => reject(error);
+        };
+        reader.onerror = (error) => reject(error);
+    });
+};
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function ModalShell({ title, onClose, children, maxWidth = "max-w-lg" }: { title: string; onClose: () => void; children: React.ReactNode; maxWidth?: string }) {
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} max-h-[90vh] flex flex-col`}>
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                     <h2 className="text-lg font-bold text-primary">{title}</h2>
                     <button onClick={onClose} className="p-1 rounded hover:bg-secondary transition-colors">
@@ -61,6 +118,23 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
                     </button>
                 </div>
                 <div className="overflow-y-auto flex-1 px-6 py-5">{children}</div>
+            </div>
+        </div>
+    );
+}
+
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6">
+                <div className="flex items-start gap-3 mb-5">
+                    <div className="p-2 bg-red-100 rounded-full shrink-0"><AlertTriangle size={20} className="text-red-500" /></div>
+                    <p className="text-sm font-medium text-primary leading-relaxed">{message}</p>
+                </div>
+                <div className="flex justify-end gap-3">
+                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Hủy</button>
+                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Xóa</button>
+                </div>
             </div>
         </div>
     );
@@ -136,14 +210,47 @@ function ProductFormModal({
     const [policyId, setPolicyId] = useState(p?.warrantyPolicyId ?? "");
     const [status, setStatus] = useState(p?.status ?? "Active");
     const [imageUrl, setImageUrl] = useState(p?.imageUrl ?? "");
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(p?.imageUrl ?? null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            try {
+                const compressed = await compressImage(file);
+                setImageFile(compressed);
+                setImagePreview(URL.createObjectURL(compressed));
+            } catch (err) {
+                console.error("Lỗi nén ảnh:", err);
+                alert("Không thể xử lý hình ảnh này.");
+            }
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
         setError("");
         try {
+            let finalImageUrl = imageUrl;
+
+            if (imageFile) {
+                const formData = new FormData();
+                formData.append("file", imageFile);
+                const uploadRes = await fetch("http://localhost:5000/api/manager/upload/image", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${getToken()}` },
+                    body: formData
+                });
+                if (!uploadRes.ok) {
+                    throw new Error("Lỗi tải ảnh lên server.");
+                }
+                const uploadData = await uploadRes.json();
+                finalImageUrl = uploadData.url;
+            }
+
             const body = {
                 ...(isEdit ? { id: p!.id } : {}),
                 name,
@@ -153,7 +260,7 @@ function ProductFormModal({
                 brandId: brandId || null,
                 warrantyPolicyId: policyId || null,
                 status,
-                imageUrl: imageUrl || null,
+                imageUrl: finalImageUrl || null,
             };
             const res = await fetch(isEdit ? `${API}/${p!.id}` : API, {
                 method: isEdit ? "PUT" : "POST",
@@ -174,32 +281,72 @@ function ProductFormModal({
     };
 
     return (
-        <ModalShell title={isEdit ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"} onClose={onClose}>
+        <ModalShell title={isEdit ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"} onClose={onClose} maxWidth="max-w-4xl">
             <form onSubmit={handleSubmit}>
-                <InputField label="Tên sản phẩm *" id="pname" value={name} onChange={(e) => setName(e.target.value)} required />
-                <TextareaField label="Mô tả" id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
-                <InputField label="Giá (VND) *" id="pprice" type="number" min="0" step="1000" value={price} onChange={(e) => setPrice(e.target.value)} required />
-                <SelectField label="Danh mục" id="pcat" value={catId} onChange={(e) => setCatId(e.target.value)}>
-                    <option value="">-- Chọn danh mục --</option>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </SelectField>
-                <SelectField label="Thương hiệu" id="pbrand" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
-                    <option value="">-- Chọn thương hiệu --</option>
-                    {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </SelectField>
-                <SelectField label="Chính sách bảo hành *" id="ppolicy" value={policyId} onChange={(e) => setPolicyId(e.target.value)} required>
-                    <option value="">-- Chọn chính sách --</option>
-                    {policies.map((pol) => <option key={pol.id} value={pol.id}>{pol.name} ({pol.durationMonths} tháng)</option>)}
-                </SelectField>
-                <SelectField label="Trạng thái" id="pstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                </SelectField>
-                <InputField label="URL hình ảnh" id="pimage" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
+                    {/* Cột 1 */}
+                    <div>
+                        <InputField label="Tên sản phẩm *" id="pname" value={name} onChange={(e) => setName(e.target.value)} required />
+                        <InputField label="Giá (VND) *" id="pprice" type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                        <SelectField label="Trạng thái" id="pstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </SelectField>
+                        <TextareaField label="Mô tả" id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
+                    </div>
+
+                    {/* Cột 2 */}
+                    <div>
+                        <SelectField label="Danh mục" id="pcat" value={catId} onChange={(e) => setCatId(e.target.value)}>
+                            <option value="">-- Chọn danh mục --</option>
+                            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </SelectField>
+                        <SelectField label="Thương hiệu" id="pbrand" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
+                            <option value="">-- Chọn thương hiệu --</option>
+                            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                        </SelectField>
+                        <SelectField label="Chính sách bảo hành *" id="ppolicy" value={policyId} onChange={(e) => setPolicyId(e.target.value)} required>
+                            <option value="">-- Chọn chính sách --</option>
+                            {policies.map((pol) => <option key={pol.id} value={pol.id}>{pol.name} ({pol.durationMonths} tháng)</option>)}
+                        </SelectField>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-primary mb-1">Hình ảnh sản phẩm</label>
+                            <div className="border border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center relative hover:bg-secondary/20 transition-colors h-[180px]">
+                                {imagePreview ? (
+                                    <div className="relative w-full h-full flex items-center justify-center z-10">
+                                        <img src={imagePreview} alt="Preview" className="max-h-full max-w-full object-contain rounded-md" />
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImageFile(null); setImagePreview(null); setImageUrl(""); }}
+                                            className="absolute top-2 right-2 bg-white text-red-500 p-1.5 rounded-full shadow-md hover:bg-red-50 transition-colors z-20"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="py-6 text-center text-muted flex flex-col items-center gap-2">
+                                        <UploadCloud size={32} className="opacity-50" />
+                                        <span className="text-sm font-medium">Nhấn để tải ảnh lên</span>
+                                        <span className="text-xs opacity-70">JPG, PNG, WEBP (Tối đa 5MB)</span>
+                                    </div>
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
+                                    title="Chọn hình ảnh"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
-                <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm">Hủy</button>
-                    <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-black transition-colors text-sm disabled:opacity-60">
+                <div className="flex justify-end gap-3 pt-4 border-t border-border mt-2">
+                    <button type="button" onClick={onClose} className="px-5 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm font-medium">Hủy</button>
+                    <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg bg-primary text-white hover:bg-black transition-colors text-sm font-medium disabled:opacity-60">
                         {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo mới"}
                     </button>
                 </div>
@@ -223,13 +370,23 @@ function CategoryModal({
     openAdd: () => void;
     openEdit: (c: Category) => void;
 }) {
-    const handleDelete = async (id: string) => {
-        if (!confirm("Xóa danh mục này?")) return;
-        await fetch(`${API}/categories/${id}`, { method: "DELETE", headers: authHeaders() });
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    const handleDelete = async () => {
+        if (!deleteId) return;
+        await fetch(`${API}/categories/${deleteId}`, { method: "DELETE", headers: authHeaders() });
+        setDeleteId(null);
         onChanged();
     };
     return (
         <ModalShell title="Quản lý danh mục" onClose={onClose}>
+            {deleteId && (
+                <ConfirmModal
+                    message="Bạn có chắc chắn muốn xóa danh mục này?"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteId(null)}
+                />
+            )}
             <button onClick={openAdd} className="mb-4 flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-sm hover:bg-black transition-colors">
                 <Plus size={16} /> Thêm danh mục
             </button>
@@ -251,7 +408,7 @@ function CategoryModal({
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => openEdit(c)} className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded transition-colors"><Edit2 size={15} /></button>
-                                <button onClick={() => handleDelete(c.id)} className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 size={15} /></button>
+                                <button onClick={() => setDeleteId(c.id)} className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 size={15} /></button>
                             </div>
                         </div>
                     ))}
@@ -334,13 +491,23 @@ function BrandModal({
     openAdd: () => void;
     openEdit: (b: Brand) => void;
 }) {
-    const handleDelete = async (id: string) => {
-        if (!confirm("Xóa thương hiệu này?")) return;
-        await fetch(`${API}/brands/${id}`, { method: "DELETE", headers: authHeaders() });
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+
+    const handleDelete = async () => {
+        if (!deleteId) return;
+        await fetch(`${API}/brands/${deleteId}`, { method: "DELETE", headers: authHeaders() });
+        setDeleteId(null);
         onChanged();
     };
     return (
         <ModalShell title="Quản lý thương hiệu" onClose={onClose}>
+            {deleteId && (
+                <ConfirmModal
+                    message="Bạn có chắc chắn muốn xóa thương hiệu này?"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteId(null)}
+                />
+            )}
             <button onClick={openAdd} className="mb-4 flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-sm hover:bg-black transition-colors">
                 <Plus size={16} /> Thêm thương hiệu
             </button>
@@ -362,7 +529,7 @@ function BrandModal({
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => openEdit(b)} className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded transition-colors"><Edit2 size={15} /></button>
-                                <button onClick={() => handleDelete(b.id)} className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 size={15} /></button>
+                                <button onClick={() => setDeleteId(b.id)} className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 rounded transition-colors"><Trash2 size={15} /></button>
                             </div>
                         </div>
                     ))}
@@ -432,6 +599,183 @@ function BrandFormModal({
     );
 }
 
+// ─── Variants Modal ────────────────────────────────────────────────────────
+function ProductVariantsModal({ product, onClose, onRefresh }: { product: Product; onClose: () => void; onRefresh: () => void }) {
+    const [activeTab, setActiveTab] = useState<"frame" | "lens">("frame");
+    const [frames, setFrames] = useState<any[]>(product.productVariants || []);
+    const [lenses, setLenses] = useState<any[]>(product.lensesVariants || []);
+    const [loading, setLoading] = useState(false);
+
+    // Frame Form State
+    const [fColor, setFColor] = useState("");
+    const [fSize, setFSize] = useState("");
+    const [fMaterial, setFMaterial] = useState("");
+    const [fPrice, setFPrice] = useState("0");
+
+    // Lens Form State
+    const [lDoCau, setLDoCau] = useState("");
+    const [lDoTru, setLDoTru] = useState("");
+    const [lChiSo, setLChiSo] = useState("");
+    const [lPrice, setLPrice] = useState("0");
+
+    const refreshVariants = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/${product.id}`, { headers: authHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                setFrames(data.productVariants || []);
+                setLenses(data.lensesVariants || []);
+            }
+            onRefresh();
+        } catch (e) { console.error(e); }
+        finally { setLoading(false); }
+    };
+
+    const handleAddFrame = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/frame-variants`, {
+                method: "POST", headers: authHeaders(),
+                body: JSON.stringify({
+                    productId: product.id,
+                    color: fColor || null,
+                    size: fSize || null,
+                    material: fMaterial || null,
+                    price: parseFloat(fPrice) || 0,
+                    status: "Active"
+                })
+            });
+            if (res.ok) {
+                setFColor(""); setFSize(""); setFMaterial(""); setFPrice("0");
+                await refreshVariants();
+            } else {
+                alert("Lỗi: " + await res.text());
+            }
+        } finally { setLoading(false); }
+    };
+
+    const handleAddLens = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/lens-variants`, {
+                method: "POST", headers: authHeaders(),
+                body: JSON.stringify({
+                    productId: product.id,
+                    doCau: parseFloat(lDoCau) || null,
+                    doTru: parseFloat(lDoTru) || null,
+                    chiSoKhucXa: parseFloat(lChiSo) || null,
+                    price: parseFloat(lPrice) || 0,
+                    status: "Active"
+                })
+            });
+            if (res.ok) {
+                setLDoCau(""); setLDoTru(""); setLChiSo(""); setLPrice("0");
+                await refreshVariants();
+            } else {
+                alert("Lỗi: " + await res.text());
+            }
+        } finally { setLoading(false); }
+    };
+
+    const handleDeleteFrame = async (id: string) => {
+        if (!confirm("Xóa gọng kính này?")) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/frame-variants/${id}`, { method: "DELETE", headers: authHeaders() });
+            if (res.ok) await refreshVariants();
+            else alert("Lỗi: " + await res.text());
+        } finally { setLoading(false); }
+    };
+
+    const handleDeleteLens = async (id: string) => {
+        if (!confirm("Xóa tròng kính này?")) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`${API}/lens-variants/${id}`, { method: "DELETE", headers: authHeaders() });
+            if (res.ok) await refreshVariants();
+            else alert("Lỗi: " + await res.text());
+        } finally { setLoading(false); }
+    };
+
+    return (
+        <ModalShell title={`Biến thể: ${product.name}`} onClose={onClose} maxWidth="max-w-3xl">
+            <div className="flex gap-2 border-b border-border mb-4">
+                <button
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "frame" ? "border-accent text-accent" : "border-transparent text-muted hover:text-primary"}`}
+                    onClick={() => setActiveTab("frame")}
+                >
+                    Gọng Kính ({frames.length})
+                </button>
+                <button
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "lens" ? "border-accent text-accent" : "border-transparent text-muted hover:text-primary"}`}
+                    onClick={() => setActiveTab("lens")}
+                >
+                    Tròng Kính ({lenses.length})
+                </button>
+            </div>
+
+            {activeTab === "frame" && (
+                <div className="space-y-4">
+                    <form onSubmit={handleAddFrame} className="bg-secondary/30 p-4 rounded-lg border border-border">
+                        <h4 className="font-bold text-sm mb-3">Thêm Gọng Kính</h4>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div><label className="text-xs font-medium block mb-1">Màu sắc</label><input required value={fColor} onChange={e => setFColor(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="VD: Đen" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Kích thước</label><input value={fSize} onChange={e => setFSize(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="VD: M, 52-18-140" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Chất liệu</label><input value={fMaterial} onChange={e => setFMaterial(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="VD: Nhựa dẻo" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Giá cộng thêm (VND)</label><input type="number" required value={fPrice} onChange={e => setFPrice(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" /></div>
+                        </div>
+                        <div className="flex justify-end"><button disabled={loading} className="bg-primary text-white text-xs px-3 py-1.5 rounded disabled:opacity-50">Thêm Gọng</button></div>
+                    </form>
+
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {frames.length === 0 ? <p className="text-xs text-muted text-center py-4">Chưa có gọng kính nào.</p> :
+                            frames.map(f => (
+                                <div key={f.id} className="flex items-center justify-between p-3 border rounded-lg bg-white">
+                                    <div className="text-sm">
+                                        <p className="font-medium">Màu {f.color}</p>
+                                        <p className="text-xs text-muted">Size: {f.size || 'N/A'} • Chất liệu: {f.material || 'N/A'} • Giá: +{f.price?.toLocaleString()}đ</p>
+                                    </div>
+                                    <button onClick={() => handleDeleteFrame(f.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 size={16} /></button>
+                                </div>
+                            ))}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === "lens" && (
+                <div className="space-y-4">
+                    <form onSubmit={handleAddLens} className="bg-secondary/30 p-4 rounded-lg border border-border">
+                        <h4 className="font-bold text-sm mb-3">Thêm Tròng Kính</h4>
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div><label className="text-xs font-medium block mb-1">Độ Cận (Diopter)</label><input type="number" step="0.25" value={lDoCau} onChange={e => setLDoCau(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="-2.00" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Độ Loạn (Cylinder)</label><input type="number" step="0.25" value={lDoTru} onChange={e => setLDoTru(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="-0.50" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Chiết xuất</label><input type="number" step="0.01" value={lChiSo} onChange={e => setLChiSo(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="1.56, 1.60..." /></div>
+                            <div><label className="text-xs font-medium block mb-1">Giá cộng thêm (VND)</label><input type="number" required value={lPrice} onChange={e => setLPrice(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" /></div>
+                        </div>
+                        <div className="flex justify-end"><button disabled={loading} className="bg-primary text-white text-xs px-3 py-1.5 rounded disabled:opacity-50">Thêm Tròng</button></div>
+                    </form>
+
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {lenses.length === 0 ? <p className="text-xs text-muted text-center py-4">Chưa có tròng kính nào.</p> :
+                            lenses.map(l => (
+                                <div key={l.id} className="flex items-center justify-between p-3 border rounded-lg bg-white">
+                                    <div className="text-sm">
+                                        <p className="font-medium">Tròng kính</p>
+                                        <p className="text-xs text-muted">Cận(Cầu): {l.doCau || '0.00'} • Loạn(Trụ): {l.doTru || '0.00'} • CX: {l.chiSoKhucXa || 'N/A'} • Giá: +{l.price?.toLocaleString()}đ</p>
+                                    </div>
+                                    <button onClick={() => handleDeleteLens(l.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 size={16} /></button>
+                                </div>
+                            ))}
+                    </div>
+                </div>
+            )}
+        </ModalShell>
+    );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ProductsPage() {
@@ -443,6 +787,7 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [modal, setModal] = useState<Modal>({ type: "none" });
+    const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -490,14 +835,16 @@ export default function ProductsPage() {
         fetchPolicies();
     }, [fetchProducts, fetchCategories, fetchBrands, fetchPolicies]);
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Xóa sản phẩm này?")) return;
+    const handleDelete = async () => {
+        if (!deleteProductId) return;
         try {
-            const res = await fetch(`${API}/${id}`, { method: "DELETE", headers: authHeaders() });
+            const res = await fetch(`${API}/${deleteProductId}`, { method: "DELETE", headers: authHeaders() });
             if (res.ok) fetchProducts();
             else alert("Xóa thất bại.");
         } catch (e) {
             console.error(e);
+        } finally {
+            setDeleteProductId(null);
         }
     };
 
@@ -520,6 +867,13 @@ export default function ProductsPage() {
                     policies={policies}
                     onClose={closeModal}
                     onSaved={fetchProducts}
+                />
+            )}
+            {deleteProductId && (
+                <ConfirmModal
+                    message="Bạn có chắc chắn muốn xóa sản phẩm này?"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteProductId(null)}
                 />
             )}
             {modal.type === "categories" && (
@@ -552,6 +906,13 @@ export default function ProductsPage() {
                     modal={modal}
                     onClose={() => setModal({ type: "brands" })}
                     onSaved={() => { fetchBrands(); setModal({ type: "brands" }); }}
+                />
+            )}
+            {modal.type === "variants" && (
+                <ProductVariantsModal
+                    product={modal.product}
+                    onClose={closeModal}
+                    onRefresh={fetchProducts}
                 />
             )}
 
@@ -658,6 +1019,12 @@ export default function ProductsPage() {
                                         </div>
                                         <div className="flex gap-2">
                                             <button
+                                                onClick={() => setModal({ type: "variants", product })}
+                                                className="px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded hover:bg-accent/20 transition-colors"
+                                            >
+                                                Cấu hình biến thể
+                                            </button>
+                                            <button
                                                 onClick={() => setModal({ type: "editProduct", product })}
                                                 className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded transition-colors"
                                                 title="Edit"
@@ -665,7 +1032,7 @@ export default function ProductsPage() {
                                                 <Edit2 size={16} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(product.id)}
+                                                onClick={() => setDeleteProductId(product.id)}
                                                 className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                                                 title="Delete"
                                             >
