@@ -90,8 +90,8 @@ builder.Services.AddDataAccess(builder.Configuration);
 
 var app = builder.Build();
 
-// Seed default accounts (Admin / Staff / Manager) on first run
-await app.SeedDefaultAccountsAsync();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
