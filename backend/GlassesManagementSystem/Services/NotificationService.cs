@@ -72,8 +72,8 @@ public class NotificationService : INotificationService
     /// <inheritdoc />
     public async Task SendNewOrderPaidToSalesAsync(Guid orderId, string customerName, decimal totalAmount)
     {
-        var title   = "Đơn hàng mới cần phê duyệt";
-        var message = $"Khách hàng {customerName} vừa đặt đơn hàng {totalAmount:N0}đ. Vui lòng xem xét và phê duyệt.";
+        var title   = "New order pending approval";
+        var message = $"Customer {customerName} just placed an order for {totalAmount:N0} VND. Please review and approve.";
         var linkTo  = $"/sales/orders/{orderId}";
         var now     = DateTime.UtcNow;
 
@@ -112,8 +112,8 @@ public class NotificationService : INotificationService
     public async Task SendPrescriptionRejectedAsync(Guid customerId, Guid prescriptionId, string? reason)
     {
         var message = string.IsNullOrWhiteSpace(reason)
-            ? "Yêu cầu kính đơn của bạn đã bị từ chối."
-            : $"Yêu cầu kính đơn của bạn đã bị từ chối. Lý do: {reason}";
+            ? "Your prescription request has been rejected."
+            : $"Your prescription request has been rejected. Reason: {reason}";
         var linkTo = "/prescriptions";
         var now    = DateTime.UtcNow;
 
@@ -123,7 +123,7 @@ public class NotificationService : INotificationService
         {
             await SaveNotificationAsync(
                 userId.Value,
-                title:   "Yêu cầu kính đơn bị từ chối",
+                title:   "Prescription request rejected",
                 content: message,
                 type:    "prescription_rejected",
                 linkTo:  linkTo,
@@ -143,8 +143,9 @@ public class NotificationService : INotificationService
 
     /// <inheritdoc />
     public async Task SendDeliveryConfirmedToOperationAsync(Guid orderId, string customerName)
-    {        var title   = "Khách hàng đã xác nhận nhận hàng";
-        var message = $"Khách hàng {customerName} đã xác nhận nhận đơn hàng. Đơn hàng đã hoàn thành.";
+    {
+        var title   = "Customer confirmed delivery";
+        var message = $"Customer {customerName} has confirmed receipt. Order completed.";
         var linkTo  = $"/operation/orders/{orderId}";
         var now     = DateTime.UtcNow;
 
@@ -185,8 +186,8 @@ public class NotificationService : INotificationService
     /// <inheritdoc />
     public async Task SendEyeResultReadyAsync(Guid customerId, Guid orderId)
     {
-        const string title   = "Kết quả khám mắt đã sẵn sàng";
-        var          message = "Nhân viên đã ghi nhận kết quả khám mắt cho đơn hàng của bạn. Nhấn để xem chi tiết.";
+        const string title   = "Eye exam results ready";
+        var          message = "Staff has recorded your eye exam results. Tap to view details.";
         var          linkTo  = $"/orders/{orderId}?tab=eye-result";
         var          now     = DateTime.UtcNow;
 
@@ -297,25 +298,27 @@ public class NotificationService : INotificationService
 
     private static string BuildOrderTitle(string status) => status switch
     {
-        "Confirmed"          => "Đơn hàng đã được xác nhận",
-        "ProcessingTemplate" => "Đơn hàng đang chuẩn bị",
-        "Manufacturing"      => "Đơn hàng đang sản xuất",
-        "Shipped"            => "Đơn hàng đang giao",
-        "Delivered"          => "Đơn hàng đã giao thành công",
-        "Cancelled"          => "Đơn hàng đã bị huỷ",
-        "Rejected"           => "Đơn hàng đã bị từ chối",
-        _                    => "Cập nhật đơn hàng"
+        "Confirmed"          => "Order confirmed",
+        "ProcessingTemplate" => "Order in preparation",
+        "Manufacturing"      => "Order in manufacturing",
+        "Shipped"            => "Order shipped",
+        "Delivered"          => "Order delivered",
+        "Cancelled"          => "Order cancelled",
+        "Rejected"           => "Order rejected",
+        "Completed"         => "Order completed",
+        _                    => "Order status updated"
     };
 
     private static string BuildOrderMessage(string status) => status switch
     {
-        "Confirmed"          => "Đơn hàng của bạn đã được xác nhận.",
-        "ProcessingTemplate" => "Đơn hàng đang được chuẩn bị mẫu.",
-        "Manufacturing"      => "Đơn hàng đang được sản xuất.",
-        "Shipped"            => "Đơn hàng đã được giao cho đơn vị vận chuyển.",
-        "Delivered"          => "Đơn hàng đã được giao thành công. Cảm ơn bạn!",
-        "Cancelled"          => "Đơn hàng đã bị huỷ.",
-        "Rejected"           => "Đơn hàng đã bị từ chối.",
-        _                    => $"Trạng thái đơn hàng cập nhật: {status}."
+        "Confirmed"          => "Your order has been confirmed.",
+        "ProcessingTemplate" => "Your order is being prepared.",
+        "Manufacturing"      => "Your order is in manufacturing.",
+        "Shipped"            => "Your order has been shipped.",
+        "Delivered"          => "Your order has been delivered. Thank you!",
+        "Cancelled"          => "Your order has been cancelled.",
+        "Rejected"           => "Your order has been rejected.",
+        "Completed"          => "Your order is completed.",
+        _                    => $"Order status updated: {status}."
     };
 }

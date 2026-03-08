@@ -52,11 +52,17 @@ namespace BusinessLogicLayer.Services.Implementations
 
             if (order.Status != "Pending")
             {
-                throw new Exception("Chỉ có thể huỷ đơn khi đang ở trạng thái Pending.");
+                throw new Exception("Order can only be cancelled when status is Pending.");
             }
 
             order.Status = "Cancelled";
             _orderRepository.Update(order);
+
+            // Load OrderItems để trả slot về Available
+            var orderWithItems = await _orderRepository.GetByIdWithItemsAsync(orderId);
+            if (orderWithItems?.OrderItems != null && orderWithItems.OrderItems.Any())
+                await SetSlotStatusByOrderItemsAsync(orderWithItems.OrderItems.ToList(), "Available");
+
             await _unitOfWork.SaveChangesAsync();
 
             // Thông báo real-time
@@ -69,13 +75,13 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var customer = await _customerRepository.GetByUserIdAsync(userId);
             if (customer == null)
-                throw new Exception("Tài khoản không tồn tại.");
+                throw new Exception("Account not found.");
 
             // FIX 1: Dùng GetCartWithItemsAsync để Include CartItems
             var cart = await _cartRepository.GetCartWithItemsAsync(request.CartId);
             if (cart == null || !cart.CartItems.Any())
             {
-                throw new Exception("Giỏ hàng rỗng.");
+                throw new Exception("Cart is empty.");
             }
 
             // Đơn chỉ dịch vụ + slot: không yêu cầu giao hàng và không áp mã khuyến mãi
@@ -89,9 +95,9 @@ namespace BusinessLogicLayer.Services.Implementations
             if (!isServiceOnlyOrder)
             {
                 if (string.IsNullOrWhiteSpace(request.ShippingAddress))
-                    throw new Exception("Vui lòng nhập địa chỉ giao hàng.");
+                    throw new Exception("Please enter shipping address.");
                 if (string.IsNullOrWhiteSpace(request.ShippingPhone))
-                    throw new Exception("Vui lòng nhập số điện thoại giao hàng.");
+                    throw new Exception("Please enter shipping phone number.");
             }
 
             var order = new Order
@@ -182,10 +188,10 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var customer = await _customerRepository.GetByUserIdAsync(request.CustomerId);
             if (customer == null)
-                throw new Exception("Khách hàng không tồn tại.");
+                throw new Exception("Customer not found.");
 
             if (request.Items == null || !request.Items.Any())
-                throw new Exception("Phải có ít nhất 1 sản phẩm.");
+                throw new Exception("At least one product is required.");
 
             var order = new Order
             {
@@ -211,7 +217,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     && item.ServiceId == null
                 )
                     throw new Exception(
-                        "Mỗi item phải có ít nhất một sản phẩm, tròng kính, combo hoặc dịch vụ."
+                        "Each item must have at least one product, lenses, combo or service."
                     );
 
                 // Tính UnitPrice từ DB
@@ -495,10 +501,10 @@ namespace BusinessLogicLayer.Services.Implementations
             )
             {
                 var flowDesc = isServiceOrder
-                    ? "Đơn dịch vụ: Paid -> Confirmed -> Completed."
-                    : "Đơn giao hàng: Paid -> Confirmed -> ProcessingTemplate -> Manufacturing -> Shipped -> Delivered.";
+                    ? "Service order: Paid -> Confirmed -> Completed."
+                    : "Delivery order: Paid -> Confirmed -> ProcessingTemplate -> Manufacturing -> Shipped -> Delivered.";
                 throw new Exception(
-                    $"Không thể chuyển từ '{order.Status}' sang '{newStatus}'. Luồng: {flowDesc}"
+                    $"Cannot transition from '{order.Status}' to '{newStatus}'. Flow: {flowDesc}"
                 );
             }
 
@@ -513,7 +519,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<bool> ConfirmOrderAsync(Guid orderId)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _orderRepository.GetByIdWithItemsAsync(orderId);
             if (order == null)
                 return false;
 
@@ -522,11 +528,15 @@ namespace BusinessLogicLayer.Services.Implementations
 
             if (order.Status != "Pending" && order.Status != "Paid")
                 throw new Exception(
-                    "Chỉ có thể xác nhận đơn hàng đang ở trạng thái 'Pending' hoặc 'Paid'."
+                    "Order can only be confirmed when status is 'Pending' or 'Paid'."
                 );
 
             order.Status = "Confirmed";
             _orderRepository.Update(order);
+
+            // Cập nhật trạng thái slot thành "Booked" khi staff xác nhận đơn (để dashboard manager hiển thị Đã đặt)
+            await SetSlotStatusByOrderItemsAsync(order.OrderItems.ToList(), "Booked");
+
             await _unitOfWork.SaveChangesAsync();
 
             await _notificationService.SendOrderStatusChangedAsync(order.CustomerId, orderId, "Confirmed");
@@ -536,12 +546,12 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<bool> RejectOrderAsync(Guid orderId, string? reason)
         {
-            var order = await _orderRepository.GetByIdAsync(orderId);
+            var order = await _orderRepository.GetByIdWithItemsAsync(orderId);
             if (order == null)
                 return false;
 
             if (order.Status != "Pending")
-                throw new Exception("Chỉ có thể từ chối đơn hàng đang ở trạng thái 'Pending'.");
+                throw new Exception("Order can only be rejected when status is 'Pending'.");
 
             order.Status = "Rejected";
             if (!string.IsNullOrEmpty(reason))
@@ -550,6 +560,10 @@ namespace BusinessLogicLayer.Services.Implementations
                     : $"{order.Note} | Saler rejecting reason: {reason}";
 
             _orderRepository.Update(order);
+
+            // Trả slot về trống khi từ chối đơn
+            await SetSlotStatusByOrderItemsAsync(order.OrderItems.ToList(), "Available");
+
             await _unitOfWork.SaveChangesAsync();
 
             // Thông báo real-time
@@ -566,29 +580,68 @@ namespace BusinessLogicLayer.Services.Implementations
 
             var customer = await _customerRepository.GetByIdAsync(order.CustomerId);
             if (customer == null || customer.UserId != userId)
-                throw new Exception("Bạn không có quyền xác nhận đơn hàng này.");
+                throw new Exception("You do not have permission to confirm this order.");
 
-            // Đơn dịch vụ: có thể hoàn thành từ Confirmed (sau khi khách đã dùng dịch vụ)
+            // Đơn dịch vụ: có thể hoàn thành từ Confirmed (khách xác nhận) hoặc đã Completed (sales đã đánh dấu → khách xác nhận lại, idempotent)
             var isServiceOrder = string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone);
             if (isServiceOrder)
             {
+                if (order.Status == "Completed")
+                {
+                    // Sales đã chuyển sang Completed; customer gọi để xác nhận lại → thành công không đổi gì
+                    return true;
+                }
                 if (order.Status != "Confirmed")
-                    throw new Exception("Đơn dịch vụ chỉ có thể xác nhận hoàn thành khi đã ở trạng thái 'Đã xác nhận'.");
+                    throw new Exception("Service order can only be confirmed when status is 'Confirmed' or already 'Completed'.");
             }
             else
             {
                 if (order.Status != "Delivered")
-                    throw new Exception("Chỉ có thể xác nhận khi đơn hàng đang ở trạng thái 'Đã giao'.");
+                    throw new Exception("Delivery can only be confirmed when order status is 'Delivered'.");
             }
 
             order.Status = "Completed";
             _orderRepository.Update(order);
+
+            // Đơn dịch vụ: đánh dấu slot đã hoàn thành
+            if (isServiceOrder)
+            {
+                var orderWithItems = await _orderRepository.GetByIdWithItemsAsync(orderId);
+                if (orderWithItems?.OrderItems != null && orderWithItems.OrderItems.Any())
+                    await SetSlotStatusByOrderItemsAsync(orderWithItems.OrderItems.ToList(), "Completed");
+            }
+
             await _unitOfWork.SaveChangesAsync();
 
-            var customerName = customer.FullName ?? "Khách hàng";
+            var customerName = customer.FullName ?? "Customer";
             await _notificationService.SendDeliveryConfirmedToOperationAsync(orderId, customerName);
 
             return true;
+        }
+
+        /// <summary>
+        /// Cập nhật Status của các Slot được tham chiếu bởi OrderItems (SlotId != null).
+        /// Dùng khi xác nhận đơn (Booked), từ chối/hủy (Available), hoàn thành dịch vụ (Completed).
+        /// </summary>
+        private async Task SetSlotStatusByOrderItemsAsync(IEnumerable<OrderItem> orderItems, string slotStatus)
+        {
+            var slotIds = orderItems
+                .Where(oi => oi.SlotId.HasValue)
+                .Select(oi => oi.SlotId!.Value)
+                .Distinct()
+                .ToList();
+            if (slotIds.Count == 0) return;
+
+            var slotRepo = _unitOfWork.GetRepository<Slot>();
+            foreach (var slotId in slotIds)
+            {
+                var slot = await slotRepo.GetByIdAsync(slotId);
+                if (slot != null)
+                {
+                    slot.Status = slotStatus;
+                    slotRepo.Update(slot);
+                }
+            }
         }
     }
 }

@@ -24,7 +24,7 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var requestId = Guid.NewGuid().ToString();
             var orderId = request.OrderId.ToString();
-            var orderInfo = request.OrderInfo ?? $"Thanh toán đơn hàng {orderId}";
+            var orderInfo = request.OrderInfo ?? $"Payment for order {orderId}";
             var amount = request.Amount;
             var extraData = "";
 

@@ -20,7 +20,12 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { getOrderById, confirmOrder, updateOrderStatus, OrderDto } from "@/lib/api/order";
+import {
+  getOrderById,
+  confirmOrder,
+  updateOrderStatus,
+  OrderDto,
+} from "@/lib/api/order";
 import {
   getEyeResultsByOrder,
   createEyeResult,
@@ -34,13 +39,13 @@ const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
 const STATUS_STEPS_SERVICE = ["Pending", "Paid", "Confirmed", "Completed"];
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Đã xác nhận",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Completed: "Hoàn thành",
-  Cancelled: "Đã huỷ",
+  Pending: "Pending",
+  Paid: "Paid",
+  Confirmed: "Confirmed",
+  Shipped: "Shipped",
+  Delivered: "Delivered",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -271,7 +276,7 @@ export default function SalesOrderDetailPage() {
   }
 
   async function handleDeleteEyeResult(id: string) {
-    if (!confirm("Xác nhận xoá kết quả đo mắt này?")) return;
+    if (!confirm("Confirm delete this eye exam result?")) return;
     setEyeError(null);
     try {
       await deleteEyeResult(id);
@@ -284,7 +289,7 @@ export default function SalesOrderDetailPage() {
   async function handleUpdateStatus(newStatus: string) {
     if (!order) return;
     if (
-      !confirm(`Xác nhận chuyển trạng thái sang "${STATUS_LABEL[newStatus]}"?`)
+      !confirm(`Confirm change status to "${STATUS_LABEL[newStatus]}"?`)
     )
       return;
 
@@ -299,7 +304,7 @@ export default function SalesOrderDetailPage() {
       }
       setOrder({ ...order, status: newStatus });
       setSuccessMsg(
-        `Đã cập nhật trạng thái thành "${STATUS_LABEL[newStatus]}".`,
+        `Status updated to "${STATUS_LABEL[newStatus]}".`,
       );
     } catch (e) {
       setError((e as Error).message);
@@ -326,7 +331,7 @@ export default function SalesOrderDetailPage() {
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
-          aria-label="Quay lại"
+          aria-label="Back"
           onClick={() => router.back()}
           className="p-2 rounded-full hover:bg-gray-100 transition-colors"
         >
@@ -334,7 +339,7 @@ export default function SalesOrderDetailPage() {
         </button>
         <div>
           <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-            Chi tiết đơn hàng
+            Order details
           </p>
           <h1 className="text-2xl font-bold text-gray-900">
             #{(orderId ?? "").slice(0, 8).toUpperCase()}
@@ -357,7 +362,7 @@ export default function SalesOrderDetailPage() {
             onClick={fetchOrder}
             className="text-red-600 underline text-xs"
           >
-            Thử lại
+            Retry
           </button>
         </div>
       )}
@@ -372,7 +377,7 @@ export default function SalesOrderDetailPage() {
       {!loading && order && (
         <div className="space-y-5">
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 gap-1">
+              <div className="flex border-b border-gray-200 gap-1">
             <button
               onClick={() => setActiveTab("order")}
               className={`px-4 py-2 text-sm font-semibold rounded-t-lg flex items-center gap-2 transition-colors ${
@@ -382,7 +387,7 @@ export default function SalesOrderDetailPage() {
               }`}
             >
               <Package className="w-4 h-4" />
-              Đơn hàng
+              Order
             </button>
             {hasServiceItems && (
               <button
@@ -394,7 +399,7 @@ export default function SalesOrderDetailPage() {
                 }`}
               >
                 <Eye className="w-4 h-4" />
-                Kết quả khám mắt
+                Eye exam results
               </button>
             )}
           </div>
@@ -406,7 +411,7 @@ export default function SalesOrderDetailPage() {
               {!isCancelled ? (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h2 className="text-sm font-semibold text-gray-700 mb-4">
-                    Tiến trình đơn hàng
+                    Order progress
                   </h2>
                   <div className="flex items-center justify-between">
                     {steps.map((step, idx) => {
@@ -451,7 +456,7 @@ export default function SalesOrderDetailPage() {
                 <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3">
                   <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm font-semibold text-red-600">
-                    Đơn hàng đã bị huỷ
+                    Order has been cancelled
                   </p>
                 </div>
               )}
@@ -461,7 +466,7 @@ export default function SalesOrderDetailPage() {
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    Thông tin giao hàng
+                    Delivery information
                   </h2>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
@@ -496,25 +501,25 @@ export default function SalesOrderDetailPage() {
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-[#D4AF37]" />
-                    Tóm tắt thanh toán
+                    Payment summary
                   </h2>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Tạm tính</span>
+                      <span className="text-gray-500">Subtotal</span>
                       <span className="text-gray-800">
                         {fmt(order.totalAmount)}
                       </span>
                     </div>
                     {order.discountAmount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Giảm giá</span>
+                        <span className="text-gray-500">Discount</span>
                         <span className="text-green-600">
                           - {fmt(order.discountAmount)}
                         </span>
                       </div>
                     )}
                     <div className="border-t border-gray-100 pt-2 flex justify-between font-bold">
-                      <span className="text-gray-800">Tổng cộng</span>
+                      <span className="text-gray-800">Total</span>
                       <span className="text-[#D4AF37] text-base">
                         {fmt(order.finalAmount ?? order.totalAmount)}
                       </span>
@@ -528,13 +533,13 @@ export default function SalesOrderDetailPage() {
                 <div className="px-5 py-3 border-b border-gray-100">
                   <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    Sản phẩm ({(order.orderItems ?? []).length})
+                    Products ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
                 <div className="divide-y divide-gray-100">
                   {(order.orderItems ?? []).length === 0 ? (
                     <p className="px-5 py-4 text-sm text-gray-400">
-                      Không có sản phẩm
+                      No items
                     </p>
                   ) : (
                     (order.orderItems ?? []).map((item) => (
@@ -549,13 +554,13 @@ export default function SalesOrderDetailPage() {
                           <div>
                             <p className="text-sm font-medium text-gray-800">
                               {item.productName ??
-                                (item.productVariantId
-                                  ? "Gọng kính"
+                                (                                item.productVariantId
+                                  ? "Frame"
                                   : item.lensesVariantId
-                                    ? "Tròng kính"
+                                    ? "Lenses"
                                     : item.comboItemId
                                       ? "Combo"
-                                      : "Dịch vụ")}
+                                      : "Service")}
                             </p>
                             {item.note && (
                               <p className="text-xs text-gray-400 italic">
@@ -582,11 +587,11 @@ export default function SalesOrderDetailPage() {
               {!isCancelled && nextStatus && (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h2 className="text-sm font-semibold text-gray-700 mb-3">
-                    Cập nhật trạng thái
+                    Update status
                   </h2>
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="flex-1 text-sm text-gray-500">
-                      Trạng thái hiện tại:{" "}
+                      Current status:{" "}
                       <span className="font-semibold text-gray-800">
                         {STATUS_LABEL[order.status]}
                       </span>
@@ -605,7 +610,7 @@ export default function SalesOrderDetailPage() {
                       ) : (
                         STATUS_ICON[nextStatus]
                       )}
-                      Chuyển sang &ldquo;{STATUS_LABEL[nextStatus]}&rdquo;
+                      Change to &ldquo;{STATUS_LABEL[nextStatus]}&rdquo;
                     </button>
                   </div>
                 </div>
@@ -620,7 +625,7 @@ export default function SalesOrderDetailPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Eye className="w-4 h-4 text-[#D4AF37]" />
-                  Kết quả khám mắt ({eyeResults.length})
+                  Eye exam results ({eyeResults.length})
                 </h2>
                 {!showForm && (
                   <button
@@ -628,7 +633,7 @@ export default function SalesOrderDetailPage() {
                     className="px-3 py-1.5 bg-[#D4AF37] text-white text-xs font-semibold rounded-lg hover:bg-[#C9A030] transition-colors flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Thêm kết quả
+                    Add result
                   </button>
                 )}
               </div>
@@ -648,8 +653,8 @@ export default function SalesOrderDetailPage() {
                     <Eye className="w-4 h-4 text-[#D4AF37]" />
                     <h3 className="text-sm font-bold text-[#1A1A1A]">
                       {editingId
-                        ? "Chỉnh sửa kết quả khám mắt"
-                        : "Ghi kết quả khám mắt"}
+                        ? "Edit eye exam result"
+                        : "Record eye exam result"}
                     </h3>
                   </div>
 
@@ -663,13 +668,13 @@ export default function SalesOrderDetailPage() {
                             L
                           </span>
                           <span className="text-xs font-semibold text-blue-700">
-                            Mắt trái (OS)
+                            Left eye (OS)
                           </span>
                         </div>
                         <div className="p-4 space-y-3">
                           <div>
                             <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                              SPH — Độ cầu
+                              SPH — Sphere
                             </label>
                             <div className="relative">
                               <input
@@ -692,7 +697,7 @@ export default function SalesOrderDetailPage() {
                           </div>
                           <div>
                             <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                              CYL — Độ trụ
+                              CYL — Cylinder
                             </label>
                             <div className="relative">
                               <input
@@ -715,7 +720,7 @@ export default function SalesOrderDetailPage() {
                           </div>
                           <div>
                             <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                              AXIS — Trục
+                              AXIS — Axis
                             </label>
                             <div className="relative">
                               <input
@@ -759,13 +764,13 @@ export default function SalesOrderDetailPage() {
                             R
                           </span>
                           <span className="text-xs font-semibold text-emerald-700">
-                            Mắt phải (OD)
+                            Right eye (OD)
                           </span>
                         </div>
                         <div className="p-4 space-y-3">
                           <div>
                             <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                              SPH — Độ cầu
+                              SPH — Sphere
                             </label>
                             <div className="relative">
                               <input
@@ -791,7 +796,7 @@ export default function SalesOrderDetailPage() {
                           </div>
                           <div>
                             <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                              CYL — Độ trụ
+                              CYL — Cylinder
                             </label>
                             <div className="relative">
                               <input
@@ -817,7 +822,7 @@ export default function SalesOrderDetailPage() {
                           </div>
                           <div>
                             <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                              AXIS — Trục
+                              AXIS — Axis
                             </label>
                             <div className="relative">
                               <input
@@ -857,10 +862,10 @@ export default function SalesOrderDetailPage() {
 
                     {/* Conditions row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                      {/* Độ cận */}
+                      {/* Near vision (CAN) */}
                       <div>
                         <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                          Độ cận (CAN)
+                          Near vision (CAN)
                         </label>
                         <div className="relative">
                           <input
@@ -875,7 +880,7 @@ export default function SalesOrderDetailPage() {
                             className="w-full border border-[#E5E7EB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all pr-12"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#9CA3AF]">
-                            độ
+                            D
                           </span>
                         </div>
                       </div>
@@ -912,7 +917,7 @@ export default function SalesOrderDetailPage() {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-[#1A1A1A]">
-                              Viễn thị
+                              Hyperopia
                             </p>
                             <p className="text-[10px] text-[#9CA3AF]">
                               Hyperopia
@@ -950,7 +955,7 @@ export default function SalesOrderDetailPage() {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-[#1A1A1A]">
-                              Loạn thị
+                              Astigmatism
                             </p>
                             <p className="text-[10px] text-[#9CA3AF]">
                               Astigmatism
@@ -963,11 +968,11 @@ export default function SalesOrderDetailPage() {
                     {/* Note */}
                     <div>
                       <label className="block text-[11px] font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                        Ghi chú / Khuyến nghị
+                        Note / Recommendation
                       </label>
                       <textarea
                         rows={3}
-                        placeholder="Nhập khuyến nghị hoặc ghi chú thêm cho khách hàng..."
+                        placeholder="Enter recommendation or note for customer..."
                         value={form.note}
                         onChange={(e) =>
                           setForm({ ...form, note: e.target.value })
@@ -982,7 +987,7 @@ export default function SalesOrderDetailPage() {
                         onClick={cancelForm}
                         className="px-4 py-2 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
                       >
-                        Huỷ
+                        Cancel
                       </button>
                       <button
                         onClick={handleSaveEyeResult}
@@ -992,7 +997,7 @@ export default function SalesOrderDetailPage() {
                         {formSaving && (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
                         )}
-                        {editingId ? "Lưu thay đổi" : "Lưu kết quả"}
+                        {editingId ? "Save changes" : "Save result"}
                       </button>
                     </div>
                   </div>
@@ -1008,10 +1013,10 @@ export default function SalesOrderDetailPage() {
                 <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
                   <Eye className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm text-gray-400">
-                    Chưa có kết quả đo mắt nào.
+                    No eye exam results yet.
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Nhấn &ldquo;Thêm kết quả&rdquo; để bắt đầu.
+                    Click &ldquo;Add result&rdquo; to start.
                   </p>
                 </div>
               ) : (
@@ -1027,7 +1032,7 @@ export default function SalesOrderDetailPage() {
                         {/* Card header */}
                         <div className="px-5 py-3 border-b border-[#F5F5F5] flex items-center justify-between">
                           <p className="text-xs text-[#6B7280]">
-                            Nhân viên:{" "}
+                            Staff:{" "}
                             <span className="font-semibold text-[#1A1A1A]">
                               {r.staffName ?? "—"}
                             </span>
@@ -1036,14 +1041,14 @@ export default function SalesOrderDetailPage() {
                             <button
                               onClick={() => openEditForm(r)}
                               className="p-1.5 rounded-lg hover:bg-[#F5F5F5] text-[#9CA3AF] hover:text-[#D4AF37] transition-colors"
-                              title="Chỉnh sửa"
+                              title="Edit"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeleteEyeResult(r.id)}
                               className="p-1.5 rounded-lg hover:bg-red-50 text-[#9CA3AF] hover:text-red-500 transition-colors"
-                              title="Xoá"
+                              title="Delete"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1055,15 +1060,15 @@ export default function SalesOrderDetailPage() {
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wide">
-                                <th className="text-left pb-2 w-28">Mắt</th>
+                                <th className="text-left pb-2 w-28">Eye</th>
                                 <th className="text-center pb-2">
-                                  SPH (Độ cầu)
+                                  SPH (Sphere)
                                 </th>
                                 <th className="text-center pb-2">
-                                  CYL (Độ trụ)
+                                  CYL (Cylinder)
                                 </th>
                                 <th className="text-center pb-2">
-                                  AXIS (Trục)
+                                  AXIS (Axis)
                                 </th>
                               </tr>
                             </thead>
@@ -1075,7 +1080,7 @@ export default function SalesOrderDetailPage() {
                                       L
                                     </span>
                                     <span className="text-xs font-semibold text-[#1A1A1A]">
-                                      Trái (OS)
+                                      Left (OS)
                                     </span>
                                   </span>
                                 </td>
@@ -1108,7 +1113,7 @@ export default function SalesOrderDetailPage() {
                                       R
                                     </span>
                                     <span className="text-xs font-semibold text-[#1A1A1A]">
-                                      Phải (OD)
+                                      Right (OD)
                                     </span>
                                   </span>
                                 </td>
@@ -1141,22 +1146,22 @@ export default function SalesOrderDetailPage() {
                           <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-[#F5F5F5]">
                             {r.can != null && (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
-                                Độ cận: {r.can} độ
+                                Near vision: {r.can} D
                               </span>
                             )}
                             {r.vien && (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full">
-                                Viễn thị
+                                Hyperopia
                               </span>
                             )}
                             {r.loan && (
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 text-xs font-semibold rounded-full">
-                                Loạn thị
+                                Astigmatism
                               </span>
                             )}
                             {!r.can && !r.vien && !r.loan && (
                               <span className="text-xs text-[#9CA3AF]">
-                                Không có chỉ định đặc biệt
+                                No special indication
                               </span>
                             )}
                           </div>

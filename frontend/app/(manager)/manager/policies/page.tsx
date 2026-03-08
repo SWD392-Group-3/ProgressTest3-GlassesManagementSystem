@@ -28,8 +28,8 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
                     <p className="text-sm font-medium text-primary leading-relaxed">{message}</p>
                 </div>
                 <div className="flex justify-end gap-3">
-                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Hủy</button>
-                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Xóa</button>
+                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Delete</button>
                 </div>
             </div>
         </div>
@@ -147,7 +147,7 @@ export default function PoliciesPage() {
         <div className="p-8">
             {deletePolicyId && (
                 <ConfirmModal
-                    message="Bạn có chắc chắn muốn xóa chính sách này?"
+                    message="Are you sure you want to delete this policy?"
                     onConfirm={handleDelete}
                     onCancel={() => setDeletePolicyId(null)}
                 />

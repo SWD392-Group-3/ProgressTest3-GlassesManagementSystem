@@ -86,13 +86,13 @@ function ConfirmModal({
             onClick={onCancel}
             className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors"
           >
-            Hủy
+            Cancel
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors"
           >
-            Xóa
+            Delete
           </button>
         </div>
       </div>
@@ -219,7 +219,7 @@ function SlotFormModal({
       onSaved();
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Lỗi không xác định");
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setSaving(false);
     }
@@ -227,12 +227,12 @@ function SlotFormModal({
 
   return (
     <ModalShell
-      title={isEdit ? "Sửa khung giờ" : "Thêm khung giờ mới"}
+      title={isEdit ? "Edit time slot" : "Add new time slot"}
       onClose={onClose}
     >
       <form onSubmit={handleSubmit}>
         <InputField
-          label="Ngày *"
+          label="Date *"
           id="slot-date"
           type="date"
           value={date}
@@ -241,7 +241,7 @@ function SlotFormModal({
         />
         <div className="grid grid-cols-2 gap-4 mb-4">
           <InputField
-            label="Giờ bắt đầu *"
+            label="Start time *"
             id="slot-start"
             type="time"
             value={startTime}
@@ -249,7 +249,7 @@ function SlotFormModal({
             required
           />
           <InputField
-            label="Giờ kết thúc *"
+            label="End time *"
             id="slot-end"
             type="time"
             value={endTime}
@@ -258,18 +258,18 @@ function SlotFormModal({
           />
         </div>
         <SelectField
-          label="Trạng thái"
+          label="Status"
           id="slot-status"
           value={status}
           onChange={(e) => setStatus(e.target.value)}
         >
-          <option value="Available">Trống</option>
-          <option value="Booked">Đã đặt</option>
-          <option value="Completed">Hoàn thành</option>
-          <option value="Cancelled">Đã hủy</option>
+          <option value="Available">Available</option>
+          <option value="Booked">Booked</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
         </SelectField>
         <TextareaField
-          label="Ghi chú"
+          label="Note"
           id="slot-note"
           value={note}
           onChange={(e) => setNote(e.target.value)}
@@ -281,14 +281,14 @@ function SlotFormModal({
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm"
           >
-            Hủy
+            Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
             className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-black transition-colors text-sm disabled:opacity-60"
           >
-            {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo mới"}
+            {saving ? "Saving..." : isEdit ? "Update" : "Create"}
           </button>
         </div>
       </form>
@@ -343,7 +343,7 @@ export default function SlotsPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as { message?: string }).message || "Không thể xóa.");
+        throw new Error((data as { message?: string }).message || "Could not delete.");
       }
       setDeleteSlotId(null);
       fetchSlots();
@@ -370,7 +370,7 @@ export default function SlotsPage() {
 
       {deleteSlotId && (
         <ConfirmModal
-          message="Bạn có chắc chắn muốn xóa khung giờ này?"
+          message="Are you sure you want to delete this time slot?"
           onConfirm={handleDelete}
           onCancel={() => setDeleteSlotId(null)}
         />
@@ -388,29 +388,29 @@ export default function SlotsPage() {
               </button>
               <span className="text-muted">/</span>
               <span className="text-sm font-medium text-primary">
-                Khung giờ đặt lịch
+                Schedule slots
               </span>
             </div>
             <h1 className="text-3xl font-heading font-bold text-primary mb-2">
-              Quản lý khung giờ (Slots)
+              Slot management
             </h1>
             <p className="text-muted">
-              Tạo và quản lý các khung giờ để khách đặt lịch dịch vụ.
+              Create and manage time slots for customers to book services.
             </p>
           </div>
           <button
             onClick={() => setModalSlot(null)}
             className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md hover:bg-black transition-colors"
           >
-            <Plus size={18} /> Thêm khung giờ
+            <Plus size={18} /> Add slot
           </button>
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { label: "Tổng slot", value: slots.length, color: "text-primary" },
-            { label: "Trống", value: availableCount, color: "text-green-600" },
-            { label: "Đã đặt", value: bookedCount, color: "text-amber-600" },
+            { label: "Total slots", value: slots.length, color: "text-primary" },
+            { label: "Available", value: availableCount, color: "text-green-600" },
+            { label: "Booked", value: bookedCount, color: "text-amber-600" },
           ].map((s) => (
             <div
               key={s.label}
@@ -424,7 +424,7 @@ export default function SlotsPage() {
 
         <div className="bg-white p-4 rounded-xl border border-border mb-6 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-primary">Từ ngày</label>
+            <label className="text-sm font-medium text-primary">From date</label>
             <input
               type="date"
               value={dateFrom}
@@ -433,7 +433,7 @@ export default function SlotsPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-primary">Đến ngày</label>
+            <label className="text-sm font-medium text-primary">To date</label>
             <input
               type="date"
               value={dateTo}
@@ -446,17 +446,17 @@ export default function SlotsPage() {
         <div className="bg-white rounded-xl border border-border overflow-hidden">
           {loading ? (
             <div className="p-12 text-center text-muted">
-              Đang tải...
+              Loading...
             </div>
           ) : slots.length === 0 ? (
             <div className="py-16 text-center text-muted">
               <Calendar size={40} className="mx-auto mb-3 opacity-20" />
-              <p className="text-base mb-3">Chưa có khung giờ nào trong khoảng ngày đã chọn.</p>
+              <p className="text-base mb-3">No slots in the selected date range.</p>
               <button
                 onClick={() => setModalSlot(null)}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-black transition-colors text-sm"
               >
-                <Plus size={16} /> Thêm khung giờ đầu tiên
+                <Plus size={16} /> Add first slot
               </button>
             </div>
           ) : (
@@ -464,19 +464,19 @@ export default function SlotsPage() {
               <thead className="bg-secondary/50 border-b border-border">
                 <tr>
                   <th className="text-left py-3 px-4 font-medium text-primary">
-                    Ngày
+                    Date
                   </th>
                   <th className="text-left py-3 px-4 font-medium text-primary">
-                    Giờ bắt đầu
+                    Start time
                   </th>
                   <th className="text-left py-3 px-4 font-medium text-primary">
-                    Giờ kết thúc
+                    End time
                   </th>
                   <th className="text-left py-3 px-4 font-medium text-primary">
-                    Trạng thái
+                    Status
                   </th>
                   <th className="text-left py-3 px-4 font-medium text-primary">
-                    Ghi chú
+                    Note
                   </th>
                   <th className="w-24 py-3 px-4" />
                 </tr>
@@ -506,9 +506,9 @@ export default function SlotsPage() {
                         }`}
                       >
                         {s.status === "Available" || !s.status
-                          ? "Trống"
+                          ? "Available"
                           : s.status === "Booked"
-                            ? "Đã đặt"
+                            ? "Booked"
                             : s.status || "—"}
                       </span>
                     </td>
@@ -520,14 +520,14 @@ export default function SlotsPage() {
                         <button
                           onClick={() => setModalSlot(s)}
                           className="p-1.5 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-colors"
-                          title="Sửa"
+                          title="Edit"
                         >
                           <Edit2 size={14} />
                         </button>
                         <button
                           onClick={() => setDeleteSlotId(s.id)}
                           className="p-1.5 text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
+                          title="Delete"
                         >
                           <Trash2 size={14} />
                         </button>

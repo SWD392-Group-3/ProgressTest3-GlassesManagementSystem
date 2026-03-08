@@ -8,11 +8,11 @@ import { useNotifications, OrderNotification } from "@/lib/NotificationContext";
 function timeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "Vừa xong";
-  if (minutes < 60) return `${minutes} phút trước`;
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} giờ trước`;
-  return `${Math.floor(hours / 24)} ngày trước`;
+  if (hours < 24) return `${hours} hours ago`;
+  return `${Math.floor(hours / 24)} days ago`;
 }
 
 function statusColor(status?: string): string {
@@ -130,7 +130,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-        aria-label="Thông báo"
+        aria-label="Notifications"
       >
         <Icon className="w-5 h-5 text-gray-700" />
         {count > 0 && (
@@ -145,10 +145,10 @@ export default function NotificationBell({ mode = "customer" }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800 text-sm">
               {isOperation
-                ? "Xác nhận nhận hàng"
+                ? "Confirm delivery"
                 : isSales
-                  ? "Đơn hàng mới"
-                  : "Thông báo"}
+                  ? "New orders"
+                  : "Notifications"}
             </span>
             <div className="flex items-center gap-2">
               {count > 0 && (
@@ -157,14 +157,14 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  Đánh dấu đã đọc
+                  Mark all read
                 </button>
               )}
               {items.length > 0 && (
                 <button
                   onClick={onClear}
                   className="text-xs text-gray-400 hover:text-red-500"
-                  title="Xóa tất cả"
+                  title="Clear all"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -176,7 +176,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
                 <Bell className="w-8 h-8 opacity-30" />
-                <span className="text-sm">Chưa có thông báo</span>
+                <span className="text-sm">No notifications</span>
               </div>
             ) : (
               items.map((n) => (

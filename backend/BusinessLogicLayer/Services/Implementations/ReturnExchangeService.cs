@@ -47,25 +47,25 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 var customer = await _customerRepository.GetByUserIdAsync(userId);
                 if (customer == null)
-                    return (null, "Tài khoản không tồn tại.");
+                    return (null, "Account not found.");
 
                 // Validate order exists and belongs to customer
                 var orderRepo = _unitOfWork.GetRepository<Order>();
                 var order = await orderRepo.GetByIdAsync(request.OrderId, cancellationToken);
 
                 if (order == null)
-                    return (null, "Đơn hàng không tồn tại");
+                    return (null, "Order not found.");
 
                 if (order.CustomerId != customer.Id)
-                    return (null, "Đơn hàng không thuộc về khách hàng này");
+                    return (null, "This order does not belong to this customer.");
 
                 // Chỉ được hoàn hàng khi đơn đã giao
                 if (order.Status != "Delivered")
-                    return (null, "Chỉ có thể hoàn hàng khi đơn hàng đã được giao");
+                    return (null, "Return is only allowed when the order has been delivered.");
 
                 // Đơn dịch vụ (không giao hàng) không hỗ trợ đổi trả
                 if (string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone))
-                    return (null, "Đơn dịch vụ không hỗ trợ yêu cầu đổi trả.");
+                    return (null, "Service orders do not support return or exchange requests.");
 
                 // Lấy tất cả OrderItem thuộc order này để validate
                 var orderItemRepo = _unitOfWork.GetRepository<OrderItem>();
@@ -79,15 +79,15 @@ namespace BusinessLogicLayer.Services.Implementations
                 foreach (var item in request.Items)
                 {
                     if (!orderItemDict.TryGetValue(item.OrderItemId, out var orderItem))
-                        return (null, $"Sản phẩm {item.OrderItemId} không thuộc đơn hàng này");
+                        return (null, $"Item {item.OrderItemId} does not belong to this order.");
 
                     if (item.Quantity <= 0)
-                        return (null, $"Số lượng hoàn phải lớn hơn 0");
+                        return (null, "Return quantity must be greater than 0.");
 
                     if (item.Quantity > orderItem.Quantity)
                         return (
                             null,
-                            $"Số lượng hoàn ({item.Quantity}) vượt quá số lượng đã mua ({orderItem.Quantity})"
+                            $"Return quantity ({item.Quantity}) exceeds purchased quantity ({orderItem.Quantity})."
                         );
 
                     // Kiểm tra OrderItem này đã có trong yêu cầu hoàn hàng Pending/ApprovedBySales chưa
@@ -102,7 +102,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     if (activeReturn != null)
                         return (
                             null,
-                            $"Sản phẩm {item.OrderItemId} đang có yêu cầu hoàn hàng chưa được xử lý"
+                            $"Item {item.OrderItemId} has a pending return request that has not been processed."
                         );
                 }
 
@@ -166,7 +166,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     ReturnExchangeId = returnExchange.Id,
                     Action = "Created",
                     NewStatus = "Pending",
-                    Comment = "Yêu cầu hoàn hàng được tạo bởi khách hàng",
+                    Comment = "Return request created by customer",
                     PerformedByUserId = userId,
                     PerformedByRole = "Customer",
                     PerformedAt = DateTime.UtcNow,
@@ -180,7 +180,7 @@ namespace BusinessLogicLayer.Services.Implementations
             }
             catch (Exception ex)
             {
-                return (null, $"Lỗi khi tạo yêu cầu hoàn hàng: {ex.Message}");
+                return (null, $"Error creating return request: {ex.Message}");
             }
         }
 
@@ -201,10 +201,10 @@ namespace BusinessLogicLayer.Services.Implementations
                 );
 
                 if (returnExchange == null)
-                    return (null, "Yêu cầu hoàn hàng không tồn tại");
+                    return (null, "Return request not found.");
 
                 if (returnExchange.Status != "Pending")
-                    return (null, "Yêu cầu hoàn hàng đã được xử lý");
+                    return (null, "Return request has already been processed.");
 
                 var oldStatus = returnExchange.Status;
 
@@ -276,7 +276,7 @@ namespace BusinessLogicLayer.Services.Implementations
             }
             catch (Exception ex)
             {
-                return (null, $"Lỗi khi xem xét yêu cầu hoàn hàng: {ex.Message}");
+                return (null, $"Error reviewing return request: {ex.Message}");
             }
         }
 
@@ -297,17 +297,17 @@ namespace BusinessLogicLayer.Services.Implementations
                 );
 
                 if (returnExchange == null)
-                    return (null, "Yêu cầu hoàn hàng không tồn tại");
+                    return (null, "Return request not found.");
 
                 if (returnExchange.Status != "ApprovedBySales")
-                    return (null, "Yêu cầu hoàn hàng chưa được phê duyệt bởi nhân viên");
+                    return (null, "Return request has not been approved by staff yet.");
 
                 var order = await _unitOfWork.GetRepository<Order>().GetByIdAsync(
                     returnExchange.OrderId,
                     cancellationToken
                 );
                 if (order == null)
-                    return (null, "Đơn hàng không tồn tại");
+                    return (null, "Order not found.");
 
                 var oldStatus = returnExchange.Status;
                 returnExchange.Status = "ReceivedByOperation";
@@ -432,7 +432,7 @@ namespace BusinessLogicLayer.Services.Implementations
                         Action = "Completed",
                         OldStatus = prevStatus,
                         NewStatus = "Completed",
-                        Comment = "Tất cả sản phẩm đã được xử lý, yêu cầu hoàn hàng hoàn tất",
+                        Comment = "All items processed, return request completed",
                         PerformedByUserId = operationUserId,
                         PerformedByRole = "Operation",
                         PerformedAt = DateTime.UtcNow,
@@ -469,7 +469,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 );
 
                 if (returnExchange == null)
-                    return (null, "Yêu cầu hoàn hàng không tồn tại");
+                    return (null, "Return request not found.");
 
                 var items = await _returnExchangeItemRepository.GetByReturnExchangeIdAsync(
                     returnExchangeId
@@ -533,7 +533,7 @@ namespace BusinessLogicLayer.Services.Implementations
             }
             catch (Exception ex)
             {
-                return (null, $"Lỗi khi lấy thông tin yêu cầu hoàn hàng: {ex.Message}");
+                return (null, $"Error getting return request: {ex.Message}");
             }
         }
 
@@ -549,7 +549,7 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 var customer = await _customerRepository.GetByUserIdAsync(userId);
                 if (customer == null)
-                    return (null, "Tài khoản không tồn tại.");
+                    return (null, "Account not found.");
 
                 var returnExchanges = await _returnExchangeRepository.FindAsync(
                     r => r.CustomerId == customer.Id,
@@ -569,7 +569,7 @@ namespace BusinessLogicLayer.Services.Implementations
             }
             catch (Exception ex)
             {
-                return (null, $"Lỗi khi lấy danh sách yêu cầu hoàn hàng: {ex.Message}");
+                return (null, $"Error getting return list: {ex.Message}");
             }
         }
 
@@ -598,7 +598,7 @@ namespace BusinessLogicLayer.Services.Implementations
             }
             catch (Exception ex)
             {
-                return (null, $"Lỗi khi lấy danh sách yêu cầu hoàn hàng chờ xử lý: {ex.Message}");
+                return (null, $"Error getting pending return list: {ex.Message}");
             }
         }
 
@@ -629,7 +629,7 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 return (
                     null,
-                    $"Lỗi khi lấy danh sách yêu cầu hoàn hàng đã phê duyệt: {ex.Message}"
+                    $"Error getting approved return list: {ex.Message}"
                 );
             }
         }

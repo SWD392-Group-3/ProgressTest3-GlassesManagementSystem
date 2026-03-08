@@ -80,15 +80,15 @@ const FALLBACK_NEXT: Record<string, string | null> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Chờ xử lý (Mới)",
-  ProcessingTemplate: "Đang xử lý mẫu",
-  Manufacturing: "Đang mài kính",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Completed: "Hoàn thành",
-  Cancelled: "Đã huỷ",
+  Pending: "Pending",
+  Paid: "Paid",
+  Confirmed: "Awaiting processing (New)",
+  ProcessingTemplate: "Processing template",
+  Manufacturing: "Manufacturing",
+  Shipped: "Shipped",
+  Delivered: "Delivered",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -154,7 +154,7 @@ export default function OperationOrderProcessingPage() {
   async function handleUpdateStatus(newStatus: string) {
     if (!order) return;
     if (
-      !confirm(`Xác nhận chuyển trạng thái sang "${STATUS_LABEL[newStatus]}"?`)
+      !confirm(`Confirm change status to "${STATUS_LABEL[newStatus]}"?`)
     )
       return;
 
@@ -165,7 +165,7 @@ export default function OperationOrderProcessingPage() {
       await updateOrderStatus(order.id, newStatus);
       setOrder({ ...order, status: newStatus });
       setSuccessMsg(
-        `Đã cập nhật trạng thái thành "${STATUS_LABEL[newStatus]}".`,
+        `Status updated to "${STATUS_LABEL[newStatus]}".`,
       );
     } catch (e) {
       setError((e as Error).message);
@@ -206,7 +206,7 @@ export default function OperationOrderProcessingPage() {
       <div className="mb-6 flex items-center gap-3">
         <button
           type="button"
-          aria-label="Quay lại"
+          aria-label="Back"
           onClick={() => router.back()}
           className="p-2 rounded-xl bg-white border border-[#E5E7EB] hover:bg-gray-50 transition-colors"
         >
@@ -214,7 +214,7 @@ export default function OperationOrderProcessingPage() {
         </button>
         <div>
           <p className="text-xs text-[#D4AF37] font-semibold uppercase tracking-wider">
-            Chi tiết xử lý đơn
+            Order processing details
           </p>
           <h1 className="text-2xl font-bold text-gray-900 font-mono tracking-tight mt-0.5">
             #{(orderId ?? "").slice(0, 8).toUpperCase()}
@@ -230,13 +230,13 @@ export default function OperationOrderProcessingPage() {
 
       {!loading && error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm mb-4">
-          <p className="font-semibold mb-1">Đã có lỗi xảy ra</p>
+          <p className="font-semibold mb-1">An error occurred</p>
           <p>{error}</p>
           <button
             onClick={fetchOrder}
             className="mt-2 text-red-600 underline text-xs font-semibold"
           >
-            Thử lại
+            Retry
           </button>
         </div>
       )}
@@ -262,16 +262,15 @@ export default function OperationOrderProcessingPage() {
             >
               {isService ? (
                 <>
-                  <Package className="w-3 h-3" /> Đơn dịch vụ — Sales/Customer xử lý, Operation không thao tác
+                  <Package className="w-3 h-3" /> Service order — handled by Sales/Customer, Operation has no actions
                 </>
               ) : isPrescription ? (
                 <>
-                  <Wrench className="w-3 h-3" /> Đơn Prescription (Gia công
-                  kính)
+                  <Wrench className="w-3 h-3" /> Prescription order (Lens manufacturing)
                 </>
               ) : (
                 <>
-                  <Package className="w-3 h-3" /> Đơn thường (Đóng gói & giao)
+                  <Package className="w-3 h-3" /> Regular order (Pack & ship)
                 </>
               )}
             </span>
@@ -283,10 +282,10 @@ export default function OperationOrderProcessingPage() {
               <Package className="w-5 h-5 text-amber-500 shrink-0" />
               <div>
                 <p className="text-sm font-bold text-amber-800">
-                  Đơn dịch vụ — không cần xử lý bởi Operation
+                  Service order — no Operation processing required
                 </p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  Trạng thái do Sales xác nhận và khách hàng hoàn thành. Bạn chỉ có thể xem thông tin.
+                  Status is confirmed by Sales and completed by customer. You can only view details.
                 </p>
               </div>
             </div>
@@ -296,7 +295,7 @@ export default function OperationOrderProcessingPage() {
           {!isCancelled ? (
             <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-sm">
               <h2 className="text-sm font-bold text-[#111827] mb-6">
-                Tiến trình xử lý tại Xưởng
+                Workshop processing progress
               </h2>
               <div className="flex items-center justify-between">
                 {STATUS_STEPS.map((step, idx) => {
@@ -347,7 +346,7 @@ export default function OperationOrderProcessingPage() {
             <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
               <XCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="text-sm font-bold text-red-600">
-                Đơn hàng đã bị huỷ
+                Order has been cancelled
               </p>
             </div>
           )}
@@ -358,10 +357,10 @@ export default function OperationOrderProcessingPage() {
               <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
               <div>
                 <p className="text-sm font-bold text-green-700">
-                  Đơn hàng đã hoàn thành
+                  Order completed
                 </p>
                 <p className="text-xs text-green-600 mt-0.5">
-                  Khách hàng đã xác nhận nhận hàng thành công.
+                  Customer has confirmed delivery successfully.
                 </p>
               </div>
             </div>
@@ -372,10 +371,10 @@ export default function OperationOrderProcessingPage() {
             <div className="bg-gradient-to-r from-[#D4AF37]/10 to-transparent rounded-2xl border border-[#D4AF37]/30 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm font-bold text-[#111827]">
-                  Trạng thái xử lý
+                  Processing status
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Đơn đang ở trạng thái:{" "}
+                  Current status:{" "}
                   <strong className="text-gray-900">
                     {STATUS_LABEL[order.status]}
                   </strong>
@@ -391,7 +390,7 @@ export default function OperationOrderProcessingPage() {
                 ) : (
                   STATUS_ICON[nextStatus]
                 )}
-                Chuyển sang &ldquo;{STATUS_LABEL[nextStatus]}&rdquo;
+                Change to &ldquo;{STATUS_LABEL[nextStatus]}&rdquo;
               </button>
             </div>
           )}
@@ -402,7 +401,7 @@ export default function OperationOrderProcessingPage() {
             <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 shadow-sm">
               <h2 className="text-sm font-bold text-[#111827] mb-4 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                Nhận hàng / Giao hàng
+                Receive / Deliver
               </h2>
               <div className="space-y-3">
                 <div className="flex px-3 py-2.5 bg-gray-50 rounded-lg">
@@ -428,7 +427,7 @@ export default function OperationOrderProcessingPage() {
                     <FileText className="w-4 h-4 text-[#D4AF37] mt-0.5 shrink-0 mr-3" />
                     <div>
                       <span className="text-xs font-semibold text-[#D4AF37] block mb-0.5">
-                        Ghi chú
+                        Note
                       </span>
                       <span className="text-sm text-gray-800 break-words">
                         {order.note}
@@ -444,14 +443,14 @@ export default function OperationOrderProcessingPage() {
               <div className="px-6 py-4 border-b border-[#E5E7EB] bg-gray-50">
                 <h2 className="text-sm font-bold text-[#111827] flex items-center gap-2">
                   <Package className="w-4 h-4 text-[#D4AF37]" />
-                  Chi tiết sản phẩm cần xử lý ({(order.orderItems ?? []).length}
+                  Product details to process ({(order.orderItems ?? []).length}
                   )
                 </h2>
               </div>
               <div className="divide-y divide-gray-100 flex-1 overflow-y-auto max-h-[300px]">
                 {(order.orderItems ?? []).length === 0 ? (
                   <p className="px-6 py-5 text-sm text-gray-400 text-center">
-                    Không có nguyên liệu/sản phẩm
+                    No items/products
                   </p>
                 ) : (
                   (order.orderItems ?? []).map((item) => (
@@ -466,12 +465,12 @@ export default function OperationOrderProcessingPage() {
                         <div>
                           <p className="text-sm font-bold text-gray-900">
                             {item.productVariantId
-                              ? "Gọng kính"
+                              ? "Frame"
                               : item.lensesVariantId
-                                ? "Tròng kính"
+                                ? "Lenses"
                                 : item.comboItemId
                                   ? "Combo"
-                                  : "Dịch vụ"}
+                                  : "Service"}
                           </p>
                           <p className="text-xs text-gray-500 font-mono mt-0.5">
                             ID:{" "}
@@ -493,7 +492,7 @@ export default function OperationOrderProcessingPage() {
                       </div>
                       <div className="text-right shrink-0 bg-gray-50 sm:bg-transparent p-2 sm:p-0 rounded-lg">
                         <p className="text-xs text-gray-500 font-medium whitespace-nowrap">
-                          Số lượng:{" "}
+                          Quantity:{" "}
                           <strong className="text-gray-900 text-sm">
                             {item.quantity}
                           </strong>

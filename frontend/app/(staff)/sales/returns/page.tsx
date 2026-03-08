@@ -64,11 +64,11 @@ interface ReturnExchange {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xét duyệt",
-  ApprovedBySales: "Đã phê duyệt",
-  ReceivedByOperation: "Đã nhận hàng",
-  Rejected: "Từ chối",
-  Completed: "Hoàn tất",
+  Pending: "Pending",
+  ApprovedBySales: "Approved",
+  ReceivedByOperation: "Received",
+  Rejected: "Rejected",
+  Completed: "Completed",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -80,10 +80,10 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const INSPECTION_OPTIONS = [
-  { value: "Available", label: "Bình thường" },
-  { value: "Defective", label: "Lỗi sản phẩm" },
-  { value: "Damaged", label: "Hư hỏng" },
-  { value: "NeedRepair", label: "Cần sửa chữa" },
+  { value: "Available", label: "Available" },
+  { value: "Defective", label: "Defective" },
+  { value: "Damaged", label: "Damaged" },
+  { value: "NeedRepair", label: "Need repair" },
 ];
 
 function fmtDate(d: string) {
@@ -214,8 +214,8 @@ export default function SalesReturnsPage() {
       );
       setSuccess(
         isApproved
-          ? "Đã phê duyệt yêu cầu đổi trả."
-          : "Đã từ chối yêu cầu đổi trả.",
+          ? "Return request approved."
+          : "Return request rejected.",
       );
       setExpandedId(null);
       fetchReturns();
@@ -250,7 +250,7 @@ export default function SalesReturnsPage() {
         },
         { auth: true },
       );
-      setSuccess("Đã xác nhận nhận hàng hoàn trả.");
+      setSuccess("Return received and confirmed.");
       setExpandedId(null);
       fetchReturns();
     } catch (e) {
@@ -268,15 +268,15 @@ export default function SalesReturnsPage() {
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-            Nhân viên
+            Staff
           </span>
           <h1 className="text-3xl font-bold text-[#1A1A1A] mt-1">
-            Đổi trả hàng
+            Returns & exchanges
           </h1>
           <p className="text-[#6B7280] mt-1 text-sm">
             {isSales
-              ? "Xem xét và phê duyệt / từ chối yêu cầu đổi trả từ khách hàng."
-              : "Nhận hàng hoàn và kiểm tra tình trạng sản phẩm."}
+              ? "Review and approve or reject return requests from customers."
+              : "Receive returned items and inspect product condition."}
           </p>
         </div>
         <button
@@ -285,7 +285,7 @@ export default function SalesReturnsPage() {
           className="shrink-0 flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-white rounded-lg text-sm font-semibold hover:bg-[#C9A030] disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Làm mới
+          Refresh
         </button>
       </div>
 
@@ -318,8 +318,8 @@ export default function SalesReturnsPage() {
           <RotateCcw className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <p className="text-[#6B7280] font-medium">
             {isSales
-              ? "Không có yêu cầu đổi trả nào đang chờ xét duyệt."
-              : "Không có yêu cầu đổi trả nào đang chờ nhận hàng."}
+              ? "No return requests pending review."
+              : "No return requests pending receipt."}
           </p>
         </div>
       )}
@@ -349,7 +349,7 @@ export default function SalesReturnsPage() {
                         #{re.id.slice(0, 8).toUpperCase()}
                       </p>
                       <p className="text-xs text-[#6B7280] mt-0.5">
-                        Đơn:{" "}
+                        Order:{" "}
                         <span className="font-mono">
                           {re.orderId.slice(0, 8).toUpperCase()}
                         </span>{" "}
@@ -364,7 +364,7 @@ export default function SalesReturnsPage() {
                       {STATUS_LABEL[re.status] ?? re.status}
                     </span>
                     <span className="text-xs text-[#6B7280]">
-                      {re.items.length} sp
+                      {re.items.length} item{re.items.length !== 1 ? "s" : ""}
                     </span>
                     {isExpanded ? (
                       <ChevronUp className="w-4 h-4 text-gray-400" />
@@ -380,7 +380,7 @@ export default function SalesReturnsPage() {
                     {/* Reason */}
                     <div>
                       <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1">
-                        Lý do yêu cầu
+                        Reason for request
                       </p>
                       <p className="text-sm text-[#1A1A1A]">
                         {re.reason || "—"}
@@ -390,7 +390,7 @@ export default function SalesReturnsPage() {
                     {/* Items */}
                     <div>
                       <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
-                        Sản phẩm hoàn trả
+                        Returned items
                       </p>
                       <div className="space-y-3">
                         {re.items.map((item) => (
@@ -409,7 +409,7 @@ export default function SalesReturnsPage() {
                             </div>
                             {item.reason && (
                               <p className="text-xs text-[#4B5563]">
-                                Lý do: {item.reason}
+                                Reason: {item.reason}
                               </p>
                             )}
                             {item.images.length > 0 && (
@@ -423,7 +423,7 @@ export default function SalesReturnsPage() {
                                   >
                                     <img
                                       src={img.imageUrl}
-                                      alt="Ảnh đổi trả"
+                                      alt="Return image"
                                       className="w-14 h-14 object-cover rounded-lg border border-[#E5E7EB] hover:opacity-80 transition-opacity"
                                     />
                                   </a>
@@ -433,14 +433,14 @@ export default function SalesReturnsPage() {
 
                             {/* Operation: per-item receive form */}
                             {isOperation && receiveForm.items[item.id] && (
-                              <div className="mt-2 space-y-2 border-t pt-2 border-dashed border-[#E5E7EB]">
+                                <div className="mt-2 space-y-2 border-t pt-2 border-dashed border-[#E5E7EB]">
                                 <div className="flex flex-wrap gap-3">
                                   <div>
                                     <label className="block text-xs font-semibold text-[#6B7280] mb-1">
-                                      Trạng thái nhận
+                                      Receive status
                                     </label>
                                     <select
-                                      aria-label="Trạng thái nhận"
+                                      aria-label="Receive status"
                                       value={receiveForm.items[item.id].status}
                                       onChange={(e) =>
                                         setReceiveForm((prev) => ({
@@ -456,18 +456,18 @@ export default function SalesReturnsPage() {
                                       }
                                       className="h-8 px-2 text-xs rounded-lg border border-gray-300 focus:ring-1 focus:ring-[#D4AF37] outline-none"
                                     >
-                                      <option value="Received">Đã nhận</option>
+                                      <option value="Received">Received</option>
                                       <option value="Rejected">
-                                        Từ chối nhận
+                                        Reject receive
                                       </option>
                                     </select>
                                   </div>
                                   <div>
                                     <label className="block text-xs font-semibold text-[#6B7280] mb-1">
-                                      Kết quả kiểm tra
+                                      Inspection result
                                     </label>
                                     <select
-                                      aria-label="Kết quả kiểm tra"
+                                      aria-label="Inspection result"
                                       value={
                                         receiveForm.items[item.id]
                                           .inspectionResult
@@ -496,7 +496,7 @@ export default function SalesReturnsPage() {
                                 </div>
                                 <input
                                   type="text"
-                                  placeholder="Ghi chú cho sản phẩm này..."
+                                  placeholder="Note for this item..."
                                   value={receiveForm.items[item.id].note}
                                   onChange={(e) =>
                                     setReceiveForm((prev) => ({
@@ -523,11 +523,11 @@ export default function SalesReturnsPage() {
                     {isSales && (
                       <div className="space-y-3 pt-2 border-t border-[#E5E7EB]">
                         <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-                          Xét duyệt yêu cầu
+                          Review request
                         </p>
                         <textarea
                           rows={2}
-                          placeholder="Nhận xét (tuỳ chọn)..."
+                          placeholder="Comment (optional)..."
                           value={reviewForm.comment}
                           onChange={(e) =>
                             setReviewForm((prev) => ({
@@ -539,7 +539,7 @@ export default function SalesReturnsPage() {
                         />
                         <input
                           type="text"
-                          placeholder="Lý do từ chối (điền nếu từ chối)..."
+                          placeholder="Rejection reason (if rejecting)..."
                           value={reviewForm.rejectionReason}
                           onChange={(e) =>
                             setReviewForm((prev) => ({
@@ -565,7 +565,7 @@ export default function SalesReturnsPage() {
                             ) : (
                               <Check className="w-4 h-4" />
                             )}
-                            Phê duyệt
+                            Approve
                           </button>
                           <button
                             disabled={reviewForm.submitting}
@@ -577,7 +577,7 @@ export default function SalesReturnsPage() {
                             ) : (
                               <X className="w-4 h-4" />
                             )}
-                            Từ chối
+                            Reject
                           </button>
                         </div>
                       </div>
@@ -587,11 +587,11 @@ export default function SalesReturnsPage() {
                     {isOperation && (
                       <div className="space-y-3 pt-2 border-t border-[#E5E7EB]">
                         <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-                          Xác nhận nhận hàng
+                          Confirm receipt
                         </p>
                         <textarea
                           rows={2}
-                          placeholder="Ghi chú chung (tuỳ chọn)..."
+                          placeholder="General note (optional)..."
                           value={receiveForm.comment}
                           onChange={(e) =>
                             setReceiveForm((prev) => ({
@@ -616,7 +616,7 @@ export default function SalesReturnsPage() {
                           ) : (
                             <Package className="w-4 h-4" />
                           )}
-                          Xác nhận đã nhận hàng
+                          Confirm received
                         </button>
                       </div>
                     )}
@@ -625,7 +625,7 @@ export default function SalesReturnsPage() {
                     {re.histories.length > 0 && (
                       <div>
                         <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
-                          Lịch sử xử lý
+                          Processing history
                         </p>
                         <div className="space-y-2">
                           {re.histories.map((h) => (
