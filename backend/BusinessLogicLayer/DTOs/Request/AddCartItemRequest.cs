@@ -12,7 +12,7 @@ namespace BusinessLogicLayer.DTOs.Request
         public Guid? ServiceId { get; set; }
         public Guid? SlotId { get; set; }
 
-        [Range(1, int.MaxValue, ErrorMessage = "Số lượng phải lớn hơn 0.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0.")]
         public int Quantity { get; set; } = 1;
 
         public string? Note { get; set; }

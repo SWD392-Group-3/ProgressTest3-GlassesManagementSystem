@@ -24,10 +24,10 @@ public class SlotController : ControllerBase
     public async Task<IActionResult> GetAvailableSlots([FromQuery] string date, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(date) || !DateOnly.TryParse(date, out var dateParsed))
-            return BadRequest(new { message = "Tham số date không hợp lệ (yyyy-MM-dd)." });
+            return BadRequest(new { message = "Invalid date parameter (use yyyy-MM-dd)." });
 
         if (dateParsed < DateOnly.FromDateTime(DateTime.Today))
-            return BadRequest(new { message = "Không thể chọn ngày trong quá khứ." });
+            return BadRequest(new { message = "Cannot select a date in the past." });
 
         var slots = await _slotService.GetAvailableSlotsAsync(dateParsed, cancellationToken);
         return Ok(slots);

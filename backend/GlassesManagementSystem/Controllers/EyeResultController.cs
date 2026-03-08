@@ -50,7 +50,7 @@ public class EyeResultController : ControllerBase
         try
         {
             var result = await _eyeResultService.GetByIdAsync(id);
-            if (result == null) return NotFound(new { message = "Không tìm thấy kết quả đo mắt." });
+            if (result == null) return NotFound(new { message = "Eye result not found." });
             return Ok(result);
         }
         catch (Exception ex)
@@ -99,7 +99,7 @@ public class EyeResultController : ControllerBase
             if (userId == null) return Unauthorized();
 
             var result = await _eyeResultService.UpdateAsync(id, Guid.Parse(userId), request);
-            if (result == null) return NotFound(new { message = "Không tìm thấy kết quả đo mắt." });
+            if (result == null) return NotFound(new { message = "Eye result not found." });
             return Ok(result);
         }
         catch (UnauthorizedAccessException ex)
@@ -128,7 +128,7 @@ public class EyeResultController : ControllerBase
             if (userId == null) return Unauthorized();
 
             var deleted = await _eyeResultService.DeleteAsync(id, Guid.Parse(userId));
-            if (!deleted) return NotFound(new { message = "Không tìm thấy kết quả đo mắt." });
+            if (!deleted) return NotFound(new { message = "Eye result not found." });
             return NoContent();
         }
         catch (UnauthorizedAccessException ex)

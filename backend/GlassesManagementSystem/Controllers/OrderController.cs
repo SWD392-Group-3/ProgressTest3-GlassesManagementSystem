@@ -51,7 +51,7 @@ public class OrderController : ControllerBase
     {
         var order = await _orderService.GetByIdAsync(orderId);
         if (order == null)
-            return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            return NotFound(new { message = "Order not found." });
 
         return Ok(order);
     }
@@ -156,20 +156,20 @@ public class OrderController : ControllerBase
 
         var order = await _orderService.GetByIdAsync(orderId);
         if (order == null)
-            return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            return NotFound(new { message = "Order not found." });
 
         var isServiceOrder =
             string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone);
         if (isServiceOrder && User.IsInRole("Operation") && !User.IsInRole("Admin"))
-            return StatusCode(403, new { message = "Đơn dịch vụ chỉ do Sales xác nhận, Operation không xử lý." });
+            return StatusCode(403, new { message = "Service orders can only be confirmed by Sales, not Operation." });
 
         try
         {
             var result = await _orderService.UpdateStatusAsync(orderId, request.Status);
             if (!result)
-                return NotFound(new { message = "Không tìm thấy đơn hàng." });
+                return NotFound(new { message = "Order not found." });
 
-            return Ok(new { message = $"Đã cập nhật trạng thái thành '{request.Status}'." });
+            return Ok(new { message = $"Status updated to '{request.Status}'." });
         }
         catch (Exception ex)
         {
@@ -198,10 +198,10 @@ public class OrderController : ControllerBase
             var result = await _orderService.CancelOrderAsync(orderId, userId);
             if (!result)
                 return NotFound(
-                    new { message = "Không tìm thấy đơn hàng hoặc bạn không có quyền huỷ." }
+                    new { message = "Order not found or you do not have permission to cancel it." }
                 );
 
-            return Ok(new { message = "Đơn hàng đã được huỷ." });
+            return Ok(new { message = "Order has been cancelled." });
         }
         catch (Exception ex)
         {
@@ -219,8 +219,8 @@ public class OrderController : ControllerBase
         try
         {
             var result = await _orderService.ConfirmOrderAsync(orderId);
-            if (!result) return NotFound(new { message = "Không tìm thấy đơn hàng." });
-            return Ok(new { message = "Đã xác nhận đơn hàng." });
+            if (!result) return NotFound(new { message = "Order not found." });
+            return Ok(new { message = "Order has been confirmed." });
         }
         catch (Exception ex)
         {
@@ -238,8 +238,8 @@ public class OrderController : ControllerBase
         try
         {
             var result = await _orderService.RejectOrderAsync(orderId, reason);
-            if (!result) return NotFound(new { message = "Không tìm thấy đơn hàng." });
-            return Ok(new { message = "Đã từ chối đơn hàng." });
+            if (!result) return NotFound(new { message = "Order not found." });
+            return Ok(new { message = "Order has been rejected." });
         }
         catch (Exception ex)
         {
@@ -267,8 +267,8 @@ public class OrderController : ControllerBase
 
             var userId = Guid.Parse(userIdStr);
             var result = await _orderService.CompleteOrderAsync(orderId, userId);
-            if (!result) return NotFound(new { message = "Không tìm thấy đơn hàng." });
-            return Ok(new { message = "Đã xác nhận nhận hàng. Cảm ơn bạn!" });
+            if (!result) return NotFound(new { message = "Order not found." });
+            return Ok(new { message = "Delivery confirmed. Thank you!" });
         }
         catch (Exception ex)
         {

@@ -4,13 +4,13 @@ namespace BusinessLogicLayer.DTOs.Request
 {
     public class CreateSlotRequest
     {
-        [Required(ErrorMessage = "Ngày là bắt buộc.")]
+        [Required(ErrorMessage = "Date is required.")]
         public DateOnly Date { get; set; }
 
-        [Required(ErrorMessage = "Giờ bắt đầu là bắt buộc.")]
+        [Required(ErrorMessage = "Start time is required.")]
         public TimeOnly StartTime { get; set; }
 
-        [Required(ErrorMessage = "Giờ kết thúc là bắt buộc.")]
+        [Required(ErrorMessage = "End time is required.")]
         public TimeOnly EndTime { get; set; }
 
         [MaxLength(50)]

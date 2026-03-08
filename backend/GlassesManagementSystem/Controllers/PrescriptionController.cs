@@ -128,7 +128,7 @@ namespace GlassesManagementSystem.Controllers
             {
                 var result = await _prescriptionService.RejectAsync(id, request);
                 if (!result) return NotFound();
-                return Ok(new { message = "Đã từ chối đơn prescription." });
+                return Ok(new { message = "Prescription request has been rejected." });
             }
             catch (Exception ex)
             {

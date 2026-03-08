@@ -91,7 +91,7 @@ public class CartController : ControllerBase
             request.ComboItemId == null &&
             request.ServiceId == null)
         {
-            return BadRequest(new { message = "Phải chọn ít nhất một sản phẩm, tròng kính, combo hoặc dịch vụ." });
+            return BadRequest(new { message = "Please select at least one product, lenses, combo or service." });
         }
 
         try
@@ -150,7 +150,7 @@ public class CartController : ControllerBase
         {
             var result = await _cartService.RemoveItemAsync(cartItemId);
             if (!result)
-                return NotFound(new { message = "Không tìm thấy sản phẩm trong giỏ hàng." });
+                return NotFound(new { message = "Item not found in cart." });
 
             return NoContent();
         }

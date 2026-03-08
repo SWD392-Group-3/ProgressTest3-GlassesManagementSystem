@@ -43,10 +43,10 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<EyeResultDto> CreateAsync(Guid staffUserId, CreateEyeResultRequest request)
         {
             var staff = await _userRepository.GetByIdAsync(staffUserId)
-                ?? throw new Exception("Không tìm thấy nhân viên.");
+                ?? throw new Exception("Staff not found.");
 
             var order = await _orderRepository.GetByIdAsync(request.OrderId)
-                ?? throw new Exception("Không tìm thấy đơn hàng.");
+                ?? throw new Exception("Order not found.");
 
             var eyeResult = new EyeResult
             {
@@ -98,7 +98,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var staff = await _userRepository.GetByIdAsync(staffUserId);
             if (staff == null) return null;
             if (eyeResult.StaffId != staffUserId && staff.Role != "Admin")
-                throw new UnauthorizedAccessException("Bạn không có quyền chỉnh sửa kết quả này.");
+                throw new UnauthorizedAccessException("You do not have permission to edit this result.");
 
             eyeResult.EyeLeft = request.EyeLeft;
             eyeResult.EyeRight = request.EyeRight;
@@ -121,7 +121,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var staff = await _userRepository.GetByIdAsync(staffUserId);
             if (staff == null) return false;
             if (eyeResult.StaffId != staffUserId && staff.Role != "Admin")
-                throw new UnauthorizedAccessException("Bạn không có quyền xóa kết quả này.");
+                throw new UnauthorizedAccessException("You do not have permission to delete this result.");
 
             _eyeResultRepository.Delete(eyeResult);
             await _unitOfWork.SaveChangesAsync();

@@ -30,7 +30,7 @@ namespace GlassesManagementSystem.Controllers
         {
             var combo = await _comboService.GetComboByIdAsync(id);
             if (combo == null)
-                return NotFound(new { message = $"Combo với Id '{id}' không tồn tại." });
+                return NotFound(new { message = $"Combo with Id '{id}' not found." });
             return Ok(combo);
         }
     }

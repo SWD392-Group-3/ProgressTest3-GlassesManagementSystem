@@ -32,7 +32,7 @@ namespace GlassesManagementSystem.Controllers.Manager
             if (!string.IsNullOrWhiteSpace(dateTo) && DateOnly.TryParse(dateTo, out var dt))
                 to = dt;
             if (from > to)
-                return BadRequest(new { message = "dateFrom phải nhỏ hơn hoặc bằng dateTo." });
+                return BadRequest(new { message = "dateFrom must be less than or equal to dateTo." });
 
             var slots = await _slotService.GetSlotsByDateRangeAsync(from, to, cancellationToken);
             return Ok(slots);
@@ -79,7 +79,7 @@ namespace GlassesManagementSystem.Controllers.Manager
             }
             catch (KeyNotFoundException)
             {
-                return NotFound(new { message = "Không tìm thấy slot." });
+                return NotFound(new { message = "Slot not found." });
             }
             catch (ArgumentException ex)
             {
@@ -99,7 +99,7 @@ namespace GlassesManagementSystem.Controllers.Manager
             try
             {
                 var deleted = await _slotService.DeleteSlotAsync(id, cancellationToken);
-                if (!deleted) return NotFound(new { message = "Không tìm thấy slot." });
+                if (!deleted) return NotFound(new { message = "Slot not found." });
                 return NoContent();
             }
             catch (InvalidOperationException ex)
