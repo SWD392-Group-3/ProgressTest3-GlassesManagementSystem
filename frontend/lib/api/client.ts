@@ -105,7 +105,7 @@ export async function apiRequest<T = unknown>(
     if (user?.expiresAt && new Date(user.expiresAt) <= new Date()) {
       clearAuth();
       if (typeof window !== "undefined") window.location.href = "/login";
-      throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+      throw new Error("Your session has expired. Please log in again.");
     }
 
     const token = getToken();
@@ -120,12 +120,12 @@ export async function apiRequest<T = unknown>(
     // Token hết hạn hoặc không hợp lệ → clear và về login
     clearAuth();
     if (typeof window !== "undefined") window.location.href = "/login";
-    throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+    throw new Error("Your session has expired. Please log in again.");
   }
 
   if (!res.ok) {
     const message =
-      (data as { message?: string })?.message ?? `Lỗi ${res.status}`;
+      (data as { message?: string })?.message ?? `Error ${res.status}`;
     throw new Error(message);
   }
 

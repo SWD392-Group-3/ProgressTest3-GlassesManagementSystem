@@ -26,11 +26,11 @@ function fmtDate(dateStr: string) {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  Paid: "Đã thanh toán",
-  Confirmed: "Đã xác nhận",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Completed: "Hoàn thành",
+  Paid: "Paid",
+  Confirmed: "Confirmed",
+  Shipped: "Shipped",
+  Delivered: "Delivered",
+  Completed: "Completed",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -122,10 +122,10 @@ export default function EyeResultsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[#1A1A1A]">
-              Kết quả khám mắt
+              Eye exam results
             </h1>
             <p className="text-sm text-[#6B7280]">
-              Đơn hàng có dịch vụ khám mắt cần ghi kết quả
+              Orders with eye exam service needing results
             </p>
           </div>
         </div>
@@ -135,8 +135,7 @@ export default function EyeResultsPage() {
           <div className="mt-4 flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-700 w-fit">
             <Clock className="w-4 h-4 shrink-0" />
             <span>
-              <strong>{pendingCount}</strong> đơn đã thanh toán đang chờ ghi kết
-              quả
+              <strong>{pendingCount}</strong> paid order(s) awaiting eye exam results
             </span>
           </div>
         )}
@@ -147,7 +146,7 @@ export default function EyeResultsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
         <input
           type="text"
-          placeholder="Tìm theo mã đơn, số điện thoại, địa chỉ..."
+          placeholder="Search by order ID, phone, address..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E5E7EB] bg-white text-sm focus:outline-none focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 transition-all"
@@ -170,11 +169,11 @@ export default function EyeResultsPage() {
           <div className="w-16 h-16 rounded-2xl bg-[#F5F5F5] flex items-center justify-center mb-4">
             <Eye className="w-8 h-8 text-[#D4AF37]/50" />
           </div>
-          <p className="text-[#6B7280] font-medium">Không có đơn hàng nào</p>
+          <p className="text-[#6B7280] font-medium">No orders</p>
           <p className="text-sm text-[#9CA3AF] mt-1">
             {search
-              ? "Không tìm thấy kết quả phù hợp."
-              : "Chưa có đơn hàng dịch vụ nào cần ghi kết quả."}
+              ? "No matching results."
+              : "No service orders need eye exam results yet."}
           </p>
         </div>
       )}
@@ -184,19 +183,19 @@ export default function EyeResultsPage() {
           {/* Table header */}
           <div className="grid grid-cols-[1fr_1.5fr_1.2fr_1fr_auto] gap-3 px-5 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB]">
             <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-              Mã đơn
+              Order ID
             </span>
             <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-              Ngày đặt
+              Date
             </span>
             <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-              SĐT
+              Phone
             </span>
             <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-              Trạng thái
+              Status
             </span>
             <span className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
-              Thao tác
+              Action
             </span>
           </div>
 
@@ -223,7 +222,7 @@ export default function EyeResultsPage() {
                         #{order.id.slice(0, 8).toUpperCase()}
                       </p>
                       <p className="text-[11px] text-[#9CA3AF] mt-0.5">
-                        {serviceItems.length} dịch vụ
+                        {serviceItems.length} service(s)
                       </p>
                     </div>
                   </div>
@@ -258,7 +257,7 @@ export default function EyeResultsPage() {
                     className="flex items-center gap-1 px-3 py-1.5 bg-[#D4AF37] text-white text-xs font-semibold rounded-lg hover:bg-[#C9A030] transition-colors whitespace-nowrap"
                   >
                     <FileText className="w-3.5 h-3.5" />
-                    Ghi kết quả
+                    Record result
                     <ChevronRight className="w-3 h-3" />
                   </Link>
                 </div>
@@ -271,8 +270,7 @@ export default function EyeResultsPage() {
       {/* Service items legend */}
       {!loading && !error && filtered.length > 0 && (
         <p className="text-xs text-[#9CA3AF] mt-4 text-center">
-          Hiển thị {filtered.length} đơn hàng có dịch vụ khám mắt · Ưu tiên đơn
-          &ldquo;Đã thanh toán&rdquo; lên đầu
+          Displaying {filtered.length} orders with eye exam service · Paid orders first
         </p>
       )}
     </div>

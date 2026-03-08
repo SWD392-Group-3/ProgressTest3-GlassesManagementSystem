@@ -45,31 +45,31 @@ function fmtDate(dateStr: string) {
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
   Pending: {
-    label: "Chờ xử lý",
+    label: "Pending",
     color: "bg-yellow-50 text-yellow-700 ring-1 ring-yellow-200",
   },
   Confirmed: {
-    label: "Đã xác nhận",
+    label: "Confirmed",
     color: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   },
   Paid: {
-    label: "Đã thanh toán",
+    label: "Paid",
     color: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
   },
   Shipped: {
-    label: "Đang giao",
+    label: "Shipping",
     color: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
   },
   Delivered: {
-    label: "Đã giao",
+    label: "Delivered",
     color: "bg-teal-50 text-teal-700 ring-1 ring-teal-200",
   },
   Completed: {
-    label: "Hoàn thành",
+    label: "Completed",
     color: "bg-green-50 text-green-700 ring-1 ring-green-200",
   },
   Cancelled: {
-    label: "Đã hủy",
+    label: "Cancelled",
     color: "bg-red-50 text-red-700 ring-1 ring-red-200",
   },
 };
@@ -153,7 +153,7 @@ export default function CustomerEyeResultsPage() {
             className="inline-flex items-center gap-1.5 text-sm text-[#9CA3AF] hover:text-[#D4AF37] transition-colors mb-7 group"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            Đơn hàng của tôi
+            My orders
           </Link>
 
           {/* Page header */}
@@ -164,14 +164,14 @@ export default function CustomerEyeResultsPage() {
                   <Stethoscope className="w-4 h-4 text-white" />
                 </div>
                 <h1 className="text-2xl font-bold text-[#1A1A1A] tracking-tight">
-                  Kết quả khám mắt
+                  Eye exam results
                 </h1>
               </div>
               {!loading && !error && (
                 <p className="text-sm text-[#9CA3AF] pl-0.5">
                   {totalResults > 0
-                    ? `${totalResults} kết quả · ${data.length} đơn hàng`
-                    : "Chưa có kết quả nào"}
+                    ? `${totalResults} results · ${data.length} orders`
+                    : "No results yet"}
                 </p>
               )}
             </div>
@@ -181,7 +181,7 @@ export default function CustomerEyeResultsPage() {
           {loading && (
             <div className="flex flex-col items-center justify-center py-32 gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-[#D4AF37]" />
-              <p className="text-sm text-[#9CA3AF]">Đang tải kết quả...</p>
+              <p className="text-sm text-[#9CA3AF]">Loading results...</p>
             </div>
           )}
 
@@ -201,16 +201,16 @@ export default function CustomerEyeResultsPage() {
                 </div>
               </div>
               <p className="text-base font-semibold text-[#1A1A1A] mb-1">
-                Chưa có kết quả khám mắt
+                No eye exam results yet
               </p>
               <p className="text-sm text-[#9CA3AF] max-w-[260px] leading-relaxed mb-6">
-                Sau khi nhân viên ghi kết quả, dữ liệu sẽ xuất hiện tại đây.
+                After staff record the results, they will appear here.
               </p>
               <Link
                 href="/services"
                 className="px-5 py-2.5 bg-[#D4AF37] text-white text-sm font-semibold rounded-xl hover:bg-[#C9A030] transition-colors shadow-sm shadow-[#D4AF37]/30"
               >
-                Đặt dịch vụ khám mắt
+                Book eye exam service
               </Link>
             </div>
           )}
@@ -274,7 +274,7 @@ export default function CustomerEyeResultsPage() {
                             </span>
                             <span className="flex items-center gap-1 text-xs text-[#9CA3AF]">
                               <Eye className="w-3 h-3" />
-                              {serviceCount} dịch vụ · {results.length} kết quả
+                              {serviceCount} services · {results.length} results
                             </span>
                           </div>
                         </div>
@@ -286,7 +286,7 @@ export default function CustomerEyeResultsPage() {
                             onClick={(e) => e.stopPropagation()}
                             className="hidden sm:flex items-center gap-1 text-xs font-medium text-[#9CA3AF] hover:text-[#D4AF37] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#D4AF37]/5"
                           >
-                            Đơn hàng
+                            Order
                             <ChevronRight className="w-3.5 h-3.5" />
                           </Link>
                           <div
@@ -315,7 +315,7 @@ export default function CustomerEyeResultsPage() {
                             href={`/orders/${order.id}`}
                             className="flex items-center gap-1 text-xs font-medium text-[#6B7280] hover:text-[#D4AF37] transition-colors"
                           >
-                            Xem chi tiết đơn hàng
+                            View order details
                             <ChevronRight className="w-3.5 h-3.5" />
                           </Link>
                         </div>
@@ -339,7 +339,7 @@ export default function CustomerEyeResultsPage() {
                                     <Eye className="w-3.5 h-3.5 text-[#D4AF37]" />
                                   </div>
                                   <span className="text-xs font-semibold text-[#374151]">
-                                    Lần khám {rIdx + 1}
+                                    Exam {rIdx + 1}
                                   </span>
                                 </div>
                                 <span className="flex items-center gap-1 text-[11px] text-[#9CA3AF]">
@@ -353,12 +353,12 @@ export default function CustomerEyeResultsPage() {
                                 {/* Column headers */}
                                 <div className="grid grid-cols-4 bg-[#FAFAFA] border-b border-[#F0F0F0]">
                                   <div className="px-4 py-2.5 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
-                                    Mắt
+                                    Eye
                                   </div>
                                   {[
-                                    { abbr: "SPH", name: "Độ cầu" },
-                                    { abbr: "CYL", name: "Độ trụ" },
-                                    { abbr: "AXIS", name: "Trục" },
+                                    { abbr: "SPH", name: "Sphere" },
+                                    { abbr: "CYL", name: "Cylinder" },
+                                    { abbr: "AXIS", name: "Axis" },
                                   ].map((col) => (
                                     <div
                                       key={col.abbr}
@@ -381,7 +381,7 @@ export default function CustomerEyeResultsPage() {
                                       L
                                     </span>
                                     <span className="text-xs font-semibold text-[#374151]">
-                                      Trái
+                                      Left
                                     </span>
                                     <span className="text-[10px] text-[#9CA3AF] hidden sm:block">
                                       (OS)
@@ -419,7 +419,7 @@ export default function CustomerEyeResultsPage() {
                                       R
                                     </span>
                                     <span className="text-xs font-semibold text-[#374151]">
-                                      Phải
+                                      Right
                                     </span>
                                     <span className="text-[10px] text-[#9CA3AF] hidden sm:block">
                                       (OD)
@@ -459,19 +459,19 @@ export default function CustomerEyeResultsPage() {
                                       {r.can != null && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full ring-1 ring-blue-100">
                                           <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                          Độ cận: {r.can} độ
+                                          Myopia: {r.can} D
                                         </span>
                                       )}
                                       {r.vien && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 text-xs font-semibold rounded-full ring-1 ring-amber-100">
                                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                          Viễn thị
+                                          Hyperopia
                                         </span>
                                       )}
                                       {r.loan && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-purple-700 text-xs font-semibold rounded-full ring-1 ring-purple-100">
                                           <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                                          Loạn thị
+                                          Astigmatism
                                         </span>
                                       )}
                                     </div>

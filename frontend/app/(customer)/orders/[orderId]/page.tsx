@@ -91,6 +91,7 @@ export default function OrderDetailPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [completeLoading, setCompleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serviceAcknowledged, setServiceAcknowledged] = useState(false);
 
   const { notifications } = useNotifications();
 
@@ -165,7 +166,8 @@ export default function OrderDetailPage() {
   }
 
   async function handleCancel() {
-    if (!order || !confirm("Are you sure you want to cancel this order?")) return;
+    if (!order || !confirm("Are you sure you want to cancel this order?"))
+      return;
     setCancelLoading(true);
     try {
       await cancelOrder(order.id);
@@ -332,12 +334,14 @@ export default function OrderDetailPage() {
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    {order.shippingAddress != null && order.shippingPhone != null
+                    {order.shippingAddress != null &&
+                    order.shippingPhone != null
                       ? "Shipping information"
                       : "Service order"}
                   </h2>
                   <div className="space-y-3 text-sm">
-                    {order.shippingAddress != null && order.shippingPhone != null ? (
+                    {order.shippingAddress != null &&
+                    order.shippingPhone != null ? (
                       <>
                         <div className="flex items-start gap-2">
                           <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
@@ -353,7 +357,9 @@ export default function OrderDetailPage() {
                         </div>
                       </>
                     ) : (
-              <p className="text-[#6B7280]">Service-only order — no delivery.</p>
+                      <p className="text-[#6B7280]">
+                        Service-only order — no delivery.
+                      </p>
                     )}
                     {order.note && (
                       <div className="flex items-start gap-2">
@@ -409,12 +415,12 @@ export default function OrderDetailPage() {
                 <div className="px-6 py-4 border-b border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    {order.orderItems?.some((i) => i.serviceId) && !order.orderItems?.every((i) => i.serviceId)
+                    {order.orderItems?.some((i) => i.serviceId) &&
+                    !order.orderItems?.every((i) => i.serviceId)
                       ? "Products & Services"
                       : order.orderItems?.every((i) => i.serviceId)
                         ? "Booked services"
-                        : "Products"}
-                    {" "}
+                        : "Products"}{" "}
                     ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
@@ -442,12 +448,12 @@ export default function OrderDetailPage() {
                           <p className="text-sm font-semibold text-[#1A1A1A]">
                             {item.productName ??
                               (item.productVariantId
-                                ? "Gọng kính"
+                                ? "Frame"
                                 : item.lensesVariantId
-                                  ? "Tròng kính"
+                                  ? "Lenses"
                                   : item.comboItemId
                                     ? "Combo"
-                                    : "Dịch vụ")}
+                                    : "Service")}
                           </p>
                           {item.serviceId && (
                             <span className="text-xs text-[#6B7280] font-medium">
@@ -455,17 +461,18 @@ export default function OrderDetailPage() {
                               {item.slotDisplay ? ` · ${item.slotDisplay}` : ""}
                             </span>
                           )}
-                          {!item.serviceId && (() => {
-                            const rawId =
-                              item.productVariantId ??
-                              item.lensesVariantId ??
-                              item.comboItemId;
-                            return rawId ? (
-                              <p className="text-xs text-[#6B7280]">
-                                #{rawId.slice(0, 8).toUpperCase()}
-                              </p>
-                            ) : null;
-                          })()}
+                          {!item.serviceId &&
+                            (() => {
+                              const rawId =
+                                item.productVariantId ??
+                                item.lensesVariantId ??
+                                item.comboItemId;
+                              return rawId ? (
+                                <p className="text-xs text-[#6B7280]">
+                                  #{rawId.slice(0, 8).toUpperCase()}
+                                </p>
+                              ) : null;
+                            })()}
                           {item.note && (
                             <p className="text-xs text-[#9CA3AF] italic mt-0.5">
                               {item.note}
