@@ -59,13 +59,13 @@ const STATUS_STEPS = [
 const STATUS_STEPS_SERVICE = ["Pending", "Paid", "Confirmed", "Completed"];
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Đã xác nhận",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Completed: "Hoàn thành",
-  Cancelled: "Đã huỷ",
+  Pending: "Awaiting confirmation",
+  Paid: "Paid",
+  Confirmed: "Confirmed",
+  Shipped: "Shipping",
+  Delivered: "Delivered",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -150,12 +150,12 @@ export default function OrderDetailPage() {
       const resp = await createMomoPayment(
         order.id,
         Math.round(order.finalAmount ?? order.totalAmount),
-        `Thanh toán đơn hàng #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
+        `Pay for order #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
       );
       if (resp.payUrl) {
         window.location.href = resp.payUrl;
       } else {
-        alert("Không lấy được link thanh toán Momo.");
+        alert("Could not get Momo payment link.");
       }
     } catch (e) {
       alert((e as Error).message);
@@ -165,7 +165,7 @@ export default function OrderDetailPage() {
   }
 
   async function handleCancel() {
-    if (!order || !confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
+    if (!order || !confirm("Are you sure you want to cancel this order?")) return;
     setCancelLoading(true);
     try {
       await cancelOrder(order.id);
@@ -183,8 +183,8 @@ export default function OrderDetailPage() {
       (order.shippingAddress == null || order.shippingAddress === "") &&
       (order.shippingPhone == null || order.shippingPhone === "");
     const msg = isService
-      ? "Bạn xác nhận đã hoàn thành dịch vụ?\nSau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái Hoàn thành."
-      : "Bạn xác nhận đã nhận được hàng?\nSau khi xác nhận, đơn hàng sẽ hoàn thành và bạn có thể yêu cầu đổi/trả nếu cần.";
+      ? "Confirm that you have completed the service?\nAfter confirming, the order will be marked as Completed."
+      : "Confirm that you have received the order?\nAfter confirming, you can request return or exchange if needed.";
     if (!confirm(msg)) return;
     setCompleteLoading(true);
     try {
@@ -203,9 +203,15 @@ export default function OrderDetailPage() {
     order != null &&
     (order.shippingAddress == null || order.shippingAddress === "") &&
     (order.shippingPhone == null || order.shippingPhone === "");
-  const canComplete = isServiceOrder
-    ? order?.status === "Confirmed"
-    : order?.status === "Delivered";
+  // Nút "Xác nhận hoàn thành dịch vụ" chỉ hiện khi: đơn dịch vụ + trạng thái đúng "Đã xác nhận"; đơn giao hàng chỉ khi "Đã giao". Ẩn hẳn khi đã Completed/Cancelled/Rejected.
+  const canComplete =
+    order != null &&
+    order.status !== "Completed" &&
+    order.status !== "Cancelled" &&
+    order.status !== "Rejected" &&
+    (isServiceOrder
+      ? order.status === "Confirmed"
+      : order.status === "Delivered");
   const canReturn = order?.status === "Completed" && !isServiceOrder;
   const isCancelled = order?.status === "Cancelled";
   const steps = isServiceOrder ? STATUS_STEPS_SERVICE : STATUS_STEPS;
@@ -223,7 +229,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
               <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
               <p className="text-sm font-semibold text-green-700">
-                Thanh toán thành công! Đơn hàng của bạn đang được xử lý.
+                Payment successful! Your order is being processed.
               </p>
             </div>
           )}
@@ -231,7 +237,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="text-sm font-semibold text-red-700">
-                Thanh toán thất bại hoặc bị huỷ. Bạn có thể thử lại bên dưới.
+                Payment failed or was cancelled. You can try again below.
               </p>
             </div>
           )}
@@ -246,7 +252,7 @@ export default function OrderDetailPage() {
             </Link>
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-                Chi tiết đơn hàng
+                Order details
               </span>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] font-heading">
                 #{orderId?.slice(0, 8).toUpperCase()}
@@ -265,7 +271,7 @@ export default function OrderDetailPage() {
                 onClick={fetchOrder}
                 className="text-[#D4AF37] hover:underline text-sm"
               >
-                Thử lại
+                Try again
               </button>
             </div>
           ) : order ? (
@@ -316,7 +322,7 @@ export default function OrderDetailPage() {
                 <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-center gap-3">
                   <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm font-semibold text-red-600">
-                    Đơn hàng đã bị huỷ
+                    Order cancelled
                   </p>
                 </div>
               )}
@@ -327,8 +333,8 @@ export default function OrderDetailPage() {
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
                     {order.shippingAddress != null && order.shippingPhone != null
-                      ? "Thông tin giao hàng"
-                      : "Đơn dịch vụ"}
+                      ? "Shipping information"
+                      : "Service order"}
                   </h2>
                   <div className="space-y-3 text-sm">
                     {order.shippingAddress != null && order.shippingPhone != null ? (
@@ -347,7 +353,7 @@ export default function OrderDetailPage() {
                         </div>
                       </>
                     ) : (
-                      <p className="text-[#6B7280]">Đơn chỉ gồm dịch vụ đặt lịch — không giao hàng.</p>
+              <p className="text-[#6B7280]">Service-only order — no delivery.</p>
                     )}
                     {order.note && (
                       <div className="flex items-start gap-2">
@@ -370,18 +376,18 @@ export default function OrderDetailPage() {
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-[#D4AF37]" />
-                    Tóm tắt thanh toán
+                    Payment summary
                   </h2>
                   <div className="space-y-2.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[#6B7280]">Tạm tính</span>
+                      <span className="text-[#6B7280]">Subtotal</span>
                       <span className="text-[#1A1A1A]">
                         {fmt(order.totalAmount)}
                       </span>
                     </div>
                     {order.discountAmount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-[#6B7280]">Giảm giá</span>
+                        <span className="text-[#6B7280]">Discount</span>
                         <span className="text-green-600">
                           - {fmt(order.discountAmount)}
                         </span>
@@ -389,7 +395,7 @@ export default function OrderDetailPage() {
                     )}
                     <div className="h-px bg-[#E5E7EB]" />
                     <div className="flex justify-between font-bold">
-                      <span className="text-[#1A1A1A]">Tổng cộng</span>
+                      <span className="text-[#1A1A1A]">Total</span>
                       <span className="text-[#D4AF37] text-lg">
                         {fmt(order.finalAmount ?? order.totalAmount)}
                       </span>
@@ -404,10 +410,10 @@ export default function OrderDetailPage() {
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
                     {order.orderItems?.some((i) => i.serviceId) && !order.orderItems?.every((i) => i.serviceId)
-                      ? "Sản phẩm & Dịch vụ"
+                      ? "Products & Services"
                       : order.orderItems?.every((i) => i.serviceId)
-                        ? "Dịch vụ đã đặt"
-                        : "Sản phẩm"}
+                        ? "Booked services"
+                        : "Products"}
                     {" "}
                     ({(order.orderItems ?? []).length})
                   </h2>
@@ -423,7 +429,7 @@ export default function OrderDetailPage() {
                           {item.imageUrl ? (
                             <Image
                               src={item.imageUrl}
-                              alt={item.productName ?? "Sản phẩm"}
+                              alt={item.productName ?? "Product"}
                               width={56}
                               height={56}
                               className="w-full h-full object-cover"
@@ -445,7 +451,7 @@ export default function OrderDetailPage() {
                           </p>
                           {item.serviceId && (
                             <span className="text-xs text-[#6B7280] font-medium">
-                              Dịch vụ
+                              Service
                               {item.slotDisplay ? ` · ${item.slotDisplay}` : ""}
                             </span>
                           )}
@@ -494,7 +500,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4" />
-                        Thanh toán qua Momo
+                        Pay with Momo
                       </>
                     )}
                   </button>
@@ -510,7 +516,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <XCircle className="w-4 h-4" />
-                        Huỷ đơn hàng
+                        Cancel order
                       </>
                     )}
                   </button>
@@ -527,8 +533,8 @@ export default function OrderDetailPage() {
                       <>
                         <CheckCircle2 className="w-4 h-4" />
                         {isServiceOrder
-                          ? "Xác nhận đã hoàn thành dịch vụ"
-                          : "Xác nhận đã nhận hàng"}
+                          ? "Confirm service completed"
+                          : "Confirm delivery received"}
                       </>
                     )}
                   </button>
@@ -539,7 +545,7 @@ export default function OrderDetailPage() {
                     className="flex-1 h-12 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] font-semibold text-sm hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    Yêu cầu đổi / trả hàng
+                    Request return / exchange
                   </Link>
                 )}
               </div>

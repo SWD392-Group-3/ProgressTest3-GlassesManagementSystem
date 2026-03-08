@@ -43,7 +43,7 @@ export default function LoginPage() {
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng nhập thất bại.");
+      setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setIsLoading(false);
     }

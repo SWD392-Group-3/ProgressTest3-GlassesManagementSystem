@@ -75,7 +75,7 @@ export default function ServicesPage() {
         // Only show Active services to customers
         setServices(data.filter((s) => s.status !== "Inactive"));
       } catch {
-        setError("Không thể tải danh sách dịch vụ. Vui lòng thử lại sau.");
+        setError("Could not load services. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -173,17 +173,16 @@ export default function ServicesPage() {
           <div className="mb-12 text-center">
             <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37] mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              Chuyên nghiệp &amp; Tận tâm
+              Professional & Dedicated
             </span>
             <h1
               className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1A1A1A]"
               style={{ fontFamily: "var(--font-heading)" }}
             >
-              Dịch vụ của chúng tôi
+              Our Services
             </h1>
             <p className="mt-4 text-[#6B7280] max-w-xl mx-auto text-sm sm:text-base">
-              Đặt lịch dịch vụ khám mắt, tư vấn và lắp kính chuyên nghiệp. Thêm
-              vào giỏ hàng để thanh toán cùng đơn đặt hàng của bạn.
+              Book eye exams, consultations and professional lens fitting. Add to cart to pay with your order.
             </p>
           </div>
 
@@ -202,7 +201,7 @@ export default function ServicesPage() {
                 onClick={() => window.location.reload()}
                 className="mt-4 text-[#D4AF37] hover:underline text-sm"
               >
-                Thử lại
+                Try again
               </button>
             </div>
           )}
@@ -211,7 +210,7 @@ export default function ServicesPage() {
           {!loading && !error && services.length === 0 && (
             <div className="text-center py-24">
               <Eye className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-[#6B7280]">Hiện chưa có dịch vụ nào.</p>
+              <p className="text-[#6B7280]">No services available yet.</p>
             </div>
           )}
 
@@ -264,12 +263,12 @@ export default function ServicesPage() {
                         ) : isAdded ? (
                           <>
                             <CheckCircle2 className="w-4 h-4" />
-                            Đã thêm
+                            Added
                           </>
                         ) : (
                           <>
                             <ShoppingBag className="w-4 h-4" />
-                            Thêm vào giỏ
+                            Add to cart
                           </>
                         )}
                       </button>
@@ -283,8 +282,7 @@ export default function ServicesPage() {
           {/* Bottom note */}
           {!loading && !error && services.length > 0 && (
             <p className="text-center text-xs text-[#9CA3AF] mt-10">
-              * Kết quả đo mắt sẽ được nhân viên ghi nhận sau khi bạn hoàn tất
-              dịch vụ và có thể xem lại trong trang chi tiết đơn hàng.
+              * Eye exam results will be recorded by staff after you complete the service and can be viewed in your order details.
             </p>
           )}
 
@@ -301,7 +299,7 @@ export default function ServicesPage() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-[#1A1A1A]">
-                      Đặt lịch: {modalService.name}
+                      Book slot: {modalService.name}
                     </h3>
                     <button
                       type="button"
@@ -315,7 +313,7 @@ export default function ServicesPage() {
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-[#374151] mb-2">
                       <Calendar className="w-4 h-4 inline mr-1" />
-                      Chọn ngày
+                      Select date
                     </label>
                     <input
                       type="date"
@@ -329,7 +327,7 @@ export default function ServicesPage() {
                   <div className="mb-6">
                     <label className="block text-sm font-medium text-[#374151] mb-2">
                       <Clock className="w-4 h-4 inline mr-1" />
-                      Chọn khung giờ
+                      Select time slot
                     </label>
                     {slotsLoading ? (
                       <div className="flex justify-center py-8">
@@ -338,8 +336,8 @@ export default function ServicesPage() {
                     ) : slots.length === 0 ? (
                       <p className="text-sm text-[#6B7280] py-4 text-center">
                         {slotDate < today
-                          ? "Vui lòng chọn ngày hiện tại hoặc tương lai."
-                          : "Không có khung giờ trống trong ngày này. Vui lòng chọn ngày khác."}
+                          ? "Please select today or a future date."
+                          : "No available slots for this date. Please choose another day."}
                       </p>
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
@@ -367,7 +365,7 @@ export default function ServicesPage() {
                       onClick={closeModal}
                       className="flex-1 py-2.5 rounded-lg border border-gray-300 text-[#374151] font-medium hover:bg-gray-50"
                     >
-                      Hủy
+                      Cancel
                     </button>
                     <button
                       type="button"
@@ -380,7 +378,7 @@ export default function ServicesPage() {
                       ) : (
                         <>
                           <CheckCircle2 className="w-4 h-4" />
-                          Xác nhận đặt lịch
+                          Confirm booking
                         </>
                       )}
                     </button>

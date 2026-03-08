@@ -46,37 +46,37 @@ type StatusConfig = {
 
 const STATUS_MAP: Record<string, StatusConfig> = {
   Pending: {
-    label: "Chờ xác nhận",
+    label: "Awaiting confirmation",
     color: "text-amber-600",
     bg: "bg-amber-50 border-amber-100",
     icon: <Clock className="w-3.5 h-3.5" />,
   },
   Paid: {
-    label: "Đã thanh toán",
+    label: "Paid",
     color: "text-green-600",
     bg: "bg-green-50 border-green-100",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   Confirmed: {
-    label: "Đã xác nhận",
+    label: "Confirmed",
     color: "text-blue-600",
     bg: "bg-blue-50 border-blue-100",
     icon: <RefreshCw className="w-3.5 h-3.5" />,
   },
   Shipped: {
-    label: "Đang giao",
+    label: "Shipping",
     color: "text-indigo-600",
     bg: "bg-indigo-50 border-indigo-100",
     icon: <Truck className="w-3.5 h-3.5" />,
   },
   Delivered: {
-    label: "Đã giao",
+    label: "Delivered",
     color: "text-green-600",
     bg: "bg-green-50 border-green-100",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   Cancelled: {
-    label: "Đã huỷ",
+    label: "Cancelled",
     color: "text-red-500",
     bg: "bg-red-50 border-red-100",
     icon: <XCircle className="w-3.5 h-3.5" />,
@@ -145,7 +145,7 @@ export default function OrdersPage() {
   }, [notifications]);
 
   async function handleCancel(orderId: string) {
-    if (!confirm("Bạn có chắc chắn muốn huỷ đơn hàng này?")) return;
+    if (!confirm("Are you sure you want to cancel this order?")) return;
     setCancellingId(orderId);
     try {
       await cancelOrder(orderId);
@@ -167,13 +167,13 @@ export default function OrdersPage() {
           {/* Header */}
           <div className="mb-8">
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-              Tài khoản
+              Account
             </span>
             <h1
               className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mt-2"
               style={{ fontFamily: "var(--font-heading)" }}
             >
-              Đơn hàng của tôi
+              My Orders
             </h1>
           </div>
 
@@ -189,7 +189,7 @@ export default function OrdersPage() {
                 onClick={fetchOrders}
                 className="text-[#D4AF37] hover:underline font-medium text-sm"
               >
-                Thử lại
+                Try again
               </button>
             </div>
           ) : orders.length === 0 ? (
@@ -201,16 +201,16 @@ export default function OrdersPage() {
                 className="text-2xl font-bold text-[#1A1A1A] mb-3"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Chưa có đơn hàng
+                No orders yet
               </h2>
               <p className="text-[#6B7280] mb-8">
-                Bạn chưa đặt hàng nào. Hãy khám phá bộ sưu tập của chúng tôi.
+                You have not placed any orders. Explore our collection.
               </p>
               <Link
                 href="/products"
                 className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-[#D4AF37] text-white font-semibold text-sm hover:bg-[#C9A030] transition-colors"
               >
-                Khám phá sản phẩm
+                Explore products
               </Link>
             </div>
           ) : (
@@ -227,7 +227,7 @@ export default function OrdersPage() {
                         <Package className="w-4 h-4 text-[#D4AF37]" />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280]">Mã đơn hàng</p>
+                        <p className="text-xs text-[#6B7280]">Order ID</p>
                         <p className="text-sm font-mono font-semibold text-[#1A1A1A]">
                           #{(order.id ?? "").slice(0, 8).toUpperCase()}
                         </p>
@@ -241,7 +241,7 @@ export default function OrdersPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
-                          Ngày đặt
+                          Order date
                         </p>
                         <p className="text-[#1A1A1A] font-medium">
                           {fmtDate(order.orderDate)}
@@ -249,7 +249,7 @@ export default function OrdersPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
-                          Sản phẩm
+                          Items
                         </p>
                         <p className="text-[#1A1A1A] font-medium">
                           {(order.orderItems ?? []).length} items
@@ -257,15 +257,15 @@ export default function OrdersPage() {
                       </div>
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
-                          Địa chỉ
+                          Address
                         </p>
                         <p className="text-[#1A1A1A] font-medium truncate">
-                          {order.shippingAddress ?? "Đơn dịch vụ"}
+                          {order.shippingAddress ?? "Service order"}
                         </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280] mb-1">
-                          Tổng tiền
+                          Total
                         </p>
                         <p className="text-[#D4AF37] font-bold text-base">
                           {fmt(order.finalAmount ?? order.totalAmount)}
@@ -288,7 +288,7 @@ export default function OrdersPage() {
                         ) : (
                           <XCircle className="w-3.5 h-3.5" />
                         )}
-                        Huỷ đơn
+                        Cancel order
                       </button>
                     )}
                     {order.status !== "Pending" && <span />}
@@ -296,7 +296,7 @@ export default function OrdersPage() {
                       href={`/orders/${order.id}`}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                     >
-                      Xem chi tiết
+                      View details
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>

@@ -26,17 +26,17 @@ function isSalesAreaRole(role: string | null): boolean {
 }
 
 const staffNavItems = [
-  { href: "/sales", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/sales/orders", label: "Quản lý đơn hàng", icon: Package },
-  { href: "/sales/eye-results", label: "Kết quả khám mắt", icon: Eye },
-  { href: "/sales/prescriptions", label: "Đơn gọng kính", icon: FileText },
-  { href: "/sales/returns", label: "Đổi trả hàng", icon: RotateCcw },
+  { href: "/sales", label: "Overview", icon: LayoutDashboard },
+  { href: "/sales/orders", label: "Orders", icon: Package },
+  { href: "/sales/eye-results", label: "Eye exam results", icon: Eye },
+  { href: "/sales/prescriptions", label: "Prescriptions", icon: FileText },
+  { href: "/sales/returns", label: "Returns & exchanges", icon: RotateCcw },
 ];
 
 const operationNavItems = [
-  { href: "/operation", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/operation/orders", label: "Quản lý đơn hàng", icon: PackageSearch },
-  { href: "/operation/returns", label: "Đổi trả hàng", icon: RotateCcw },
+  { href: "/operation", label: "Overview", icon: LayoutDashboard },
+  { href: "/operation/orders", label: "Orders", icon: PackageSearch },
+  { href: "/operation/returns", label: "Returns & exchanges", icon: RotateCcw },
 ];
 
 function getNavItems(role: string | null) {
@@ -57,7 +57,7 @@ export default function StaffLayout({
   const navItems = getNavItems(user?.role ?? null);
   const isOperation = user?.role === "Operation";
   const homeHref = isOperation ? "/operation" : "/sales";
-  const areaLabel = isOperation ? "Khu vực Operation" : "Khu vực nhân viên";
+  const areaLabel = isOperation ? "Operation area" : "Staff area";
 
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 0);
@@ -114,7 +114,7 @@ export default function StaffLayout({
             <button
               onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-white/10"
-              aria-label="Đóng menu"
+              aria-label="Close menu"
             >
               <X className="w-5 h-5" />
             </button>
@@ -152,7 +152,7 @@ export default function StaffLayout({
           <div className="p-3 border-t border-white/10">
             <div className="px-3 py-2 mb-2 rounded-lg bg-white/5">
               <p className="text-xs font-semibold text-white/90 truncate">
-                {user.fullName ?? "Nhân viên"}
+                {user.fullName ?? "Staff"}
               </p>
               <p className="text-[10px] text-white/50 truncate">{user.email}</p>
               {user.role && (
@@ -166,7 +166,7 @@ export default function StaffLayout({
               className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-white/70 hover:bg-red-500/20 hover:text-red-300 transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              Đăng xuất
+              Log out
             </button>
           </div>
         </aside>
@@ -186,7 +186,7 @@ export default function StaffLayout({
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 rounded-lg hover:bg-[#F5F5F5]"
-              aria-label="Mở menu"
+              aria-label="Open menu"
             >
               <Menu className="w-5 h-5 text-[#1A1A1A]" />
             </button>
@@ -194,7 +194,7 @@ export default function StaffLayout({
               href="/"
               className="ml-2 lg:ml-0 text-sm text-[#6B7280] hover:text-[#D4AF37] transition-colors"
             >
-              ← Về trang chủ
+              ← Back to home
             </Link>
             {/* Thông báo — Sales/Admin nhận đơn mới, Operation nhận xác nhận nhận hàng */}
             {isOperation ? (

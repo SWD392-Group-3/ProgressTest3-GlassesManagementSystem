@@ -53,13 +53,13 @@ export default function CheckoutPage() {
         <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 flex items-center justify-center">
           <div className="text-center">
             <p className="text-[#6B7280] mb-4">
-              Giỏ hàng trống, không thể checkout.
+              Cart is empty, cannot checkout.
             </p>
             <Link
               href="/cart"
               className="text-[#D4AF37] hover:underline font-medium"
             >
-              ← Quay lại giỏ hàng
+              ← Back to cart
             </Link>
           </div>
         </main>
@@ -105,13 +105,13 @@ export default function CheckoutPage() {
             </Link>
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-                Đặt hàng
+                Place order
               </span>
               <h1
                 className="text-3xl font-bold text-[#1A1A1A]"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Thanh toán
+                Checkout
               </h1>
             </div>
           </div>
@@ -125,25 +125,25 @@ export default function CheckoutPage() {
                     {/* Shipping info */}
                     <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                       <h2 className="text-base font-bold text-[#1A1A1A] mb-5">
-                        Thông tin giao hàng
+                        Shipping information
                       </h2>
                       <div className="space-y-4">
                         <div>
                           <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
-                            Địa chỉ giao hàng *
+                            Shipping address *
                           </label>
                           <input
                             type="text"
                             required
                             value={shippingAddress}
                             onChange={(e) => setShippingAddress(e.target.value)}
-                            placeholder="Số nhà, tên đường, phường, quận, thành phố..."
+                            placeholder="Street, district, city..."
                             className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
-                            Số điện thoại *
+                            Phone number *
                           </label>
                           <input
                             type="tel"
@@ -156,13 +156,13 @@ export default function CheckoutPage() {
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
-                            Ghi chú (tuỳ chọn)
+                            Note (optional)
                           </label>
                           <textarea
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             rows={3}
-                            placeholder="Ghi chú cho người giao hàng..."
+                            placeholder="Note for delivery..."
                             className="w-full px-4 py-3 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors resize-none"
                           />
                         </div>
@@ -173,17 +173,17 @@ export default function CheckoutPage() {
                     <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                       <h2 className="text-base font-bold text-[#1A1A1A] mb-5 flex items-center gap-2">
                         <Tag className="w-4 h-4 text-[#D4AF37]" />
-                        Mã khuyến mãi
+                        Promotion code
                       </h2>
                       <input
                         type="text"
                         value={promotionId}
                         onChange={(e) => setPromotionId(e.target.value)}
-                        placeholder="Nhập Promotion ID (nếu có)..."
+                        placeholder="Enter Promotion ID (if any)..."
                         className="w-full h-11 px-4 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors"
                       />
                       <p className="text-xs text-[#9CA3AF] mt-2">
-                        * Nhập ID của mã giảm giá do admin cung cấp
+                        * Enter discount code ID provided by admin
                       </p>
                     </div>
                   </>
@@ -191,17 +191,17 @@ export default function CheckoutPage() {
                 {isServiceOnly && (
                   <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                     <p className="text-sm text-[#6B7280]">
-                      Đơn của bạn chỉ gồm dịch vụ đặt lịch. Xác nhận để thanh toán — không cần địa chỉ giao hàng hay mã khuyến mãi.
+                      Your order contains only booked services. Confirm to place order — no shipping address or promotion code needed.
                     </p>
                     <div className="mt-4">
                       <label className="block text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-1.5">
-                        Ghi chú (tuỳ chọn)
+                        Note (optional)
                       </label>
                       <textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
                         rows={2}
-                        placeholder="Ghi chú..."
+                        placeholder="Note..."
                         className="w-full px-4 py-3 rounded-xl border border-[#E5E7EB] text-sm text-[#1A1A1A] placeholder-[#9CA3AF] focus:outline-none focus:border-[#D4AF37] transition-colors resize-none"
                       />
                     </div>
@@ -216,9 +216,9 @@ export default function CheckoutPage() {
                     className="text-base font-bold text-[#1A1A1A] mb-5"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
-                    Đơn hàng (
+                    Order (
                     {isServiceOnly
-                      ? `${cart.cartItems.length} dịch vụ`
+                      ? `${cart.cartItems.length} services`
                       : cart.cartItems.every(
                           (i) =>
                             i.productId ||
@@ -226,8 +226,8 @@ export default function CheckoutPage() {
                             i.lensesVariantId ||
                             i.comboItemId
                         )
-                        ? `${cart.cartItems.length} sản phẩm`
-                        : `${cart.cartItems.length} món`}
+                        ? `${cart.cartItems.length} products`
+                        : `${cart.cartItems.length} items`}
                     )
                   </h2>
 
@@ -240,14 +240,14 @@ export default function CheckoutPage() {
                       >
                         <span className="text-[#6B7280] truncate max-w-[60%]">
                           {item.productVariantId
-                            ? "Gọng kính"
+                            ? "Frame"
                             : item.productId
-                              ? "Sản phẩm"
+                              ? "Product"
                               : item.lensesVariantId
-                                ? "Tròng kính"
+                                ? "Lenses"
                                 : item.comboItemId
                                   ? "Combo"
-                                  : "Dịch vụ"}{" "}
+                                  : "Service"}{" "}
                           × {item.quantity}
                         </span>
                         <span className="font-medium text-[#1A1A1A] shrink-0">
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
                   <div className="h-px bg-[#E5E7EB] mb-4" />
                   <div className="flex justify-between mb-6">
                     <span className="font-semibold text-[#1A1A1A]">
-                      Tổng cộng
+                      Total
                     </span>
                     <span className="text-xl font-bold text-[#D4AF37]">
                       {fmt(cart.totalAmount)}
@@ -283,13 +283,13 @@ export default function CheckoutPage() {
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        Xác nhận đặt hàng
+                        Confirm order
                       </>
                     )}
                   </button>
 
                   <p className="text-[10px] text-[#9CA3AF] text-center mt-3">
-                    Bạn có thể thanh toán Momo sau khi đặt hàng thành công
+                    You can pay with Momo after placing the order
                   </p>
                 </div>
               </div>
