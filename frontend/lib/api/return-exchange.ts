@@ -135,7 +135,7 @@ export async function uploadReturnImages(
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || `Lỗi upload ảnh (${res.status})`);
+    throw new Error(errorData.message || `Image upload failed (${res.status})`);
   }
 
   return await res.json();

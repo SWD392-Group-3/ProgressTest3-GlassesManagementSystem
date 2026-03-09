@@ -58,7 +58,13 @@ export default function OrderReturnPage() {
     try {
       const data = await getOrderById(orderId);
       if (data.status !== "Delivered") {
-        throw new Error("Chỉ có thể đổi trả cho đơn hàng Đã Giao (Delivered).");
+        throw new Error("Return/exchange is only available for Delivered orders.");
+      }
+      const isServiceOrder =
+        (data.shippingAddress == null || data.shippingAddress === "") &&
+        (data.shippingPhone == null || data.shippingPhone === "");
+      if (isServiceOrder) {
+        throw new Error("Service orders do not support return or exchange.");
       }
       setOrder(data);
 
@@ -139,21 +145,21 @@ export default function OrderReturnPage() {
     // Validate
     const selectedItems = Object.values(itemForms).filter((i) => i.selected);
     if (selectedItems.length === 0) {
-      setError("Vui lòng chọn ít nhất 1 sản phẩm để đổi/trả.");
+      setError("Please select at least one product to return or exchange.");
       return;
     }
     for (const item of selectedItems) {
       if (!item.reason.trim()) {
-        setError("Vui lòng nhập lý do cụ thể cho các sản phẩm đã chọn.");
+        setError("Please enter a specific reason for each selected product.");
         return;
       }
       if (item.files.length === 0) {
-        setError("Vui lòng tải lên ít nhất 1 ảnh minh chứng cho sản phẩm lỗi.");
+        setError("Please upload at least one evidence photo for the defective product.");
         return;
       }
     }
     if (!globalReason.trim()) {
-      setError("Vui lòng nhập lý do tổng quan.");
+      setError("Please enter the overall reason.");
       return;
     }
 
@@ -204,15 +210,15 @@ export default function OrderReturnPage() {
             onClick={() => router.back()}
             className="flex items-center gap-2 text-sm font-medium text-[#6B7280] hover:text-[#1A1A1A] mb-6 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Quay lại
+            <ArrowLeft className="w-4 h-4" /> Back
           </button>
 
           <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 sm:p-8 shadow-sm">
             <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2 font-heading">
-              Yêu cầu đổi / trả hàng
+              Return / Exchange request
             </h1>
             <p className="text-sm text-[#6B7280] mb-8">
-              Mã đơn: #{orderId?.slice(0, 8).toUpperCase()}
+              Order ID: #{orderId?.slice(0, 8).toUpperCase()}
             </p>
 
             {loading ? (
@@ -236,7 +242,7 @@ export default function OrderReturnPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      Loại yêu cầu
+                      Request type
                     </label>
                     <div className="flex gap-4">
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -249,7 +255,7 @@ export default function OrderReturnPage() {
                           className="w-4 h-4 text-[#D4AF37] focus:ring-[#D4AF37]"
                         />
                         <span className="text-sm font-medium">
-                          Hoàn trả trực tiếp (Return)
+                          Direct return (Return)
                         </span>
                       </label>
                       <label className="flex items-center gap-2 cursor-pointer">
@@ -262,7 +268,7 @@ export default function OrderReturnPage() {
                           className="w-4 h-4 text-[#D4AF37] focus:ring-[#D4AF37]"
                         />
                         <span className="text-sm font-medium">
-                          Đổi mã mới (Exchange)
+                          Exchange for new item (Exchange)
                         </span>
                       </label>
                     </div>
@@ -270,12 +276,12 @@ export default function OrderReturnPage() {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      Nguyên nhân tổng quan
+                      Overall reason
                     </label>
                     <textarea
                       value={globalReason}
                       onChange={(e) => setGlobalReason(e.target.value)}
-                      placeholder="Giao sai thông số, sản phẩm bị trầy xước..."
+                      placeholder="Wrong specs delivered, product scratched..."
                       rows={3}
                       className="w-full p-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] outline-none text-sm resize-none"
                     />
@@ -285,7 +291,7 @@ export default function OrderReturnPage() {
                 {/* Items selection */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-[#1A1A1A] pb-2 border-b border-[#E5E7EB]">
-                    Chọn sản phẩm lỗi
+                    Select defective product(s)
                   </h3>
 
                   {order.orderItems.map((item) => {
@@ -303,7 +309,7 @@ export default function OrderReturnPage() {
                       >
                         <div className="flex items-start gap-4">
                           <input
-                            aria-label={`Chọn sản phẩm ${item.id}`}
+                            aria-label={`Select product ${item.id}`}
                             type="checkbox"
                             checked={uiData.selected}
                             onChange={(e) =>
@@ -315,13 +321,13 @@ export default function OrderReturnPage() {
                             <div className="flex justify-between items-start mb-2">
                               <div>
                                 <p className="font-semibold text-sm">
-                                  Sản phẩm kính / phụ kiện
+                                  Glasses / accessory
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   ID: {item.id.slice(0, 8)}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  Đã mua: {item.quantity}
+                                  Purchased: {item.quantity}
                                 </p>
                               </div>
                               <p className="text-sm font-bold text-[#D4AF37]">
@@ -334,10 +340,10 @@ export default function OrderReturnPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <label className="block text-xs font-semibold text-gray-600 mb-1">
-                                      Số lượng lỗi
+                                      Defective quantity
                                     </label>
                                     <input
-                                      aria-label="Số lượng lỗi"
+                                      aria-label="Defective quantity"
                                       type="number"
                                       min="1"
                                       max={uiData.maxQuantity}
@@ -354,10 +360,10 @@ export default function OrderReturnPage() {
                                   </div>
                                   <div className="col-span-2">
                                     <label className="block text-xs font-semibold text-gray-600 mb-1">
-                                      Lý do cụ thể (bắt buộc)
+                                      Specific reason (required)
                                     </label>
                                     <input
-                                      aria-label="Lý do cụ thể"
+                                      aria-label="Specific reason"
                                       type="text"
                                       value={uiData.reason}
                                       onChange={(e) =>
@@ -367,7 +373,7 @@ export default function OrderReturnPage() {
                                           e.target.value,
                                         )
                                       }
-                                      placeholder="Ví dụ: Lỗi xước gọng..."
+                                      placeholder="e.g. Frame scratch..."
                                       className="w-full h-10 px-3 rounded-lg border border-gray-300 text-sm focus:ring-[#D4AF37] outline-none"
                                     />
                                   </div>
@@ -376,7 +382,7 @@ export default function OrderReturnPage() {
                                 {/* Upload ảnh */}
                                 <div>
                                   <label className="block text-xs font-semibold text-gray-600 mb-2">
-                                    Hình ảnh minh chứng (ít nhất 1 ảnh)
+                                    Evidence photos (at least 1)
                                   </label>
 
                                   <div className="flex flex-wrap gap-2 mb-2">
@@ -392,7 +398,7 @@ export default function OrderReturnPage() {
                                           className="w-full h-full object-cover"
                                         />
                                         <button
-                                          aria-label={`Xóa ảnh ${idx}`}
+                                          aria-label={`Remove photo ${idx}`}
                                           type="button"
                                           onClick={() =>
                                             removeFile(item.id, idx)
@@ -406,7 +412,7 @@ export default function OrderReturnPage() {
                                     <label className="w-16 h-16 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors">
                                       <Upload className="w-4 h-4 text-gray-400 mb-1" />
                                       <span className="text-[10px] text-gray-500">
-                                        Tải lên
+                                        Upload
                                       </span>
                                       <input
                                         type="file"
@@ -440,7 +446,7 @@ export default function OrderReturnPage() {
                     className="h-12 px-8 rounded-full bg-[#1A1A1A] text-white font-semibold flex items-center gap-2 hover:bg-black transition-colors disabled:opacity-50"
                   >
                     {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Gửi yêu cầu ngay
+                    Submit request
                   </button>
                 </div>
               </form>

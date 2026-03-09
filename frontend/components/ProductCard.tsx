@@ -89,7 +89,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* CTA */}
         <div className="w-full h-10 rounded-full text-xs font-semibold tracking-wide flex items-center justify-center gap-2 bg-[#1A1A1A] text-white group-hover:bg-[#D4AF37] transition-colors duration-300">
-          Chọn kiểu dáng
+          Select style
           <ChevronRight className="w-3.5 h-3.5" />
         </div>
       </div>

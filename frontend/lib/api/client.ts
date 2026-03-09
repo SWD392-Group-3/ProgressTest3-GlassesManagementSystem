@@ -31,6 +31,7 @@ export const API = {
     updateStatus: (orderId: string) => `/api/order/${orderId}/status`,
     confirm: (orderId: string) => `/api/order/${orderId}/confirm`,
     cancel: (orderId: string) => `/api/order/${orderId}/cancel`,
+    complete: (orderId: string) => `/api/order/${orderId}/complete`,
   },
   payment: {
     momoCreate: "/api/payment/momo",
@@ -68,6 +69,28 @@ export const API = {
     addImages: (id: string) => `/api/ReturnExchange/${id}/images`,
     uploadImages: "/api/ReturnExchange/upload-images",
   },
+  notification: {
+    getMyNotifications: "/api/notification",
+    markRead: (notificationId: string) =>
+      `/api/notification/${notificationId}/read`,
+    markAllRead: "/api/notification/read-all",
+  },
+  slots: {
+    available: (date: string) => `/api/slot/available?date=${date}`,
+  },
+  manager: {
+    revenue: {
+      overview: (from?: string, to?: string) => {
+        const p = new URLSearchParams();
+        if (from) p.set("from", from);
+        if (to) p.set("to", to);
+        const q = p.toString();
+        return `/api/manager/revenue/overview${q ? `?${q}` : ""}`;
+      },
+      monthly: (year: number) => `/api/manager/revenue/monthly/${year}`,
+      recentOrders: (count: number) => `/api/manager/revenue/recent-orders?count=${count}`,
+    },
+  },
 } as const;
 
 export type ApiEndpoint = string;
@@ -95,7 +118,7 @@ export async function apiRequest<T = unknown>(
     if (user?.expiresAt && new Date(user.expiresAt) <= new Date()) {
       clearAuth();
       if (typeof window !== "undefined") window.location.href = "/login";
-      throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+      throw new Error("Your session has expired. Please log in again.");
     }
 
     const token = getToken();
@@ -110,12 +133,12 @@ export async function apiRequest<T = unknown>(
     // Token hết hạn hoặc không hợp lệ → clear và về login
     clearAuth();
     if (typeof window !== "undefined") window.location.href = "/login";
-    throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+    throw new Error("Your session has expired. Please log in again.");
   }
 
   if (!res.ok) {
     const message =
-      (data as { message?: string })?.message ?? `Lỗi ${res.status}`;
+      (data as { message?: string })?.message ?? `Error ${res.status}`;
     throw new Error(message);
   }
 

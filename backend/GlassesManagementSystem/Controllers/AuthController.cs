@@ -24,12 +24,12 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { message = "Email và mật khẩu không được để trống." });
+            return BadRequest(new { message = "Email and password are required." });
 
         var (response, error) = await _authService.LoginAsync(request, cancellationToken);
 
         if (response == null)
-            return Unauthorized(new { message = error ?? "Đăng nhập thất bại." });
+            return Unauthorized(new { message = error ?? "Login failed." });
 
         return Ok(response);
     }
@@ -43,16 +43,16 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Email))
-            return BadRequest(new { message = "Email không được để trống." });
+            return BadRequest(new { message = "Email is required." });
         if (string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { message = "Mật khẩu không được để trống." });
+            return BadRequest(new { message = "Password is required." });
         if (request.Password.Length < 8)
-            return BadRequest(new { message = "Mật khẩu phải có ít nhất 8 ký tự." });
+            return BadRequest(new { message = "Password must be at least 8 characters." });
 
         var (response, error) = await _authService.RegisterAsync(request, cancellationToken);
 
         if (response == null)
-            return BadRequest(new { message = error ?? "Đăng ký thất bại." });
+            return BadRequest(new { message = error ?? "Registration failed." });
 
         return StatusCode(StatusCodes.Status201Created, response);
     }

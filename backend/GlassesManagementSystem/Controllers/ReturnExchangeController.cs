@@ -48,7 +48,7 @@ namespace GlassesManagementSystem.Controllers
                 return Unauthorized();
 
             if (request.Items == null || !request.Items.Any())
-                return BadRequest(new { message = "Phải có ít nhất một sản phẩm để hoàn trả" });
+                return BadRequest(new { message = "At least one item is required for return." });
 
             var (response, error) = await _returnExchangeService.CreateReturnExchangeAsync(
                 request,
@@ -227,10 +227,10 @@ namespace GlassesManagementSystem.Controllers
                 return Unauthorized();
 
             if (request.ImageUrls == null || !request.ImageUrls.Any())
-                return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
+                return BadRequest(new { message = "At least one image is required." });
 
             if (request.ImageUrls.Count > 5)
-                return BadRequest(new { message = "Tối đa 5 hình ảnh" });
+                return BadRequest(new { message = "Maximum 5 images allowed." });
 
             var (success, error) = await _returnExchangeService.AddImagesAsync(
                 request.ReturnExchangeItemId,
@@ -244,7 +244,7 @@ namespace GlassesManagementSystem.Controllers
             if (!success)
                 return BadRequest(new { message = error });
 
-            return Ok(new { message = "Thêm hình ảnh thành công" });
+            return Ok(new { message = "Images added successfully." });
         }
 
         /// <summary>
@@ -266,10 +266,10 @@ namespace GlassesManagementSystem.Controllers
                 return Unauthorized();
 
             if (files == null || !files.Any())
-                return BadRequest(new { message = "Phải có ít nhất một hình ảnh" });
+                return BadRequest(new { message = "At least one image is required." });
 
             if (files.Count > 5)
-                return BadRequest(new { message = "Tối đa 5 hình ảnh" });
+                return BadRequest(new { message = "Maximum 5 images allowed." });
 
             // Xác định thư mục theo role hiện tại (Customer / Sales / Operation / Admin)
             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";

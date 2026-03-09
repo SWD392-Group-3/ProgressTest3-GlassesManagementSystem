@@ -63,15 +63,15 @@ export default function RegisterPage() {
     setError("");
 
     if (form.password !== form.confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp.");
+      setError("Confirm password does not match.");
       return;
     }
     if (form.password.length < 8) {
-      setError("Mật khẩu phải có ít nhất 8 ký tự.");
+      setError("Password must be at least 8 characters.");
       return;
     }
     if (!agreed) {
-      setError("Vui lòng đồng ý với Điều khoản & Chính sách bảo mật.");
+      setError("Please agree to the Terms & Privacy Policy.");
       return;
     }
 
@@ -85,6 +85,7 @@ export default function RegisterPage() {
       });
       saveAuth(res.token, {
         userId: res.userId,
+        customerId: res.customerId ?? null,
         email: res.email,
         fullName: res.fullName ?? null,
         role: res.role ?? null,
@@ -93,7 +94,7 @@ export default function RegisterPage() {
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng ký thất bại.");
+      setError(err instanceof Error ? err.message : "Registration failed.");
     } finally {
       setIsLoading(false);
     }

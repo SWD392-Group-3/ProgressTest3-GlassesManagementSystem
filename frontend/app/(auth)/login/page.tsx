@@ -25,6 +25,7 @@ export default function LoginPage() {
       const res = await login({ email: email.trim(), password });
       saveAuth(res.token, {
         userId: res.userId,
+        customerId: res.customerId ?? null,
         email: res.email,
         fullName: res.fullName ?? null,
         role: res.role ?? null,
@@ -42,7 +43,7 @@ export default function LoginPage() {
       }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Đăng nhập thất bại.");
+      setError(err instanceof Error ? err.message : "Login failed.");
     } finally {
       setIsLoading(false);
     }

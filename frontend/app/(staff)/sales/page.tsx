@@ -6,17 +6,17 @@ import { getUser } from "@/lib/auth-storage";
 
 const cards = [
   {
-    title: "Quản lý đơn hàng",
+    title: "Order management",
     description:
-      "Tra cứu đơn hàng theo mã, xem chi tiết và cập nhật trạng thái đơn.",
+      "Search orders by ID, view details and update order status.",
     href: "/sales/orders",
     icon: Package,
     accent: "bg-[#D4AF37]/10 text-[#D4AF37]",
   },
   {
-    title: "Đổi trả hàng",
+    title: "Returns & exchanges",
     description:
-      "Xử lý yêu cầu hoàn hàng (Sales: phê duyệt/từ chối, Operation: nhận hàng & kiểm tra).",
+      "Process return requests (Sales: approve/reject, Operation: receive & inspect).",
     href: "/sales/returns",
     icon: RotateCcw,
     accent: "bg-indigo-500/10 text-indigo-600",
@@ -30,16 +30,16 @@ export default function SalesDashboardPage() {
     <div className="max-w-4xl mx-auto animate-fade-in">
       <div className="mb-8">
         <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-          Khu vực nhân viên
+          Staff area
         </span>
         <h1
           className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mt-2"
           style={{ fontFamily: "var(--font-heading)" }}
         >
-          Xin chào, {user?.fullName ?? "Nhân viên"}
+          Hello, {user?.fullName ?? "Staff"}
         </h1>
         <p className="text-[#6B7280] mt-1">
-          Chọn chức năng bên dưới để bắt đầu làm việc.
+          Choose an option below to get started.
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export default function SalesDashboardPage() {
                 {card.description}
               </p>
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#D4AF37] group-hover:gap-3 transition-all">
-                Mở
+                Open
                 <ArrowRight className="w-4 h-4" />
               </span>
             </Link>
@@ -79,16 +79,16 @@ export default function SalesDashboardPage() {
           </div>
           <div>
             <h3 className="font-semibold text-[#1A1A1A] mb-1">
-              Vai trò của bạn
+              Your role
             </h3>
             <p className="text-sm text-[#6B7280]">
               {user?.role === "Admin"
-                ? "Quản trị viên: toàn quyền quản lý đơn hàng và hệ thống."
+                ? "Administrator: full access to orders and system."
                 : user?.role === "Sales"
-                  ? "Nhân viên cửa hàng: tra cứu đơn hàng, cập nhật trạng thái, phê duyệt/từ chối đổi trả."
+                  ? "Store staff: search orders, update status, approve/reject returns."
                   : user?.role === "Operation"
-                    ? "Nhân viên vận hành: nhận hàng hoàn, kiểm tra và cập nhật kết quả."
-                    : "Bạn có quyền truy cập khu vực nhân viên."}
+                    ? "Operations: receive returns, inspect and update results."
+                    : "You have access to the staff area."}
             </p>
           </div>
         </div>

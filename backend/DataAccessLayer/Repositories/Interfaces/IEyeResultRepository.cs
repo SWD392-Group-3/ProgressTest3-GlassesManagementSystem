@@ -9,5 +9,7 @@ namespace DataAccessLayer.Repositories.Interfaces
 {
     public interface IEyeResultRepository : IGenericRepository<EyeResult>
     {
+        Task<IEnumerable<EyeResult>> GetByOrderIdAsync(Guid orderId);
+        Task<EyeResult?> GetByIdWithStaffAsync(Guid id);
     }
 }

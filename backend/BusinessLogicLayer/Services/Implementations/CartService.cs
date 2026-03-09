@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -41,7 +41,7 @@ namespace BusinessLogicLayer.Services.Implementations
             if (byUserId != null)
                 return byUserId.Id;
 
-            throw new Exception("Không tìm thấy thông tin khách hàng.");
+            throw new Exception("Customer not found.");
         }
 
         public async Task<CartDto> AddItemAsync(Guid userId, Guid? productId, Guid? productVariantId, Guid? lensesVariantId, Guid? comboItemId, Guid? serviceId, Guid? slotId, int quantity, string? note)
@@ -105,6 +105,20 @@ namespace BusinessLogicLayer.Services.Implementations
                 var service = await _unitOfWork.GetRepository<Service>()
                     .GetByIdAsync(serviceId.Value);
                 unitPrice += service?.Price ?? 0;
+            }
+
+            // Khi chọn dịch vụ kèm slot: kiểm tra slot tồn tại và còn trống
+            if (slotId.HasValue)
+            {
+                var slot = await _unitOfWork.GetRepository<Slot>()
+                    .GetByIdAsync(slotId.Value);
+                if (slot == null)
+                    throw new Exception("Slot does not exist.");
+                var isAvailable = slot.Status == null || slot.Status == "Available";
+                if (!isAvailable)
+                    throw new Exception("This slot is no longer available. Please choose another.");
+                if (slot.Date < DateOnly.FromDateTime(DateTime.UtcNow))
+                    throw new Exception("Cannot book a slot in the past.");
             }
 
             var cartItem = new CartItem
@@ -185,14 +199,14 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var cart = await _cartRepository.GetCartByCartItemIdAsync(cartItemId);
             if (cart == null)
-                throw new Exception("Bạn chưa có giỏ hàng.");
+                throw new Exception("You do not have a cart yet.");
 
             var cartItem = await _cartItemRepository.GetByIdAsync(cartItemId);
             if (cartItem == null)
-                throw new Exception("Bạn không có sản phẩm này");
+                throw new Exception("This item is not in your cart.");
 
             if (quantity == 0)
-                throw new Exception("Số lượng không được bằng 0.");
+                throw new Exception("Quantity cannot be zero.");
 
             cartItem.Quantity = quantity;
             _cartItemRepository.Update(cartItem);

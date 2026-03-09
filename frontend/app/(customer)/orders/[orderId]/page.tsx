@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -24,9 +25,11 @@ import { getUser } from "@/lib/auth-storage";
 import {
   getOrderById,
   cancelOrder,
+  completeOrder,
   createMomoPayment,
   OrderDto,
 } from "@/lib/api";
+import { useNotifications } from "@/lib/NotificationContext";
 
 function fmt(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -45,15 +48,24 @@ function fmtDate(dateStr: string) {
   });
 }
 
-const STATUS_STEPS = ["Pending", "Paid", "Confirmed", "Shipped", "Delivered"];
+const STATUS_STEPS = [
+  "Pending",
+  "Paid",
+  "Confirmed",
+  "Shipped",
+  "Delivered",
+  "Completed",
+];
+const STATUS_STEPS_SERVICE = ["Pending", "Paid", "Confirmed", "Completed"];
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Đã xác nhận",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Cancelled: "Đã huỷ",
+  Pending: "Awaiting confirmation",
+  Paid: "Paid",
+  Confirmed: "Confirmed",
+  Shipped: "Shipping",
+  Delivered: "Delivered",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -62,6 +74,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   Confirmed: <RefreshCw className="w-4 h-4" />,
   Shipped: <Truck className="w-4 h-4" />,
   Delivered: <CheckCircle2 className="w-4 h-4" />,
+  Completed: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
 };
 
@@ -76,7 +89,11 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [payLoading, setPayLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [completeLoading, setCompleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serviceAcknowledged, setServiceAcknowledged] = useState(false);
+
+  const { notifications } = useNotifications();
 
   const fetchOrder = useCallback(async () => {
     if (!orderId) return;
@@ -109,6 +126,24 @@ export default function OrderDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentStatus]);
 
+  // Cập nhật status real-time khi nhận thông báo SignalR cho đơn hàng này
+  useEffect(() => {
+    if (notifications.length === 0) return;
+    const latest = notifications[0];
+    if (latest.orderId === orderId && latest.newStatus) {
+      setOrder((prev) =>
+        prev ? { ...prev, status: latest.newStatus! } : prev,
+      );
+    }
+  }, [notifications, orderId]);
+
+  // Auto-redirect to /eye-results when ?tab=eye-result is in the URL
+  useEffect(() => {
+    if (searchParams.get("tab") === "eye-result") {
+      router.replace("/eye-results");
+    }
+  }, [searchParams, router]);
+
   async function handlePayMomo() {
     if (!order) return;
     setPayLoading(true);
@@ -116,12 +151,12 @@ export default function OrderDetailPage() {
       const resp = await createMomoPayment(
         order.id,
         Math.round(order.finalAmount ?? order.totalAmount),
-        `Thanh toán đơn hàng #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
+        `Pay for order #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
       );
       if (resp.payUrl) {
         window.location.href = resp.payUrl;
       } else {
-        alert("Không lấy được link thanh toán Momo.");
+        alert("Could not get Momo payment link.");
       }
     } catch (e) {
       alert((e as Error).message);
@@ -131,7 +166,8 @@ export default function OrderDetailPage() {
   }
 
   async function handleCancel() {
-    if (!order || !confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
+    if (!order || !confirm("Are you sure you want to cancel this order?"))
+      return;
     setCancelLoading(true);
     try {
       await cancelOrder(order.id);
@@ -143,12 +179,47 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function handleComplete() {
+    if (!order) return;
+    const isService =
+      (order.shippingAddress == null || order.shippingAddress === "") &&
+      (order.shippingPhone == null || order.shippingPhone === "");
+    const msg = isService
+      ? "Confirm that you have completed the service?\nAfter confirming, the order will be marked as Completed."
+      : "Confirm that you have received the order?\nAfter confirming, you can request return or exchange if needed.";
+    if (!confirm(msg)) return;
+    setCompleteLoading(true);
+    try {
+      await completeOrder(order.id);
+      setOrder({ ...order, status: "Completed" });
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setCompleteLoading(false);
+    }
+  }
+
   const canCancel = order?.status === "Pending";
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
+  const isServiceOrder =
+    order != null &&
+    (order.shippingAddress == null || order.shippingAddress === "") &&
+    (order.shippingPhone == null || order.shippingPhone === "");
+  // Nút "Xác nhận hoàn thành dịch vụ" chỉ hiện khi: đơn dịch vụ + trạng thái đúng "Đã xác nhận"; đơn giao hàng chỉ khi "Đã giao". Ẩn hẳn khi đã Completed/Cancelled/Rejected.
+  const canComplete =
+    order != null &&
+    order.status !== "Completed" &&
+    order.status !== "Cancelled" &&
+    order.status !== "Rejected" &&
+    (isServiceOrder
+      ? order.status === "Confirmed"
+      : order.status === "Delivered");
+  const canReturn = order?.status === "Completed" && !isServiceOrder;
   const isCancelled = order?.status === "Cancelled";
+  const steps = isServiceOrder ? STATUS_STEPS_SERVICE : STATUS_STEPS;
   const currentStepIndex = isCancelled
     ? -1
-    : STATUS_STEPS.indexOf(order?.status ?? "");
+    : steps.indexOf(order?.status ?? "");
 
   return (
     <>
@@ -160,7 +231,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
               <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
               <p className="text-sm font-semibold text-green-700">
-                Thanh toán thành công! Đơn hàng của bạn đang được xử lý.
+                Payment successful! Your order is being processed.
               </p>
             </div>
           )}
@@ -168,7 +239,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="text-sm font-semibold text-red-700">
-                Thanh toán thất bại hoặc bị huỷ. Bạn có thể thử lại bên dưới.
+                Payment failed or was cancelled. You can try again below.
               </p>
             </div>
           )}
@@ -183,7 +254,7 @@ export default function OrderDetailPage() {
             </Link>
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-                Chi tiết đơn hàng
+                Order details
               </span>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] font-heading">
                 #{orderId?.slice(0, 8).toUpperCase()}
@@ -202,7 +273,7 @@ export default function OrderDetailPage() {
                 onClick={fetchOrder}
                 className="text-[#D4AF37] hover:underline text-sm"
               >
-                Thử lại
+                Try again
               </button>
             </div>
           ) : order ? (
@@ -211,7 +282,7 @@ export default function OrderDetailPage() {
               {!isCancelled ? (
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <div className="flex items-center justify-between">
-                    {STATUS_STEPS.map((step, idx) => {
+                    {steps.map((step, idx) => {
                       const done = idx <= currentStepIndex;
                       const active = idx === currentStepIndex;
                       return (
@@ -219,7 +290,7 @@ export default function OrderDetailPage() {
                           key={step}
                           className="flex-1 flex flex-col items-center relative"
                         >
-                          {idx < STATUS_STEPS.length - 1 && (
+                          {idx < steps.length - 1 && (
                             <div
                               className={`absolute top-4 left-1/2 w-full h-0.5 transition-colors ${
                                 idx < currentStepIndex
@@ -253,31 +324,43 @@ export default function OrderDetailPage() {
                 <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-center gap-3">
                   <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm font-semibold text-red-600">
-                    Đơn hàng đã bị huỷ
+                    Order cancelled
                   </p>
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Shipping info */}
+                {/* Shipping info — ẩn hoặc hiển thị "Đơn dịch vụ" khi không có giao hàng */}
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    Thông tin giao hàng
+                    {order.shippingAddress != null &&
+                    order.shippingPhone != null
+                      ? "Shipping information"
+                      : "Service order"}
                   </h2>
                   <div className="space-y-3 text-sm">
-                    <div className="flex items-start gap-2">
-                      <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
-                      <span className="text-[#1A1A1A]">
-                        {order.shippingAddress}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-[#6B7280] shrink-0" />
-                      <span className="text-[#1A1A1A]">
-                        {order.shippingPhone}
-                      </span>
-                    </div>
+                    {order.shippingAddress != null &&
+                    order.shippingPhone != null ? (
+                      <>
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
+                          <span className="text-[#1A1A1A]">
+                            {order.shippingAddress}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-[#6B7280] shrink-0" />
+                          <span className="text-[#1A1A1A]">
+                            {order.shippingPhone}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-[#6B7280]">
+                        Service-only order — no delivery.
+                      </p>
+                    )}
                     {order.note && (
                       <div className="flex items-start gap-2">
                         <FileText className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
@@ -299,18 +382,18 @@ export default function OrderDetailPage() {
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-[#D4AF37]" />
-                    Tóm tắt thanh toán
+                    Payment summary
                   </h2>
                   <div className="space-y-2.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[#6B7280]">Tạm tính</span>
+                      <span className="text-[#6B7280]">Subtotal</span>
                       <span className="text-[#1A1A1A]">
                         {fmt(order.totalAmount)}
                       </span>
                     </div>
                     {order.discountAmount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-[#6B7280]">Giảm giá</span>
+                        <span className="text-[#6B7280]">Discount</span>
                         <span className="text-green-600">
                           - {fmt(order.discountAmount)}
                         </span>
@@ -318,7 +401,7 @@ export default function OrderDetailPage() {
                     )}
                     <div className="h-px bg-[#E5E7EB]" />
                     <div className="flex justify-between font-bold">
-                      <span className="text-[#1A1A1A]">Tổng cộng</span>
+                      <span className="text-[#1A1A1A]">Total</span>
                       <span className="text-[#D4AF37] text-lg">
                         {fmt(order.finalAmount ?? order.totalAmount)}
                       </span>
@@ -327,12 +410,18 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
-              {/* Order items */}
+              {/* Order items — sản phẩm và/hoặc dịch vụ */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    Sản phẩm ({(order.orderItems ?? []).length})
+                    {order.orderItems?.some((i) => i.serviceId) &&
+                    !order.orderItems?.every((i) => i.serviceId)
+                      ? "Products & Services"
+                      : order.orderItems?.every((i) => i.serviceId)
+                        ? "Booked services"
+                        : "Products"}{" "}
+                    ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
                 <div className="divide-y divide-[#E5E7EB]">
@@ -342,32 +431,50 @@ export default function OrderDetailPage() {
                       className="px-6 py-4 flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0">
-                          <Package className="w-5 h-5 text-[#D4AF37]" />
+                        <div className="w-14 h-14 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0 overflow-hidden border border-[#E5E7EB]">
+                          {item.imageUrl ? (
+                            <Image
+                              src={item.imageUrl}
+                              alt={item.productName ?? "Product"}
+                              width={56}
+                              height={56}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Package className="w-6 h-6 text-[#D4AF37]" />
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-semibold text-[#1A1A1A]">
-                            {item.productVariantId
-                              ? "Gọng kính"
-                              : item.lensesVariantId
-                                ? "Tròng kính"
-                                : item.comboItemId
-                                  ? "Combo"
-                                  : "Dịch vụ"}
+                            {item.productName ??
+                              (item.productVariantId
+                                ? "Frame"
+                                : item.lensesVariantId
+                                  ? "Lenses"
+                                  : item.comboItemId
+                                    ? "Combo"
+                                    : "Service")}
                           </p>
-                          <p className="text-xs text-[#6B7280]">
-                            ID:{" "}
-                            {(
-                              item.productVariantId ??
-                              item.lensesVariantId ??
-                              item.comboItemId ??
-                              item.serviceId ??
-                              "—"
-                            ).slice(0, 8)}
-                            ...
-                          </p>
+                          {item.serviceId && (
+                            <span className="text-xs text-[#6B7280] font-medium">
+                              Service
+                              {item.slotDisplay ? ` · ${item.slotDisplay}` : ""}
+                            </span>
+                          )}
+                          {!item.serviceId &&
+                            (() => {
+                              const rawId =
+                                item.productVariantId ??
+                                item.lensesVariantId ??
+                                item.comboItemId;
+                              return rawId ? (
+                                <p className="text-xs text-[#6B7280]">
+                                  #{rawId.slice(0, 8).toUpperCase()}
+                                </p>
+                              ) : null;
+                            })()}
                           {item.note && (
-                            <p className="text-xs text-[#9CA3AF] italic">
+                            <p className="text-xs text-[#9CA3AF] italic mt-0.5">
                               {item.note}
                             </p>
                           )}
@@ -388,6 +495,7 @@ export default function OrderDetailPage() {
 
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
+                {" "}
                 {canPay && (
                   <button
                     onClick={handlePayMomo}
@@ -399,7 +507,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4" />
-                        Thanh toán qua Momo
+                        Pay with Momo
                       </>
                     )}
                   </button>
@@ -415,18 +523,36 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <XCircle className="w-4 h-4" />
-                        Huỷ đơn hàng
+                        Cancel order
                       </>
                     )}
                   </button>
                 )}
-                {order?.status === "Delivered" && (
+                {canComplete && (
+                  <button
+                    onClick={handleComplete}
+                    disabled={completeLoading}
+                    className="flex-1 h-12 rounded-full bg-green-500 text-white font-semibold text-sm hover:bg-green-600 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {completeLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        {isServiceOrder
+                          ? "Confirm service completed"
+                          : "Confirm delivery received"}
+                      </>
+                    )}
+                  </button>
+                )}
+                {canReturn && (
                   <Link
                     href={`/orders/${order.id}/return`}
                     className="flex-1 h-12 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] font-semibold text-sm hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    Yêu cầu đổi / trả hàng
+                    Request return / exchange
                   </Link>
                 )}
               </div>

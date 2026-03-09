@@ -9,5 +9,7 @@ namespace DataAccessLayer.Repositories.Interfaces
 {
     public interface INotificationRepository : IGenericRepository<Notification>
     {
+        /// <summary>Lấy tối đa <paramref name="limit"/> thông báo của user, mới nhất trước.</summary>
+        Task<IReadOnlyList<Notification>> GetByUserIdAsync(Guid userId, int limit = 50, CancellationToken cancellationToken = default);
     }
 }

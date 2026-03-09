@@ -4,6 +4,7 @@ using BusinessLogicLayer.Services.Implementations;
 using BusinessLogicLayer.Services.Interfaces;
 using BusinessLogicLayer.Settings;
 using GlassesManagementSystem.Extensions;
+using GlassesManagementSystem.Hubs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -39,6 +40,21 @@ builder
                 Encoding.UTF8.GetBytes(jwtSettings?.Secret ?? "")
             ),
         };
+
+        // SignalR gửi token qua query string (access_token) vì WebSocket không hỗ trợ header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // DI: DbContext, Services, Repositories (theo template AddDependencyInjection)
@@ -47,17 +63,29 @@ builder.Services.AddService(builder.Configuration);
 // Momo Payment Service (HttpClient)
 builder.Services.AddHttpClient<IMomoService, MomoService>();
 
-// CORS (cho frontend Next.js)
+// CORS (cho frontend Next.js) — AllowCredentials bắt buộc cho SignalR WebSocket
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod();
+        policy
+            .WithOrigins(
+                "http://localhost:3000",
+                "http://localhost:3001",
+                "http://localhost:3002",
+                "http://localhost:3003"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // required for SignalR
     });
 });
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// SignalR
+builder.Services.AddSignalR();
 
 // Swagger / Swashbuckle (compatible với .NET 8)
 builder.Services.AddEndpointsApiExplorer();
@@ -119,5 +147,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationHub>("/hubs/notification");
 
 app.Run();

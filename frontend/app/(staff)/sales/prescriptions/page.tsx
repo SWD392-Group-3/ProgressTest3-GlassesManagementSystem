@@ -53,19 +53,19 @@ const STATUS_MAP: Record<
   { label: string; color: string; bg: string; icon: React.ReactNode }
 > = {
   PrescriptionPending: {
-    label: "Chờ duyệt",
+    label: "Pending",
     color: "text-amber-700",
     bg: "bg-amber-50 border-amber-200",
     icon: <Clock className="w-3.5 h-3.5" />,
   },
   PrescriptionConfirmed: {
-    label: "Đã duyệt",
+    label: "Approved",
     color: "text-green-700",
     bg: "bg-green-50 border-green-200",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   PrescriptionRejected: {
-    label: "Từ chối",
+    label: "Rejected",
     color: "text-red-600",
     bg: "bg-red-50 border-red-200",
     icon: <XCircle className="w-3.5 h-3.5" />,
@@ -161,19 +161,19 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
 
   const handleSubmit = async () => {
     if (!selectedFrameVariantId) {
-      setError("Vui lòng chọn biến thể gọng kính.");
+      setError("Please select a frame variant.");
       return;
     }
     if (!selectedLensVariantId) {
-      setError("Vui lòng chọn biến thể tròng kính.");
+      setError("Please select a lens variant.");
       return;
     }
     if (!shippingAddress.trim()) {
-      setError("Vui lòng nhập địa chỉ giao hàng.");
+      setError("Please enter shipping address.");
       return;
     }
     if (!shippingPhone.trim()) {
-      setError("Vui lòng nhập số điện thoại giao hàng.");
+      setError("Please enter shipping phone number.");
       return;
     }
 
@@ -189,7 +189,7 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
       });
       onSuccess();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Lỗi khi xác nhận đơn.");
+      setError(err instanceof Error ? err.message : "Failed to confirm prescription.");
       setSubmitting(false);
     }
   };
@@ -208,86 +208,86 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-bold text-gray-900">
-              Xác nhận đơn gọng kính
+              Confirm prescription order
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Mã đơn: #{prescription.id.slice(0, 8).toUpperCase()}
+              Order #: #{prescription.id.slice(0, 8).toUpperCase()}
             </p>
           </div>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Đóng"
+            aria-label="Close"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
         <div className="px-6 py-5 space-y-5">
-          {/* Thông số đơn khách */}
+          {/* Customer prescription specs */}
           <div className="bg-gray-50 rounded-xl p-4 text-sm">
             <p className="font-semibold text-gray-700 mb-2">
-              📏 Thông số gọng khách gửi
+              📏 Customer frame specs
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-gray-600">
               {prescription.cangKinh && (
                 <>
-                  <span className="text-gray-400">Càng kính:</span>
+                  <span className="text-gray-400">Temple:</span>
                   <span className="font-medium">{prescription.cangKinh}</span>
                 </>
               )}
               {prescription.banLe && (
                 <>
-                  <span className="text-gray-400">Bản lề:</span>
+                  <span className="text-gray-400">Hinge:</span>
                   <span className="font-medium">{prescription.banLe}</span>
                 </>
               )}
               {prescription.vienGong && (
                 <>
-                  <span className="text-gray-400">Viền gọng:</span>
+                  <span className="text-gray-400">Rim:</span>
                   <span className="font-medium">{prescription.vienGong}</span>
                 </>
               )}
               {prescription.chanVeMui && (
                 <>
-                  <span className="text-gray-400">Chân vế mũi:</span>
+                  <span className="text-gray-400">Nose pad:</span>
                   <span className="font-medium">{prescription.chanVeMui}</span>
                 </>
               )}
               {prescription.cauGong && (
                 <>
-                  <span className="text-gray-400">Cầu gọng:</span>
+                  <span className="text-gray-400">Bridge:</span>
                   <span className="font-medium">{prescription.cauGong}</span>
                 </>
               )}
               {prescription.duoiGong && (
                 <>
-                  <span className="text-gray-400">Đuôi gọng:</span>
+                  <span className="text-gray-400">Temple tip:</span>
                   <span className="font-medium">{prescription.duoiGong}</span>
                 </>
               )}
               {prescription.note && (
                 <>
-                  <span className="text-gray-400">Ghi chú KH:</span>
+                  <span className="text-gray-400">Note:</span>
                   <span className="font-medium">{prescription.note}</span>
                 </>
               )}
             </div>
           </div>
 
-          {/* Chọn Gọng kính */}
+          {/* Select Frame */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
-              🕶️ Chọn Gọng kính (Frame)
+              🕶️ Select frame
             </label>
             <div className="relative">
               <select
                 value={selectedFrameProductId}
                 onChange={(e) => setSelectedFrameProductId(e.target.value)}
                 className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm appearance-none pr-9 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
-                aria-label="Chọn sản phẩm gọng kính"
+                aria-label="Select frame product"
               >
-                <option value="">-- Chọn sản phẩm --</option>
+                <option value="">-- Select product --</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -302,9 +302,9 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
                   value={selectedFrameVariantId}
                   onChange={(e) => setSelectedFrameVariantId(e.target.value)}
                   className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm appearance-none pr-9 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
-                  aria-label="Chọn biến thể gọng kính"
+                  aria-label="Select frame variant"
                 >
-                  <option value="">-- Chọn biến thể --</option>
+                  <option value="">-- Select variant --</option>
                   {frameVariants.map((v) => (
                     <option key={v.id} value={v.id}>
                       {[v.color, v.size].filter(Boolean).join(" - ") ||
@@ -318,19 +318,19 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
             )}
           </div>
 
-          {/* Chọn Tròng kính */}
+          {/* Select Lens */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
-              🔵 Chọn Tròng kính (Lens)
+              🔵 Select lens
             </label>
             <div className="relative">
               <select
                 value={selectedLensProductId}
                 onChange={(e) => setSelectedLensProductId(e.target.value)}
                 className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm appearance-none pr-9 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
-                aria-label="Chọn sản phẩm tròng kính"
+                aria-label="Select lens product"
               >
-                <option value="">-- Chọn sản phẩm --</option>
+                <option value="">-- Select product --</option>
                 {lensProducts.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name}
@@ -345,9 +345,9 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
                   value={selectedLensVariantId}
                   onChange={(e) => setSelectedLensVariantId(e.target.value)}
                   className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm appearance-none pr-9 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
-                  aria-label="Chọn biến thể tròng kính"
+                  aria-label="Select lens variant"
                 >
-                  <option value="">-- Chọn biến thể --</option>
+                  <option value="">-- Select variant --</option>
                   {lensVariants.map((v) => (
                     <option key={v.id} value={v.id}>
                       {[v.type, v.material].filter(Boolean).join(" - ") ||
@@ -361,37 +361,37 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
             )}
           </div>
 
-          {/* Giá tổng ước tính */}
+          {/* Estimated total */}
           {(framePrice > 0 || lensPrice > 0) && (
             <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl px-4 py-3 flex items-center justify-between text-sm">
-              <span className="text-gray-600">Tổng ước tính:</span>
+              <span className="text-gray-600">Estimated total:</span>
               <span className="font-bold text-[#1A1A1A] text-base">
                 {fmtPrice(framePrice + lensPrice)}
               </span>
             </div>
           )}
 
-          {/* Thông tin giao hàng */}
+          {/* Shipping info */}
           <div className="space-y-3">
             <label className="block text-sm font-semibold text-gray-700">
-              🚚 Thông tin giao hàng
+              🚚 Shipping information
             </label>
             <input
               type="text"
-              placeholder="Địa chỉ giao hàng *"
+              placeholder="Shipping address *"
               value={shippingAddress}
               onChange={(e) => setShippingAddress(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
             />
             <input
               type="text"
-              placeholder="Số điện thoại giao hàng *"
+              placeholder="Shipping phone *"
               value={shippingPhone}
               onChange={(e) => setShippingPhone(e.target.value)}
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
             />
             <textarea
-              placeholder="Ghi chú thêm cho đơn (tuỳ chọn)"
+              placeholder="Additional note (optional)"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
@@ -414,7 +414,7 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
             onClick={onClose}
             className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
           >
-            Huỷ bỏ
+            Cancel
           </button>
           <button
             onClick={handleSubmit}
@@ -426,7 +426,7 @@ function ConfirmModal({ prescription, onClose, onSuccess }: ConfirmModalProps) {
             ) : (
               <CheckCircle2 className="w-4 h-4" />
             )}
-            {submitting ? "Đang xác nhận..." : "Xác nhận & Tạo Order"}
+            {submitting ? "Confirming..." : "Confirm & Create Order"}
           </button>
         </div>
       </div>
@@ -455,7 +455,7 @@ export default function SalesPrescriptionsPage() {
       setPrescriptions(data);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Không thể tải danh sách đơn",
+        err instanceof Error ? err.message : "Failed to load prescriptions",
       );
     } finally {
       setLoading(false);
@@ -482,7 +482,7 @@ export default function SalesPrescriptionsPage() {
       setRejectReason("");
       fetchData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Lỗi khi từ chối đơn");
+      alert(err instanceof Error ? err.message : "Failed to reject prescription");
     }
   };
 
@@ -524,10 +524,10 @@ export default function SalesPrescriptionsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Quản lý đơn gọng kính
+              Prescription management
             </h1>
             <p className="text-gray-500 text-sm">
-              Xem và xử lý yêu cầu thông số gọng kính từ khách hàng
+              View and process frame specification requests from customers
             </p>
           </div>
         </div>
@@ -539,7 +539,7 @@ export default function SalesPrescriptionsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Tìm theo mã đơn, ghi chú..."
+            placeholder="Search by order code, note..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]"
@@ -559,7 +559,7 @@ export default function SalesPrescriptionsPage() {
                     : "bg-white text-gray-600 border-gray-300 hover:border-[#D4AF37]"
                 }`}
               >
-                {status === "all" ? "Tất cả" : (cfg?.label ?? status)}
+                {status === "all" ? "All" : (cfg?.label ?? status)}
               </button>
             );
           })}
@@ -571,7 +571,7 @@ export default function SalesPrescriptionsPage() {
           className="ml-auto flex items-center gap-2 px-4 py-2.5 bg-[#D4AF37] text-white rounded-xl text-sm font-semibold hover:bg-[#C9A030] disabled:opacity-50 transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Làm mới
+          Refresh
         </button>
       </div>
 
@@ -596,7 +596,7 @@ export default function SalesPrescriptionsPage() {
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>Không có đơn gọng kính nào</p>
+              <p>No prescriptions</p>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-200">
@@ -604,22 +604,22 @@ export default function SalesPrescriptionsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Mã đơn
+                      Order code
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Ngày tạo
+                      Created
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Thông số gọng
+                      Frame specs
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Ghi chú
+                      Notes
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-600">
-                      Trạng thái
+                      Status
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-600">
-                      Thao tác
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -671,7 +671,7 @@ export default function SalesPrescriptionsPage() {
                             )}
                             {p.duoiGong && (
                               <span className="px-1.5 py-0.5 bg-gray-100 rounded">
-                                ĐG: {p.duoiGong}
+                                Temple tip: {p.duoiGong}
                               </span>
                             )}
                             {!p.cangKinh &&
@@ -680,7 +680,7 @@ export default function SalesPrescriptionsPage() {
                               !p.chanVeMui &&
                               !p.cauGong &&
                               !p.duoiGong && (
-                                <span className="text-gray-400">Chưa nhập</span>
+                                <span className="text-gray-400">Not entered</span>
                               )}
                           </div>
                         </td>
@@ -702,7 +702,7 @@ export default function SalesPrescriptionsPage() {
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="text"
-                                    placeholder="Lý do từ chối..."
+                                    placeholder="Rejection reason..."
                                     value={rejectReason}
                                     onChange={(e) =>
                                       setRejectReason(e.target.value)
@@ -722,7 +722,7 @@ export default function SalesPrescriptionsPage() {
                                     }}
                                     className="text-xs px-2 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
                                   >
-                                    Huỷ
+                                    Cancel
                                   </button>
                                 </div>
                               ) : (
@@ -731,13 +731,13 @@ export default function SalesPrescriptionsPage() {
                                     onClick={() => setConfirmingPrescription(p)}
                                     className="text-xs px-3 py-1.5 bg-[#D4AF37] text-white rounded-lg hover:bg-[#C9A030] font-medium transition-colors"
                                   >
-                                    ✓ Xác nhận
+                                    ✓ Confirm
                                   </button>
                                   <button
                                     onClick={() => setRejectingId(p.id)}
                                     className="text-xs px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 font-medium transition-colors"
                                   >
-                                    Từ chối
+                                    Reject
                                   </button>
                                 </>
                               )}
@@ -751,7 +751,7 @@ export default function SalesPrescriptionsPage() {
                             )}
                           {p.status === "PrescriptionRejected" && (
                             <span className="text-xs text-gray-400">
-                              Đã từ chối
+                              Rejected
                             </span>
                           )}
                         </td>
@@ -764,7 +764,7 @@ export default function SalesPrescriptionsPage() {
           )}
 
           <div className="mt-4 text-sm text-gray-500">
-            Hiển thị {filtered.length} / {prescriptions.length} đơn
+            Displaying {filtered.length} / {prescriptions.length} orders
           </div>
         </>
       )}

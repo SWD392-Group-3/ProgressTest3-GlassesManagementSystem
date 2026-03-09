@@ -4,6 +4,7 @@ export interface LoginResponse {
   token: string;
   expiresAt: string;
   userId: string;
+  customerId?: string | null; // Customer.Id — chỉ có khi role = "Customer"
   email: string;
   fullName: string | null;
   role: string | null;
@@ -29,9 +30,9 @@ export async function login(body: LoginRequest): Promise<LoginResponse> {
       body: JSON.stringify(body),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Đăng nhập thất bại.";
-    if (message === "Lỗi 401")
-      throw new Error("Email hoặc mật khẩu không đúng.");
+    const message = err instanceof Error ? err.message : "Login failed.";
+    if (message === "Error 401" || message.includes("401"))
+      throw new Error("Invalid email or password.");
     throw err;
   }
 }

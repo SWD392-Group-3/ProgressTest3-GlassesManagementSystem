@@ -12,24 +12,27 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly ICustomerRepository _customerRepository;
         private readonly IOrderRepository _orderRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
         public PrescriptionService(
             IPrescriptionRepository prescriptionRepository,
             ICustomerRepository customerRepository,
             IOrderRepository orderRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            INotificationService notificationService)
         {
             _prescriptionRepository = prescriptionRepository;
             _customerRepository = customerRepository;
             _orderRepository = orderRepository;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<PrescriptionDto> CreateAsync(Guid userId, CreatePrescriptionRequest request)
         {
             var customer = await _customerRepository.GetByUserIdAsync(userId);
             if (customer == null)
-                throw new Exception("Khách hàng không tồn tại.");
+                throw new Exception("Customer not found.");
 
             var prescription = new Prescription
             {
@@ -82,17 +85,17 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var customer = await _customerRepository.GetByUserIdAsync(userId);
             if (customer == null)
-                throw new Exception("Khách hàng không tồn tại.");
+                throw new Exception("Customer not found.");
 
             var prescription = await _prescriptionRepository.GetByIdAsync(id);
             if (prescription == null)
-                throw new Exception("Đơn prescription không tồn tại.");
+                throw new Exception("Prescription order not found.");
 
             if (prescription.CustomerId != customer.Id)
-                throw new Exception("Bạn không có quyền sửa đơn này.");
+                throw new Exception("You do not have permission to edit this prescription.");
 
             if (prescription.Status != "PrescriptionPending")
-                throw new Exception("Chỉ có thể sửa đơn khi đang ở trạng thái PrescriptionPending.");
+                throw new Exception("Prescription can only be edited when status is PrescriptionPending.");
 
             prescription.CangKinh = request.CangKinh ?? prescription.CangKinh;
             prescription.BanLe = request.BanLe ?? prescription.BanLe;
@@ -113,10 +116,10 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var prescription = await _prescriptionRepository.GetByIdAsync(id);
             if (prescription == null)
-                throw new Exception("Đơn prescription không tồn tại.");
+                throw new Exception("Prescription order not found.");
 
             if (prescription.Status != "PrescriptionPending")
-                throw new Exception("Chỉ có thể duyệt đơn khi đang ở trạng thái PrescriptionPending.");
+                throw new Exception("Prescription can only be confirmed when status is PrescriptionPending.");
 
             // Lấy giá sản phẩm
             decimal unitPrice = 0;
@@ -168,6 +171,10 @@ namespace BusinessLogicLayer.Services.Implementations
             _prescriptionRepository.Update(prescription);
             await _unitOfWork.SaveChangesAsync();
 
+            // Thông báo real-time tới khách hàng: đơn prescription đã được duyệt, Order mới tạo
+            await _notificationService.SendOrderStatusChangedAsync(
+                order.CustomerId, order.Id, "Confirmed");
+
             return MapToDto(prescription);
         }
 
@@ -178,7 +185,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 return false;
 
             if (prescription.Status != "PrescriptionPending")
-                throw new Exception("Chỉ có thể từ chối đơn khi đang ở trạng thái PrescriptionPending.");
+                throw new Exception("Prescription can only be rejected when status is PrescriptionPending.");
 
             prescription.Status = "PrescriptionRejected";
             prescription.Note = request.Reason ?? prescription.Note;
@@ -186,6 +193,10 @@ namespace BusinessLogicLayer.Services.Implementations
 
             _prescriptionRepository.Update(prescription);
             await _unitOfWork.SaveChangesAsync();
+
+            // Thông báo real-time tới khách hàng: yêu cầu kính đơn bị từ chối
+            await _notificationService.SendPrescriptionRejectedAsync(
+                prescription.CustomerId, prescription.Id, request.Reason);
 
             return true;
         }

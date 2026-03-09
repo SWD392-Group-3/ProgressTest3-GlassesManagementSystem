@@ -1,4 +1,4 @@
-import { apiRequest } from "./client";
+import { apiRequest, API } from "./client";
 import type { Product } from "@/constants/products";
 
 // ─── DTOs (match backend BusinessLogicLayer.DTOs.Manager) ─────────────────────
@@ -158,4 +158,35 @@ export async function getLensVariants(
 /** GET /api/products/lens-variants/:id */
 export async function getLensVariant(id: string): Promise<LensesVariantDto> {
   return apiRequest<LensesVariantDto>(`/api/products/lens-variants/${id}`);
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
+export interface ServiceDto {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  status: string | null;
+}
+
+/** GET /api/manager/pricing-promotions/services  (AllowAnonymous) */
+export async function getServices(): Promise<ServiceDto[]> {
+  return apiRequest<ServiceDto[]>("/api/manager/pricing-promotions/services");
+}
+
+// ─── Slots (book slot when adding service) ─────────────────────────────────────
+
+export interface SlotDto {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string | null;
+  note: string | null;
+}
+
+/** GET /api/Slot/available?date=yyyy-MM-dd */
+export async function getAvailableSlots(date: string): Promise<SlotDto[]> {
+  return apiRequest<SlotDto[]>(API.slots.available(date));
 }

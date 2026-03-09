@@ -11,9 +11,11 @@ import {
   X,
   LogOut,
   Package,
+  Eye,
 } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
+import NotificationBell from "@/components/NotificationBell";
 
 const SALES_ROLES = ["Sales", "Admin"];
 const isSalesUser = (u: StoredUser | null) =>
@@ -26,6 +28,7 @@ const navLinks = [
   { name: "Sunglasses", href: "/products?category=sunglasses" },
   { name: "Optical", href: "/products?category=optical" },
   { name: "Blue-Light", href: "/products?category=blue-light" },
+  { name: "Services", href: "/services" },
   { name: "Prescriptions", href: "/prescriptions" },
 ];
 
@@ -130,6 +133,11 @@ export default function Navbar() {
               )}
             </Link>
 
+            {/* Notification bell — chỉ hiển thị cho Customer */}
+            <div suppressHydrationWarning>
+              {user?.role === "Customer" && <NotificationBell />}
+            </div>
+
             {/* User — suppressHydrationWarning prevents mismatch because
                 user is read from localStorage (null on SSR, set after mount) */}
             <div suppressHydrationWarning>
@@ -151,7 +159,7 @@ export default function Navbar() {
                     <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-[#E5E7EB] overflow-hidden z-50">
                       <div className="px-4 py-3 border-b border-[#E5E7EB]">
                         <p className="text-sm font-semibold text-[#1A1A1A] truncate">
-                          {user.fullName ?? "Khách hàng"}
+                          {user.fullName ?? "Customer"}
                         </p>
                         <p className="text-xs text-[#6B7280] truncate">
                           {user.email}
@@ -164,15 +172,25 @@ export default function Navbar() {
                           className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
                         >
                           <Package className="w-4 h-4 text-[#6B7280]" />
-                          Đơn hàng của tôi
+                          My Orders
                         </Link>
+                        {!isSalesUser(user) && !isOperationUser(user) && (
+                          <Link
+                            href="/eye-results"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
+                          >
+                            <Eye className="w-4 h-4 text-[#6B7280]" />
+                            Eye Exam Results
+                          </Link>
+                        )}
                         {isSalesUser(user) && (
                           <Link
                             href="/sales"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
                           >
-                            Khu vực nhân viên
+                            Staff Area
                           </Link>
                         )}
                         {!isSalesUser(user) && isOperationUser(user) && (
@@ -181,7 +199,7 @@ export default function Navbar() {
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors font-medium"
                           >
-                            Khu vực Operation
+                            Operation Area
                           </Link>
                         )}
                         <button
@@ -189,7 +207,7 @@ export default function Navbar() {
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
-                          Đăng xuất
+                          Log out
                         </button>
                       </div>
                     </div>
@@ -264,15 +282,24 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
               >
-                Đơn hàng
+                Orders
               </Link>
+              {!isSalesUser(user) && !isOperationUser(user) && (
+                <Link
+                  href="/eye-results"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+                >
+                  Eye Exam Results
+                </Link>
+              )}
               {isSalesUser(user) && (
                 <Link
                   href="/sales"
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                 >
-                  Khu vực nhân viên
+                  Staff Area
                 </Link>
               )}
               {!isSalesUser(user) && isOperationUser(user) && (
@@ -281,7 +308,7 @@ export default function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="text-lg font-medium tracking-wide text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                 >
-                  Khu vực Operation
+                  Operation Area
                 </Link>
               )}
               <button
@@ -291,7 +318,7 @@ export default function Navbar() {
                 }}
                 className="text-lg font-medium tracking-wide text-red-500 hover:text-red-700 transition-colors"
               >
-                Đăng xuất
+                Log out
               </button>
             </>
           ) : (
