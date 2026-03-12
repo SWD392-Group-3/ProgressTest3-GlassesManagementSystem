@@ -555,9 +555,19 @@ function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose:
 
 function ComboCard({ combo, onEdit, onDelete, onManageItems }: { combo: Combo; onEdit: () => void; onDelete: () => void; onManageItems: () => void }) {
     const [expanded, setExpanded] = useState(false);
+
+    // Calculate total original price of all items in the combo
+    const originalTotal = combo.comboItems.reduce((acc, item) => {
+        const itemPrice = (item.frameVariant?.price || 0) + (item.lensVariant?.price || 0);
+        return acc + itemPrice * item.quantity;
+    }, 0);
+
+    // Check if the combo price is illogical (higher than original items sum)
+    const isOverpriced = originalTotal > 0 && combo.basePrice > originalTotal;
+
     return (
-        <div className="bg-white rounded-xl border border-border hover:shadow-md transition-shadow group">
-            <div className="p-5">
+        <div className="bg-white rounded-xl border border-border hover:shadow-md transition-shadow group flex flex-col">
+            <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                         <Box size={18} className="text-accent shrink-0" />
@@ -567,51 +577,74 @@ function ComboCard({ combo, onEdit, onDelete, onManageItems }: { combo: Combo; o
                     <ActionsRow onEdit={onEdit} onDelete={onDelete} />
                 </div>
                 {combo.description && <p className="text-sm text-muted mb-3">{combo.description}</p>}
-                <p className="text-accent font-bold text-lg mb-2">{combo.basePrice.toLocaleString("vi-VN")} VND</p>
-                <div className="flex items-center gap-1.5 text-xs text-muted mb-3">
+
+                <div className="flex items-end gap-2 mb-2">
+                    <p className={`font-bold text-lg ${isOverpriced ? "text-red-500" : "text-accent"}`}>
+                        {combo.basePrice.toLocaleString("vi-VN")} VND
+                    </p>
+                    {originalTotal > 0 && originalTotal !== combo.basePrice && (
+                        <p className="text-xs text-muted line-through mb-1" title="Original Total Price">
+                            {originalTotal.toLocaleString("vi-VN")} VND
+                        </p>
+                    )}
+                </div>
+                {isOverpriced && (
+                    <p className="text-xs text-red-500 mb-2 flex items-center gap-1 font-medium bg-red-50 p-1.5 rounded-md border border-red-100">
+                        <AlertTriangle size={12} />
+                        Giá combo đang cao hơn tổng giá gốc ({originalTotal.toLocaleString()}đ)
+                    </p>
+                )}
+
+                <div className="flex items-center gap-1.5 text-xs text-muted mb-4">
                     <Clock size={13} />
                     {new Date(combo.startDate).toLocaleDateString("vi-VN")} — {new Date(combo.endDate).toLocaleDateString("vi-VN")}
                 </div>
-                {combo.comboItems.length > 0 && (
+
+                {combo.comboItems.length > 0 ? (
                     <button
                         onClick={() => setExpanded(!expanded)}
-                        className="flex items-center gap-1 text-xs text-accent hover:underline mb-2"
+                        className="flex items-center gap-1 text-xs text-accent hover:underline mb-1"
                     >
                         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         {combo.comboItems.length} sản phẩm trong combo
                     </button>
+                ) : (
+                    <span className="text-xs text-muted italic mb-1 block">Chưa có sản phẩm trong combo</span>
                 )}
-
-                <button onClick={onManageItems} className="w-full mt-2 py-1.5 text-sm font-medium border border-border rounded-md text-primary hover:bg-secondary/50 flex items-center justify-center gap-2 transition-colors">
-                    <Settings size={14} /> Quản lý sản phẩm
-                </button>
             </div>
+
             {expanded && combo.comboItems.length > 0 && (
-                <div className="border-t border-border px-5 pb-4 pt-3 space-y-2">
+                <div className="border-t border-border px-5 py-4 space-y-2 bg-secondary/20">
                     {combo.comboItems.map(item => (
                         <div key={item.id} className="flex items-center gap-3 text-sm">
                             <Package size={14} className="text-muted shrink-0" />
                             <div className="flex-1">
                                 {item.frameVariant && (
-                                    <span className="text-primary">
-                                        <span className="font-medium">[Gọng]</span> {item.frameVariant.productName ?? "—"}
+                                    <span className="text-primary truncate block w-full">
+                                        <span className="font-medium opacity-80">[Gọng]</span> {item.frameVariant.productName ?? "—"}
                                         {item.frameVariant.color && ` · ${item.frameVariant.color}`}
                                         {item.frameVariant.size && ` · ${item.frameVariant.size}`}
-                                        {" · "}<span className="text-accent">{item.frameVariant.price.toLocaleString("vi-VN")} VND</span>
+                                        <span className="text-accent ml-2">{item.frameVariant.price.toLocaleString("vi-VN")} VND</span>
                                     </span>
                                 )}
                                 {item.lensVariant && (
-                                    <span className="text-primary">
-                                        <span className="font-medium">[Tròng]</span> {item.lensVariant.productName ?? "—"}
-                                        {" · "}<span className="text-accent">{item.lensVariant.price.toLocaleString("vi-VN")} VND</span>
+                                    <span className="text-primary truncate block w-full">
+                                        <span className="font-medium opacity-80">[Tròng]</span> {item.lensVariant.productName ?? "—"}
+                                        <span className="text-accent ml-2">{item.lensVariant.price.toLocaleString("vi-VN")} VND</span>
                                     </span>
                                 )}
                             </div>
-                            <span className="text-muted text-xs">x{item.quantity}</span>
+                            <span className="text-muted text-xs font-medium">x{item.quantity}</span>
                         </div>
                     ))}
                 </div>
             )}
+
+            <div className="p-4 pt-3 border-t border-border mt-auto">
+                <button onClick={onManageItems} className="w-full py-2 text-sm font-medium bg-secondary/50 text-primary rounded-lg hover:bg-secondary flex items-center justify-center gap-2 transition-colors border border-border/50 hover:border-border">
+                    <Settings size={15} /> Quản lý sản phẩm
+                </button>
+            </div>
         </div>
     );
 }

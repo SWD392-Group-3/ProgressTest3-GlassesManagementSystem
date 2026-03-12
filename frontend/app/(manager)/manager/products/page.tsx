@@ -788,6 +788,17 @@ export default function ProductsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [modal, setModal] = useState<Modal>({ type: "none" });
     const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
+    const [addError, setAddError] = useState("");
+
+    const handleOpenAddProduct = () => {
+        if (categories.length === 0 || brands.length === 0) {
+            setAddError("You must create at least one category and one brand before adding a product.");
+            setTimeout(() => setAddError(""), 5000);
+            return;
+        }
+        setAddError("");
+        setModal({ type: "addProduct" });
+    };
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -922,9 +933,10 @@ export default function ProductsPage() {
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-primary mb-2">Product Catalog</h1>
                         <p className="text-muted">Manage frames, lenses, and variant configurations.</p>
+                        {addError && <p className="text-red-500 text-sm mt-3 font-medium animate-pulse">{addError}</p>}
                     </div>
                     <button
-                        onClick={() => setModal({ type: "addProduct" })}
+                        onClick={handleOpenAddProduct}
                         className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md hover:bg-black transition-colors"
                     >
                         <Plus size={18} />
@@ -977,7 +989,7 @@ export default function ProductsPage() {
                             <Package size={48} className="mx-auto mb-4 opacity-20" />
                             <p className="text-lg mb-2">No products found.</p>
                             <button
-                                onClick={() => setModal({ type: "addProduct" })}
+                                onClick={handleOpenAddProduct}
                                 className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-black transition-colors text-sm"
                             >
                                 <Plus size={16} /> Add first product
