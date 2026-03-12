@@ -63,7 +63,10 @@ export default function ManagerLayout({
         </nav>
 
         <div className="p-4 border-t border-border">
-          <button className="flex w-full items-center gap-3 px-3 py-2 text-muted hover:text-red-500 hover:bg-red-50 transition-colors rounded-md">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 px-3 py-2 text-muted hover:text-red-500 hover:bg-red-50 transition-colors rounded-md"
+          >
             <LogOut size={20} />
             <span className="font-medium">Logout</span>
           </button>
@@ -124,7 +127,10 @@ export default function ManagerLayout({
         </nav>
 
         <div className="p-4 border-t border-border">
-          <button className="flex w-full items-center gap-3 px-3 py-2 text-muted hover:text-red-500 hover:bg-red-50 transition-colors rounded-md">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 px-3 py-2 text-muted hover:text-red-500 hover:bg-red-50 transition-colors rounded-md"
+          >
             <LogOut size={20} />
             <span className="font-medium">Logout</span>
           </button>
