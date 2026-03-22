@@ -19,7 +19,7 @@ import { getUser } from "@/lib/auth-storage";
 import { getMyPrescriptions, PrescriptionDto } from "@/lib/api/prescription";
 
 function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("vi-VN", {
+  return new Date(dateStr).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -37,19 +37,19 @@ type StatusConfig = {
 
 const STATUS_MAP: Record<string, StatusConfig> = {
   PrescriptionPending: {
-    label: "Chờ duyệt",
+    label: "Pending",
     color: "text-amber-600",
     bg: "bg-amber-50 border-amber-100",
     icon: <Clock className="w-3.5 h-3.5" />,
   },
   PrescriptionConfirmed: {
-    label: "Đã duyệt",
+    label: "Approved",
     color: "text-green-600",
     bg: "bg-green-50 border-green-100",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
   PrescriptionRejected: {
-    label: "Từ chối",
+    label: "Rejected",
     color: "text-red-500",
     bg: "bg-red-50 border-red-100",
     icon: <XCircle className="w-3.5 h-3.5" />,
@@ -110,10 +110,10 @@ export default function PrescriptionsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-                Tài khoản
+                Account
               </span>
               <h1 className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mt-2 font-heading">
-                Hồ sơ đo mắt (Đơn kính)
+                Eye measurement profiles (Prescriptions)
               </h1>
             </div>
             <Link
@@ -121,7 +121,7 @@ export default function PrescriptionsPage() {
               className="inline-flex items-center gap-2 h-10 px-6 rounded-full bg-[#1A1A1A] text-white font-semibold text-sm hover:bg-black transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Tạo đơn mới
+              Create new profile
             </Link>
           </div>
 
@@ -137,7 +137,7 @@ export default function PrescriptionsPage() {
                 onClick={fetchPrescriptions}
                 className="text-[#D4AF37] hover:underline font-medium text-sm"
               >
-                Thử lại
+                Try again
               </button>
             </div>
           ) : prescriptions.length === 0 ? (
@@ -146,10 +146,10 @@ export default function PrescriptionsPage() {
                 <FileText className="w-10 h-10 text-[#D4AF37]" />
               </div>
               <h2 className="text-2xl font-bold text-[#1A1A1A] mb-3 font-heading">
-                Chưa có hồ sơ đo mắt
+                No eye measurement profiles yet
               </h2>
               <p className="text-[#6B7280] mb-8">
-                Bạn chưa lưu thông số kính cận/viễn nào để mua hàng.
+                You haven't saved any vision measurement profile for shopping.
               </p>
             </div>
           ) : (
@@ -165,7 +165,7 @@ export default function PrescriptionsPage() {
                         <FileText className="w-4 h-4 text-[#D4AF37]" />
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280]">Khởi tạo lúc</p>
+                        <p className="text-xs text-[#6B7280]">Created at</p>
                         <p className="text-sm font-semibold text-[#1A1A1A]">
                           {fmtDate(p.createdAt)}
                         </p>
@@ -177,50 +177,50 @@ export default function PrescriptionsPage() {
                   <div className="px-5 py-4 grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-                        Càng Kính
+                        Temple
                       </h4>
                       <p className="text-sm font-semibold text-gray-900">
-                        {p.cangKinh || "Chưa nhập"}
+                        {p.cangKinh || "Not specified"}
                       </p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-                        Bản Lề
+                        Hinge
                       </h4>
                       <p className="text-sm font-semibold text-gray-900">
-                        {p.banLe || "Chưa nhập"}
+                        {p.banLe || "Not specified"}
                       </p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-                        Viền Gọng
+                        Rim
                       </h4>
                       <p className="text-sm font-semibold text-gray-900">
-                        {p.vienGong || "Chưa nhập"}
+                        {p.vienGong || "Not specified"}
                       </p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-                        Chân Ve Mũi
+                        Nose pad
                       </h4>
                       <p className="text-sm font-semibold text-gray-900">
-                        {p.chanVeMui || "Chưa nhập"}
+                        {p.chanVeMui || "Not specified"}
                       </p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-                        Cầu Gọng
+                        Bridge
                       </h4>
                       <p className="text-sm font-semibold text-gray-900">
-                        {p.cauGong || "Chưa nhập"}
+                        {p.cauGong || "Not specified"}
                       </p>
                     </div>
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <h4 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">
-                        Đuôi Gọng
+                        Temple tip
                       </h4>
                       <p className="text-sm font-semibold text-gray-900">
-                        {p.duoiGong || "Chưa nhập"}
+                        {p.duoiGong || "Not specified"}
                       </p>
                     </div>
                   </div>
@@ -229,7 +229,7 @@ export default function PrescriptionsPage() {
                     <div className="px-5 py-2">
                       <p className="text-sm text-gray-600">
                         <span className="font-medium text-gray-800">
-                          Ghi chú:{" "}
+                          Note:{" "}
                         </span>
                         {p.note}
                       </p>
@@ -239,7 +239,7 @@ export default function PrescriptionsPage() {
                   <div className="flex items-center justify-end px-5 py-3 bg-[#F5F5F5] border-t border-[#E5E7EB]">
                     {p.status === "PrescriptionPending" && (
                       <span className="text-xs text-amber-600 mr-auto flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" /> Có thể chỉnh sửa
+                        <Clock className="w-3.5 h-3.5" /> Editable
                       </span>
                     )}
                     <Link
@@ -247,8 +247,8 @@ export default function PrescriptionsPage() {
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#D4AF37] hover:text-[#C9A030] transition-colors"
                     >
                       {p.status === "PrescriptionPending"
-                        ? "Chỉnh sửa"
-                        : "Xem chi tiết"}
+                        ? "Edit"
+                        : "View details"}
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>

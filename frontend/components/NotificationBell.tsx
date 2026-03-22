@@ -8,72 +8,95 @@ import { useNotifications, OrderNotification } from "@/lib/NotificationContext";
 function timeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "Vừa xong";
-  if (minutes < 60) return `${minutes} phút trước`;
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} giờ trước`;
-  return `${Math.floor(hours / 24)} ngày trước`;
+  if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days > 1 ? "s" : ""} ago`;
 }
 
-function localizeLegacyMessage(message: string): string {
+function normalizeLegacyMessageToEnglish(message: string): string {
   const directMap: Record<string, string> = {
-    "Your order has been confirmed.": "Đơn hàng của bạn đã được xác nhận.",
-    "Your order is being prepared.": "Đơn hàng của bạn đang được chuẩn bị.",
-    "Your order is in manufacturing.":
-      "Đơn hàng của bạn đang trong quá trình sản xuất.",
-    "Your order has been shipped.": "Đơn hàng của bạn đang được giao.",
-    "Your order has been delivered. Thank you!":
-      "Đơn hàng của bạn đã được giao. Cảm ơn bạn!",
-    "Your order has been cancelled.": "Đơn hàng của bạn đã bị hủy.",
-    "Your order has been rejected.": "Đơn hàng của bạn đã bị từ chối.",
-    "Your order is completed.": "Đơn hàng của bạn đã hoàn tất.",
+    "Đơn hàng của bạn đã được xác nhận.": "Your order has been confirmed.",
+    "Đơn hàng của bạn đang được chuẩn bị.": "Your order is being prepared.",
+    "Đơn hàng của bạn đang trong quá trình sản xuất.":
+      "Your order is in manufacturing.",
+    "Đơn hàng của bạn đang được giao.": "Your order has been shipped.",
+    "Đơn hàng của bạn đã được giao. Cảm ơn bạn!":
+      "Your order has been delivered. Thank you!",
+    "Đơn hàng của bạn đã bị hủy.": "Your order has been cancelled.",
+    "Đơn hàng của bạn đã bị từ chối.": "Your order has been rejected.",
+    "Đơn hàng của bạn đã hoàn tất.": "Your order is completed.",
+    "Yêu cầu kính theo toa của bạn đã bị từ chối.":
+      "Your prescription request has been rejected.",
+    "Đã có kết quả đo mắt": "Eye exam results ready",
+    "Nhân viên đã cập nhật kết quả đo mắt của bạn. Nhấn để xem chi tiết.":
+      "Staff has recorded your eye exam results. Tap to view details.",
+    "Khách hàng đã xác nhận nhận hàng": "Customer confirmed delivery",
+    "Đơn hàng sẵn sàng xử lý": "Order ready for operations",
+    "Đơn hàng mới chờ duyệt": "New order pending approval",
+    "Yêu cầu kính theo toa bị từ chối": "Prescription request rejected",
+    "Xác nhận giao hàng": "Confirm delivery",
+    "Đơn hàng mới": "New orders",
+    "Thông báo": "Notifications",
   };
 
   if (directMap[message]) return directMap[message];
 
-  if (
-    message ===
-    "Customer Sample Customer has confirmed receipt. Order completed."
-  ) {
-    return "Khách hàng Sample Customer đã xác nhận nhận hàng. Đơn đã hoàn tất.";
-  }
-
-  if (
-    message ===
-    "Sales confirmed order from Sample Customer. Please continue fulfillment workflow."
-  ) {
-    return "Sales đã xác nhận đơn của khách hàng Sample Customer. Vui lòng tiếp tục quy trình xử lý.";
-  }
-
-  if (message.includes("has confirmed receipt. Order completed.")) {
+  if (message.includes("đã xác nhận nhận hàng. Đơn đã hoàn tất.")) {
     return message
-      .replace("Customer ", "Khách hàng ")
+      .replace("Khách hàng ", "Customer ")
       .replace(
-        " has confirmed receipt. Order completed.",
         " đã xác nhận nhận hàng. Đơn đã hoàn tất.",
+        " has confirmed receipt. Order completed.",
       );
   }
 
   if (
-    message.includes("Sales confirmed order from ") &&
-    message.includes(". Please continue fulfillment workflow.")
+    message.includes(" vừa đặt đơn ") &&
+    message.includes(" VND. Vui lòng kiểm tra và xác nhận.")
+  ) {
+    return message
+      .replace("Khách hàng ", "Customer ")
+      .replace(" vừa đặt đơn ", " just placed an order for ")
+      .replace(
+        " VND. Vui lòng kiểm tra và xác nhận.",
+        " VND. Please review and approve.",
+      );
+  }
+
+  if (
+    message.includes("Sales đã xác nhận đơn của khách hàng ") &&
+    message.includes(". Vui lòng tiếp tục quy trình xử lý.")
   ) {
     return message
       .replace(
-        "Sales confirmed order from ",
         "Sales đã xác nhận đơn của khách hàng ",
+        "Sales confirmed order from ",
       )
       .replace(
-        ". Please continue fulfillment workflow.",
         ". Vui lòng tiếp tục quy trình xử lý.",
+        ". Please continue fulfillment workflow.",
       );
   }
 
-  if (message.startsWith("Order status updated: ")) {
+  if (message.startsWith("Trạng thái đơn hàng đã được cập nhật: ")) {
     const status = message
-      .replace("Order status updated: ", "")
+      .replace("Trạng thái đơn hàng đã được cập nhật: ", "")
       .replace(/\.$/, "");
-    return `Trạng thái đơn hàng đã được cập nhật: ${status}.`;
+    return `Order status updated: ${status}.`;
+  }
+
+  if (message.includes("Lý do:")) {
+    return message.replace("Lý do:", "Reason:");
+  }
+
+  if (message.includes("Yêu cầu kính theo toa của bạn đã bị từ chối.")) {
+    return message.replace(
+      "Yêu cầu kính theo toa của bạn đã bị từ chối.",
+      "Your prescription request has been rejected.",
+    );
   }
 
   return message;
@@ -191,7 +214,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-        aria-label="Thông báo"
+        aria-label="Notifications"
       >
         <Icon className="w-5 h-5 text-gray-700" />
         {count > 0 && (
@@ -206,10 +229,10 @@ export default function NotificationBell({ mode = "customer" }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800 text-sm">
               {isOperation
-                ? "Xác nhận giao hàng"
+                ? "Confirm delivery"
                 : isSales
-                  ? "Đơn hàng mới"
-                  : "Thông báo"}
+                  ? "New orders"
+                  : "Notifications"}
             </span>
             <div className="flex items-center gap-2">
               {count > 0 && (
@@ -218,14 +241,14 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  Đánh dấu đã đọc
+                  Mark all read
                 </button>
               )}
               {items.length > 0 && (
                 <button
                   onClick={onClear}
                   className="text-xs text-gray-400 hover:text-red-500"
-                  title="Xóa tất cả"
+                  title="Clear all"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -237,7 +260,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
                 <Bell className="w-8 h-8 opacity-30" />
-                <span className="text-sm">Chưa có thông báo</span>
+                <span className="text-sm">No notifications</span>
               </div>
             ) : (
               items.map((n) => (
@@ -255,11 +278,11 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-800 leading-snug">
-                      {localizeLegacyMessage(n.message)}
+                      {normalizeLegacyMessageToEnglish(n.message)}
                     </p>
                     {isSales && n.totalAmount != null && (
                       <p className="text-xs text-amber-600 font-medium mt-0.5">
-                        {n.totalAmount.toLocaleString("vi-VN")}đ
+                        {n.totalAmount.toLocaleString("en-US")} VND
                       </p>
                     )}
                     <p className="text-xs text-gray-400 mt-0.5">

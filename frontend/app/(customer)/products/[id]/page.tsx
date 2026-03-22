@@ -192,7 +192,7 @@ export default function ProductDetailPage({ params }: PageProps) {
             href="/products"
             className="text-[#D4AF37] hover:underline mt-4 inline-block"
           >
-            ← Quay lại bộ sưu tập
+            ← Back to collection
           </Link>
         </main>
         <Footer />
@@ -242,7 +242,7 @@ export default function ProductDetailPage({ params }: PageProps) {
               className="flex items-center gap-1 text-[#6B7280] hover:text-[#1A1A1A] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Bộ sưu tập
+              Collection
             </Link>
             <span className="text-[#6B7280]">/</span>
             <span className="text-[#1A1A1A] font-medium">{dto.name}</span>
@@ -341,7 +341,7 @@ export default function ProductDetailPage({ params }: PageProps) {
 
               {/* Base price note */}
               <p className="text-xs text-[#6B7280] mb-6">
-                Giá niêm yết:{" "}
+                Listed price:{" "}
                 <span className="font-semibold text-[#1A1A1A]">
                   {dto.unitPrice.toLocaleString("vi-VN")}₫
                 </span>
@@ -350,7 +350,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                   selectedVariant.price !== dto.unitPrice && (
                     <span>
                       {" "}
-                      · Giá variant đã chọn:{" "}
+                      · Selected variant price:{" "}
                       <span className="text-[#D4AF37] font-semibold">
                         {selectedVariant.price.toLocaleString("vi-VN")}₫
                       </span>
@@ -372,7 +372,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                   {colorMap.size > 0 && (
                     <div>
                       <p className="text-xs font-bold tracking-[0.1em] uppercase text-[#6B7280] mb-2.5">
-                        Màu sắc:{" "}
+                        Color:{" "}
                         <span className="text-[#1A1A1A] font-semibold normal-case tracking-normal">
                           {selectedVariant?.color ?? "—"}
                         </span>
@@ -412,7 +412,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                   {sizesForColor.length > 1 && (
                     <div>
                       <p className="text-xs font-bold tracking-[0.1em] uppercase text-[#6B7280] mb-2.5">
-                        Kích thước:{" "}
+                        Size:{" "}
                         <span className="text-[#1A1A1A] font-semibold normal-case tracking-normal">
                           {selectedVariant?.size ?? "—"}
                         </span>
@@ -439,7 +439,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                   {selectedVariant?.material && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-xs font-bold tracking-[0.1em] uppercase text-[#6B7280]">
-                        Chất liệu:
+                        Material:
                       </span>
                       <span className="text-[#1A1A1A] font-medium">
                         {selectedVariant.material}
@@ -449,14 +449,14 @@ export default function ProductDetailPage({ params }: PageProps) {
                 </div>
               ) : (
                 <div className="mb-6 p-4 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] text-sm text-[#6B7280]">
-                  Sản phẩm này không có biến thể — bạn có thể mua trực tiếp.
+                  This product has no variants — you can buy it directly.
                 </div>
               )}
 
               {/* Quantity */}
               <div className="mb-6">
                 <p className="text-xs font-bold tracking-[0.15em] uppercase text-[#6B7280] mb-3">
-                  Số lượng
+                  Quantity
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center border border-[#E5E7EB] rounded-full overflow-hidden">
@@ -476,23 +476,23 @@ export default function ProductDetailPage({ params }: PageProps) {
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                  <span className="text-xs text-[#6B7280]">Còn hàng</span>
+                  <span className="text-xs text-[#6B7280]">In stock</span>
                 </div>
               </div>
 
               {/* Actions */}
               <div className="space-y-3 mb-8">
-                {/* Mua ngay */}
+                {/* Buy now */}
                 <button
                   onClick={handleBuyNow}
                   disabled={hasVariants && !selectedVariant}
                   className="w-full h-14 rounded-full bg-[#1A1A1A] text-white font-semibold text-sm tracking-wide hover:bg-[#333] transition-colors duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Zap className="w-4 h-4 text-[#D4AF37]" />
-                  Mua ngay
+                  Buy now
                 </button>
 
-                {/* Thêm vào giỏ */}
+                {/* Add to cart */}
                 <button
                   onClick={handleAddToCart}
                   disabled={addingToCart || (hasVariants && !selectedVariant)}
@@ -507,12 +507,12 @@ export default function ProductDetailPage({ params }: PageProps) {
                   ) : addedToCart ? (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      Đã thêm vào giỏ!
+                      Added to cart!
                     </>
                   ) : (
                     <>
                       <ShoppingBag className="w-4 h-4" />
-                      Thêm vào giỏ hàng
+                      Add to cart
                     </>
                   )}
                 </button>
@@ -520,7 +520,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                 {/* Helper text nếu chưa chọn variant */}
                 {hasVariants && !selectedVariant && (
                   <p className="text-xs text-center text-red-500">
-                    Vui lòng chọn màu sắc trước khi thêm vào giỏ
+                    Please choose a color before adding to cart
                   </p>
                 )}
 
@@ -531,7 +531,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                   </button>
                   <button className="flex-1 h-11 rounded-full border-2 border-[#E5E7EB] text-[#1A1A1A] text-sm font-medium flex items-center justify-center gap-2 hover:border-[#1A1A1A] transition-colors">
                     <Share2 className="w-4 h-4" />
-                    Chia sẻ
+                    Share
                   </button>
                 </div>
               </div>
@@ -541,15 +541,15 @@ export default function ProductDetailPage({ params }: PageProps) {
                 {[
                   {
                     icon: <Truck className="w-4 h-4" />,
-                    text: "Giao hàng toàn quốc",
+                    text: "Nationwide delivery",
                   },
                   {
                     icon: <RotateCcw className="w-4 h-4" />,
-                    text: "Đổi trả 30 ngày",
+                    text: "30-day returns",
                   },
                   {
                     icon: <ShieldCheck className="w-4 h-4" />,
-                    text: "Bảo hành 2 năm",
+                    text: "2-year warranty",
                   },
                 ].map((badge) => (
                   <div key={badge.text} className="flex items-center gap-2">
