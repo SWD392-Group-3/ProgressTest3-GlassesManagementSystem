@@ -81,6 +81,11 @@ export const API = {
   slots: {
     available: (date: string) => `/api/slot/available?date=${date}`,
   },
+  feedback: {
+    create: "/api/feedback",
+    checkCanFeedback: (orderItemId: string) => `/api/feedback/can-feedback?orderItemId=${orderItemId}`,
+    getProductFeedbacks: (productId: string) => `/api/feedback/product/${productId}`,
+  },
   manager: {
     revenue: {
       overview: (from?: string, to?: string) => {

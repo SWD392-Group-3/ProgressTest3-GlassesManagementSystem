@@ -30,6 +30,8 @@ import {
   OrderDto,
 } from "@/lib/api";
 import { useNotifications } from "@/lib/NotificationContext";
+import { checkCanFeedback } from "@/lib/api/feedback";
+import FeedbackModal from "@/components/FeedbackModal";
 
 function fmt(amount: number) {
   return new Intl.NumberFormat("vi-VN", {
@@ -93,12 +95,42 @@ export default function OrderDetailPage() {
 
   const { notifications } = useNotifications();
 
+  // Feedback State
+  const [feedbackItem, setFeedbackItem] = useState<{
+    productId: string;
+    orderItemId: string;
+    productName: string;
+  } | null>(null);
+  const [reviewedItems, setReviewedItems] = useState<Set<string>>(new Set());
+
   const fetchOrder = useCallback(async () => {
     if (!orderId) return;
     setLoading(true);
     try {
       const data = await getOrderById(orderId);
       setOrder(data);
+
+      // Fetch which items can be reviewed if status is Delivered/Completed
+      if (data.status === "Delivered" || data.status === "Completed") {
+        const canReviewMap = await Promise.all(
+          (data.orderItems ?? []).map(async (item) => {
+            try {
+              const res = await checkCanFeedback(item.id);
+              return { id: item.id, canReview: res.canFeedback };
+            } catch {
+              return { id: item.id, canReview: false };
+            }
+          })
+        );
+        const newReviewedSets = new Set<string>();
+        // If canReview is false, it means they already reviewed
+        canReviewMap.forEach((m) => {
+          if (!m.canReview) {
+            newReviewedSets.add(m.id);
+          }
+        });
+        setReviewedItems(newReviewedSets);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -192,7 +224,8 @@ export default function OrderDetailPage() {
   const canCancel = order?.status === "Pending";
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
   const canComplete = order?.status === "Delivered";
-  const canReturn = order?.status === "Completed";
+  const canReturn = order?.status === "Completed" || order?.status === "Delivered";
+  const canReview = order?.status === "Completed" || order?.status === "Delivered";
   const isCancelled = order?.status === "Cancelled";
   const currentStepIndex = isCancelled
     ? -1
@@ -434,13 +467,35 @@ export default function OrderDetailPage() {
                           )}
                         </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-xs text-[#6B7280]">
-                          {fmt(item.unitPrice)} × {item.quantity}
-                        </p>
-                        <p className="text-sm font-bold text-[#1A1A1A]">
-                          {fmt(item.unitPrice * item.quantity)}
-                        </p>
+                      <div className="text-right shrink-0 flex flex-col items-end gap-2">
+                        <div>
+                          <p className="text-xs text-[#6B7280]">
+                            {fmt(item.unitPrice)} × {item.quantity}
+                          </p>
+                          <p className="text-sm font-bold text-[#1A1A1A]">
+                            {fmt(item.unitPrice * item.quantity)}
+                          </p>
+                        </div>
+                        {canReview && item.productId && (
+                          <button
+                            onClick={() => {
+                              if (reviewedItems.has(item.id)) return;
+                              setFeedbackItem({
+                                productId: item.productId!,
+                                orderItemId: item.id,
+                                productName: item.productName || "Sản phẩm",
+                              });
+                            }}
+                            disabled={reviewedItems.has(item.id)}
+                            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                              reviewedItems.has(item.id)
+                                ? "bg-gray-100 text-gray-500 cursor-not-allowed border border-gray-200"
+                                : "text-[#D4AF37] border border-[#D4AF37] hover:bg-yellow-50"
+                            }`}
+                          >
+                            {reviewedItems.has(item.id) ? "Đã đánh giá" : "Viết đánh giá"}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -509,6 +564,21 @@ export default function OrderDetailPage() {
               </div>
             </div>
           ) : null}
+
+          {/* Feedback Modal */}
+          {feedbackItem && (
+            <FeedbackModal
+              isOpen={!!feedbackItem}
+              productId={feedbackItem.productId}
+              orderItemId={feedbackItem.orderItemId}
+              productName={feedbackItem.productName}
+              onClose={() => setFeedbackItem(null)}
+              onSuccess={() => {
+                // Mark this item as reviewed so button updates immediately
+                setReviewedItems((prev) => new Set(prev).add(feedbackItem.orderItemId));
+              }}
+            />
+          )}
         </div>
       </main>
       <Footer />

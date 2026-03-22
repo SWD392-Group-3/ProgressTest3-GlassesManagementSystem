@@ -49,6 +49,7 @@ public static class AddDependencyInjection
         serviceCollection.AddScoped<INotificationService, NotificationService>();
         serviceCollection.AddScoped<IEyeResultService, EyeResultService>();
         serviceCollection.AddScoped<ISlotService, SlotService>();
+        serviceCollection.AddScoped<IFeedbackService, FeedbackService>();
 
         // Repositories
         serviceCollection.AddScoped<IUserRepository, UserRepository>();

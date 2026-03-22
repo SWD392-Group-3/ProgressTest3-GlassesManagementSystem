@@ -13,6 +13,10 @@ import {
   type ProductDto,
   type ProductVariantDto,
 } from "@/lib/api/product";
+import {
+  getProductFeedbacks,
+  type ProductFeedbackSummaryResponse,
+} from "@/lib/api/feedback";
 import type { Product } from "@/constants/products";
 import { useCart } from "@/lib/CartContext";
 import { getUser } from "@/lib/auth-storage";
@@ -79,6 +83,8 @@ function mapProductDto(dto: ProductDto): Product {
 export default function ProductDetailPage({ params }: PageProps) {
   const { id } = use(params);
   const [dto, setDto] = useState<ProductDto | null>(null);
+  const [feedbacks, setFeedbacks] =
+    useState<ProductFeedbackSummaryResponse | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -100,6 +106,12 @@ export default function ProductDetailPage({ params }: PageProps) {
         if (data.productVariants.length > 0) {
           setSelectedVariant(data.productVariants[0]);
         }
+        
+        // Fetch feedbacks
+        getProductFeedbacks(id)
+          .then(setFeedbacks)
+          .catch(() => setFeedbacks(null));
+
         // Fetch related
         return getProducts().then((all) => {
           const related = all
@@ -316,12 +328,20 @@ export default function ProductDetailPage({ params }: PageProps) {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${i < 4 ? "fill-[#D4AF37] text-[#D4AF37]" : "fill-[#E5E7EB] text-[#E5E7EB]"}`}
+                      className={`w-4 h-4 ${
+                        i < Math.round(feedbacks?.averageRating || 5)
+                          ? "fill-[#D4AF37] text-[#D4AF37]"
+                          : "fill-[#E5E7EB] text-[#E5E7EB]"
+                      }`}
                     />
                   ))}
                 </div>
-                <span className="text-sm font-medium text-[#1A1A1A]">4.5</span>
-                <span className="text-sm text-[#6B7280]">(0 reviews)</span>
+                <span className="text-sm font-medium text-[#1A1A1A]">
+                  {feedbacks?.averageRating || 5}
+                </span>
+                <span className="text-sm text-[#6B7280]">
+                  ({feedbacks?.totalFeedbacks || 0} đánh giá)
+                </span>
               </div>
 
               {/* Price */}
@@ -562,6 +582,77 @@ export default function ProductDetailPage({ params }: PageProps) {
               </div>
             </div>
           </div>
+
+          {/* Feedback Section */}
+          <section className="mt-20 sm:mt-28 border-t border-[#E5E7EB] pt-16">
+            <h2
+              className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-8"
+              style={{ fontFamily: "var(--font-heading)" }}
+            >
+              Đánh giá từ khách hàng
+            </h2>
+
+            {(!feedbacks || feedbacks.totalFeedbacks === 0) ? (
+              <p className="text-[#6B7280] bg-[#F9FAFB] p-6 rounded-2xl border border-[#E5E7EB] text-center">
+                Chưa có đánh giá nào cho sản phẩm này.
+              </p>
+            ) : (
+              <div className="grid lg:grid-cols-3 gap-10">
+                {/* Summary */}
+                <div className="lg:col-span-1 bg-[#F9FAFB] p-8 rounded-3xl border border-[#E5E7EB] flex flex-col items-center justify-center text-center">
+                  <span className="text-6xl font-bold text-[#1A1A1A] mb-2">{feedbacks.averageRating}</span>
+                  <div className="flex items-center gap-1 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-5 h-5 ${
+                          i < Math.round(feedbacks.averageRating)
+                            ? "fill-[#D4AF37] text-[#D4AF37]"
+                            : "fill-[#E5E7EB] text-[#E5E7EB]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-[#6B7280]">Dựa trên {feedbacks.totalFeedbacks} đánh giá</span>
+                </div>
+
+                {/* Reviews List */}
+                <div className="lg:col-span-2 space-y-6">
+                  {feedbacks.feedbacks.map((fb) => (
+                    <div key={fb.id} className="bg-white p-6 rounded-3xl border border-[#E5E7EB]">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="font-bold text-[#1A1A1A] text-lg">{fb.customerName}</p>
+                          <p className="text-xs text-[#9CA3AF]">
+                            {new Date(fb.createdAt).toLocaleDateString("vi-VN", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric"
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < fb.rating
+                                  ? "fill-[#D4AF37] text-[#D4AF37]"
+                                  : "fill-[#E5E7EB] text-[#E5E7EB]"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-[#4B5563] text-sm leading-relaxed whitespace-pre-line">
+                        {fb.comment || <span className="italic text-[#9CA3AF]">Không có bình luận</span>}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
 
           {/* Related Products */}
           {relatedProducts.length > 0 && (

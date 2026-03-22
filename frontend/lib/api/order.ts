@@ -14,6 +14,7 @@ export interface PromotionDto {
 export interface OrderItemDto {
   id: string;
   orderId: string;
+  productId: string | null;
   productVariantId: string | null;
   lensesVariantId: string | null;
   comboItemId: string | null;
