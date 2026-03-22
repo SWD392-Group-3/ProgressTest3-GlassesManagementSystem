@@ -61,8 +61,8 @@ namespace BusinessLogicLayer.Services.Implementations
                     return (false, "You can only review products from delivered or completed orders.");
 
                 // Check for duplicate feedback on this OrderItemId
-                bool hasReviewed = await CanCustomerFeedbackAsync(customerUserId, request.OrderItemId, cancellationToken);
-                if (!hasReviewed)
+                bool canFeedback = await CanCustomerFeedbackAsync(customerUserId, request.OrderItemId, cancellationToken);
+                if (!canFeedback)
                     return (false, "You have already reviewed this item from this order.");
 
                 // Create feedback
