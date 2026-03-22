@@ -32,11 +32,11 @@ function itemLabel(item: {
   comboItemId: string | null;
   serviceId: string | null;
 }) {
-  if (item.productVariantId) return "Frame";
-  if (item.productId) return "Product";
-  if (item.lensesVariantId) return "Lenses";
+  if (item.productVariantId) return "Gọng kính";
+  if (item.productId) return "Sản phẩm";
+  if (item.lensesVariantId) return "Tròng kính";
   if (item.comboItemId) return "Combo";
-  return "Service";
+  return "Dịch vụ";
 }
 
 function itemId(item: {
@@ -147,7 +147,7 @@ export default function CartPage() {
           {/* Header */}
           <div className="mb-8">
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-              Cart
+              Giỏ hàng
             </span>
             <h1
               className="text-3xl sm:text-4xl font-bold text-[#1A1A1A] mt-2"
@@ -171,16 +171,17 @@ export default function CartPage() {
                 className="text-2xl font-bold text-[#1A1A1A] mb-3"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Your cart is empty
+                Giỏ hàng trống
               </h2>
               <p className="text-[#6B7280] mb-8 max-w-sm">
-                You have no items in your cart. Explore our collection.
+                Bạn chưa có sản phẩm nào trong giỏ. Hãy khám phá bộ sưu tập của
+                chúng tôi.
               </p>
               <Link
                 href="/products"
                 className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-[#D4AF37] text-white font-semibold text-sm hover:bg-[#C9A030] transition-colors"
               >
-                Explore products
+                Khám phá sản phẩm
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -202,15 +203,15 @@ export default function CartPage() {
                     ) : (
                       <Square className="w-5 h-5 text-[#9CA3AF]" />
                     )}
-                    Select all ({items.length} items)
+                    Chọn tất cả ({checkedIds.size}/{items.length} sản phẩm)
                   </button>
                   {someChecked && (
                     <span className="ml-auto text-xs text-[#6B7280]">
-                      Selected{" "}
+                      Đã chọn{" "}
                       <span className="font-semibold text-[#D4AF37]">
                         {checkedIds.size}
                       </span>{" "}
-                      items
+                      sản phẩm
                     </span>
                   )}
                 </div>
@@ -238,7 +239,7 @@ export default function CartPage() {
                           onClick={() => toggleItem(item.id)}
                           className="mt-1 shrink-0"
                           aria-label={
-                            isChecked ? "Deselect item" : "Select item"
+                            isChecked ? "Bỏ chọn sản phẩm" : "Chọn sản phẩm"
                           }
                         >
                           {isChecked ? (
@@ -270,7 +271,7 @@ export default function CartPage() {
                             </div>
                             <button
                               type="button"
-                              aria-label="Remove item"
+                              aria-label="Xóa sản phẩm"
                               onClick={() => handleRemove(item.id)}
                               className="p-1.5 rounded-full hover:bg-red-50 text-[#6B7280] hover:text-red-500 transition-colors"
                             >
@@ -283,7 +284,7 @@ export default function CartPage() {
                             <div className="flex items-center gap-2 border border-[#E5E7EB] rounded-full px-3 py-1">
                               <button
                                 type="button"
-                                aria-label="Decrease quantity"
+                                aria-label="Giảm số lượng"
                                 onClick={() =>
                                   handleQuantity(item.id, item.quantity - 1)
                                 }
@@ -296,7 +297,7 @@ export default function CartPage() {
                               </span>
                               <button
                                 type="button"
-                                aria-label="Increase quantity"
+                                aria-label="Tăng số lượng"
                                 onClick={() =>
                                   handleQuantity(item.id, item.quantity + 1)
                                 }
@@ -330,28 +331,28 @@ export default function CartPage() {
                     className="text-lg font-bold text-[#1A1A1A] mb-6"
                     style={{ fontFamily: "var(--font-heading)" }}
                   >
-                    Order summary
+                    Tóm tắt đơn hàng
                   </h2>
 
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-sm">
                       <span className="text-[#6B7280]">
-                        Selected ({selectedCount} items)
+                        Đã chọn ({selectedCount} sản phẩm)
                       </span>
                       <span className="font-medium text-[#1A1A1A]">
                         {fmt(selectedTotal)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-[#6B7280]">Shipping</span>
+                      <span className="text-[#6B7280]">Phí vận chuyển</span>
                       <span className="text-green-600 font-medium">
-                        Free
+                        Miễn phí
                       </span>
                     </div>
                     <div className="h-px bg-[#E5E7EB]" />
                     <div className="flex justify-between">
                       <span className="font-semibold text-[#1A1A1A]">
-                        Total
+                        Tổng cộng
                       </span>
                       <span className="text-xl font-bold text-[#D4AF37]">
                         {fmt(selectedTotal)}
@@ -364,13 +365,13 @@ export default function CartPage() {
                     disabled={checkedIds.size === 0}
                     className="w-full h-12 rounded-full bg-[#D4AF37] text-white font-semibold text-sm hover:bg-[#C9A030] transition-colors flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    Proceed to checkout
+                    Tiến hành thanh toán
                     <ArrowRight className="w-4 h-4" />
                   </button>
 
                   {checkedIds.size === 0 && (
                     <p className="text-xs text-center text-[#9CA3AF] mt-3">
-                      Please select at least 1 item
+                      Vui lòng chọn ít nhất 1 sản phẩm
                     </p>
                   )}
 
@@ -378,7 +379,7 @@ export default function CartPage() {
                     href="/products"
                     className="block text-center mt-4 text-sm text-[#6B7280] hover:text-[#D4AF37] transition-colors"
                   >
-                    ← Continue shopping
+                    ← Tiếp tục mua sắm
                   </Link>
                 </div>
               </div>

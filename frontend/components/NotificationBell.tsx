@@ -2,17 +2,81 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, X, CheckCheck, Package, ShoppingBag, Eye } from "lucide-react";
+import { Bell, X, CheckCheck, Package, ShoppingBag } from "lucide-react";
 import { useNotifications, OrderNotification } from "@/lib/NotificationContext";
 
 function timeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1) return "Vừa xong";
+  if (minutes < 60) return `${minutes} phút trước`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hours ago`;
-  return `${Math.floor(hours / 24)} days ago`;
+  if (hours < 24) return `${hours} giờ trước`;
+  return `${Math.floor(hours / 24)} ngày trước`;
+}
+
+function localizeLegacyMessage(message: string): string {
+  const directMap: Record<string, string> = {
+    "Your order has been confirmed.": "Đơn hàng của bạn đã được xác nhận.",
+    "Your order is being prepared.": "Đơn hàng của bạn đang được chuẩn bị.",
+    "Your order is in manufacturing.":
+      "Đơn hàng của bạn đang trong quá trình sản xuất.",
+    "Your order has been shipped.": "Đơn hàng của bạn đang được giao.",
+    "Your order has been delivered. Thank you!":
+      "Đơn hàng của bạn đã được giao. Cảm ơn bạn!",
+    "Your order has been cancelled.": "Đơn hàng của bạn đã bị hủy.",
+    "Your order has been rejected.": "Đơn hàng của bạn đã bị từ chối.",
+    "Your order is completed.": "Đơn hàng của bạn đã hoàn tất.",
+  };
+
+  if (directMap[message]) return directMap[message];
+
+  if (
+    message ===
+    "Customer Sample Customer has confirmed receipt. Order completed."
+  ) {
+    return "Khách hàng Sample Customer đã xác nhận nhận hàng. Đơn đã hoàn tất.";
+  }
+
+  if (
+    message ===
+    "Sales confirmed order from Sample Customer. Please continue fulfillment workflow."
+  ) {
+    return "Sales đã xác nhận đơn của khách hàng Sample Customer. Vui lòng tiếp tục quy trình xử lý.";
+  }
+
+  if (message.includes("has confirmed receipt. Order completed.")) {
+    return message
+      .replace("Customer ", "Khách hàng ")
+      .replace(
+        " has confirmed receipt. Order completed.",
+        " đã xác nhận nhận hàng. Đơn đã hoàn tất.",
+      );
+  }
+
+  if (
+    message.includes("Sales confirmed order from ") &&
+    message.includes(". Please continue fulfillment workflow.")
+  ) {
+    return message
+      .replace(
+        "Sales confirmed order from ",
+        "Sales đã xác nhận đơn của khách hàng ",
+      )
+      .replace(
+        ". Please continue fulfillment workflow.",
+        ". Vui lòng tiếp tục quy trình xử lý.",
+      );
+  }
+
+  if (message.startsWith("Order status updated: ")) {
+    const status = message
+      .replace("Order status updated: ", "")
+      .replace(/\.$/, "");
+    return `Trạng thái đơn hàng đã được cập nhật: ${status}.`;
+  }
+
+  return message;
 }
 
 function statusColor(status?: string): string {
@@ -28,8 +92,6 @@ function statusColor(status?: string): string {
     case "Rejected":
     case "PrescriptionRejected":
       return "text-red-500";
-    case "EyeResultReady":
-      return "text-purple-600";
     default:
       return "text-amber-500";
   }
@@ -107,7 +169,6 @@ export default function NotificationBell({ mode = "customer" }: Props) {
   function handleNotificationClick(n: OrderNotification) {
     onMarkRead(n.id);
     setOpen(false);
-    // If the notification carries an explicit link, use it (e.g. EyeResultReady → /orders/…?tab=eye-result)
     if (n.linkTo) {
       router.push(n.linkTo);
       return;
@@ -130,7 +191,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-        aria-label="Notifications"
+        aria-label="Thông báo"
       >
         <Icon className="w-5 h-5 text-gray-700" />
         {count > 0 && (
@@ -145,10 +206,10 @@ export default function NotificationBell({ mode = "customer" }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800 text-sm">
               {isOperation
-                ? "Confirm delivery"
+                ? "Xác nhận giao hàng"
                 : isSales
-                  ? "New orders"
-                  : "Notifications"}
+                  ? "Đơn hàng mới"
+                  : "Thông báo"}
             </span>
             <div className="flex items-center gap-2">
               {count > 0 && (
@@ -157,14 +218,14 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
-                  Mark all read
+                  Đánh dấu đã đọc
                 </button>
               )}
               {items.length > 0 && (
                 <button
                   onClick={onClear}
                   className="text-xs text-gray-400 hover:text-red-500"
-                  title="Clear all"
+                  title="Xóa tất cả"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -176,7 +237,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
                 <Bell className="w-8 h-8 opacity-30" />
-                <span className="text-sm">No notifications</span>
+                <span className="text-sm">Chưa có thông báo</span>
               </div>
             ) : (
               items.map((n) => (
@@ -188,17 +249,13 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   }`}
                 >
                   <div className="mt-0.5 shrink-0">
-                    {n.newStatus === "EyeResultReady" ? (
-                      <Eye className={`w-4 h-4 ${statusColor(n.newStatus)}`} />
-                    ) : (
-                      <Package
-                        className={`w-4 h-4 ${statusColor(n.newStatus)}`}
-                      />
-                    )}
+                    <Package
+                      className={`w-4 h-4 ${statusColor(n.newStatus)}`}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-800 leading-snug">
-                      {n.message}
+                      {localizeLegacyMessage(n.message)}
                     </p>
                     {isSales && n.totalAmount != null && (
                       <p className="text-xs text-amber-600 font-medium mt-0.5">

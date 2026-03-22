@@ -1,5 +1,16 @@
 import { apiRequest, API } from "./client";
 
+export interface PromotionDto {
+  id: string;
+  code: string;
+  name?: string | null;
+  description?: string | null;
+  discountValue: number;
+  startDate: string;
+  endDate: string;
+  status?: string | null;
+}
+
 export interface OrderItemDto {
   id: string;
   orderId: string;
@@ -36,6 +47,7 @@ export interface OrderDto {
 
 export interface CreateOrderRequest {
   cartId: string;
+  selectedCartItemIds?: string[] | null;
   promotionId?: string | null;
   shippingAddress?: string | null;
   shippingPhone?: string | null;
@@ -68,6 +80,11 @@ export async function createOrderFromCart(
     { method: "POST", body: JSON.stringify(body) },
     { auth: true },
   );
+}
+
+/** GET /api/manager/pricing-promotions/promotions (AllowAnonymous) */
+export async function getPublicPromotions(): Promise<PromotionDto[]> {
+  return apiRequest<PromotionDto[]>(API.promotions.getAll);
 }
 
 /** PATCH /api/order/{orderId}/cancel */

@@ -100,6 +100,35 @@ namespace BusinessLogicLayer.Services.Implementations
                     throw new Exception("Please enter shipping phone number.");
             }
 
+            var selectedCartItemIds = (request.SelectedCartItemIds ?? new List<Guid>())
+                .Distinct()
+                .ToHashSet();
+
+            var checkoutItems = selectedCartItemIds.Count > 0
+                ? cart.CartItems.Where(i => selectedCartItemIds.Contains(i.Id)).ToList()
+                : cart.CartItems.ToList();
+
+            if (!checkoutItems.Any())
+                throw new Exception("Không có sản phẩm hợp lệ để thanh toán.");
+
+            if (selectedCartItemIds.Count > 0 && checkoutItems.Count != selectedCartItemIds.Count)
+                throw new Exception("Một số sản phẩm đã chọn không hợp lệ.");
+
+            var isServiceOnlyOrder = checkoutItems.All(i =>
+                i.ServiceId != null
+                && i.ProductId == null
+                && i.ProductVariantId == null
+                && i.LensesVariantId == null
+                && i.ComboItemId == null);
+
+            if (!isServiceOnlyOrder)
+            {
+                if (string.IsNullOrWhiteSpace(request.ShippingAddress))
+                    throw new Exception("Vui lòng nhập địa chỉ giao hàng.");
+                if (string.IsNullOrWhiteSpace(request.ShippingPhone))
+                    throw new Exception("Vui lòng nhập số điện thoại giao hàng.");
+            }
+
             var order = new Order
             {
                 Id = Guid.NewGuid(),
@@ -113,7 +142,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 Note = request.Note,
             };
 
-            foreach (var item in cart.CartItems)
+            foreach (var item in checkoutItems)
             {
                 var orderItem = new OrderItem
                 {
@@ -147,7 +176,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
             // FIX 2 & 3: Add order + orderItems cùng lúc, gọi Update để persist TotalAmount/DiscountAmount
             await _orderRepository.AddAsync(order);
-            _cartItemRepository.RemoveRange(cart.CartItems);
+            _cartItemRepository.RemoveRange(checkoutItems);
             await _unitOfWork.SaveChangesAsync();
 
             return new OrderDto
@@ -540,6 +569,14 @@ namespace BusinessLogicLayer.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
 
             await _notificationService.SendOrderStatusChangedAsync(order.CustomerId, orderId, "Confirmed");
+
+            var isServiceOrder = string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone);
+            if (!isServiceOrder)
+            {
+                var customer = await _customerRepository.GetByIdAsync(order.CustomerId);
+                var customerName = customer?.FullName ?? "Customer";
+                await _notificationService.SendOrderConfirmedToOperationAsync(orderId, customerName);
+            }
 
             return true;
         }

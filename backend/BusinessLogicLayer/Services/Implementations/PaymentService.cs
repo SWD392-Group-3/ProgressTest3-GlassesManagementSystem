@@ -29,12 +29,28 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task HandleMomoNotifyAsync(MomoCallbackResponse notify)
         {
-            if (!Guid.TryParse(notify.OrderId, out var orderId))
-                throw new Exception("Invalid OrderId.");
+            var originalOrderId = !string.IsNullOrWhiteSpace(notify.ExtraData)
+                ? notify.ExtraData
+                : notify.OrderId;
 
-            // Bước 1: Kiểm tra Payment đã tồn tại chưa (tránh IPN gọi nhiều lần)
-            var existing = await _paymentRepository.FindAsync(p => p.OrderId == orderId);
-            if (existing.Any())
+            if (!Guid.TryParse(originalOrderId, out var orderId))
+                throw new Exception("OrderId không hợp lệ.");
+
+            // Bước 1: Tránh xử lý trùng theo transaction của MoMo
+            var transTag = $"TransId: {notify.TransId} |";
+            var sameTransaction = await _paymentRepository.FindAsync(p =>
+                p.OrderId == orderId
+                && p.Note != null
+                && p.Note.Contains(transTag)
+            );
+            if (sameTransaction.Any())
+                return;
+
+            // Nếu đơn đã ghi nhận Paid trước đó thì bỏ qua callback tiếp theo
+            var paidPayments = await _paymentRepository.FindAsync(p =>
+                p.OrderId == orderId && p.Status == "Paid"
+            );
+            if (paidPayments.Any())
                 return;
 
             // Bước 2: Tạo Payment tương ứng kết quả từ Momo
@@ -63,7 +79,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
                     // Bước 4: Gửi thông báo real-time tới nhóm Sales
                     var customer = await _customerRepository.GetByIdAsync(order.CustomerId);
-                    var customerName = customer?.FullName ?? "Customer";
+                    var customerName = customer?.FullName ?? "Khách hàng";
                     await _notificationService.SendNewOrderPaidToSalesAsync(orderId, customerName, notify.Amount);
                     return;
                 }

@@ -56,16 +56,15 @@ const STATUS_STEPS = [
   "Delivered",
   "Completed",
 ];
-const STATUS_STEPS_SERVICE = ["Pending", "Paid", "Confirmed", "Completed"];
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Awaiting confirmation",
-  Paid: "Paid",
-  Confirmed: "Confirmed",
-  Shipped: "Shipping",
-  Delivered: "Delivered",
-  Completed: "Completed",
-  Cancelled: "Cancelled",
+  Pending: "Chờ xác nhận",
+  Paid: "Đã thanh toán",
+  Confirmed: "Đã xác nhận",
+  Shipped: "Đang giao",
+  Delivered: "Đã giao",
+  Completed: "Hoàn thành",
+  Cancelled: "Đã huỷ",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -91,7 +90,6 @@ export default function OrderDetailPage() {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [completeLoading, setCompleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [serviceAcknowledged, setServiceAcknowledged] = useState(false);
 
   const { notifications } = useNotifications();
 
@@ -137,13 +135,6 @@ export default function OrderDetailPage() {
     }
   }, [notifications, orderId]);
 
-  // Auto-redirect to /eye-results when ?tab=eye-result is in the URL
-  useEffect(() => {
-    if (searchParams.get("tab") === "eye-result") {
-      router.replace("/eye-results");
-    }
-  }, [searchParams, router]);
-
   async function handlePayMomo() {
     if (!order) return;
     setPayLoading(true);
@@ -151,12 +142,12 @@ export default function OrderDetailPage() {
       const resp = await createMomoPayment(
         order.id,
         Math.round(order.finalAmount ?? order.totalAmount),
-        `Pay for order #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
+        `Thanh toán đơn hàng #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
       );
       if (resp.payUrl) {
         window.location.href = resp.payUrl;
       } else {
-        alert("Could not get Momo payment link.");
+        alert("Không thể tạo liên kết thanh toán MoMo.");
       }
     } catch (e) {
       alert((e as Error).message);
@@ -166,8 +157,7 @@ export default function OrderDetailPage() {
   }
 
   async function handleCancel() {
-    if (!order || !confirm("Are you sure you want to cancel this order?"))
-      return;
+    if (!order || !confirm("Bạn có chắc muốn hủy đơn hàng này không?")) return;
     setCancelLoading(true);
     try {
       await cancelOrder(order.id);
@@ -185,8 +175,8 @@ export default function OrderDetailPage() {
       (order.shippingAddress == null || order.shippingAddress === "") &&
       (order.shippingPhone == null || order.shippingPhone === "");
     const msg = isService
-      ? "Confirm that you have completed the service?\nAfter confirming, the order will be marked as Completed."
-      : "Confirm that you have received the order?\nAfter confirming, you can request return or exchange if needed.";
+      ? "Xác nhận bạn đã hoàn tất dịch vụ?\nSau khi xác nhận, đơn hàng sẽ chuyển sang Hoàn tất."
+      : "Xác nhận bạn đã nhận được đơn hàng?\nSau khi xác nhận, bạn có thể yêu cầu đổi/trả nếu cần.";
     if (!confirm(msg)) return;
     setCompleteLoading(true);
     try {
@@ -201,25 +191,12 @@ export default function OrderDetailPage() {
 
   const canCancel = order?.status === "Pending";
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
-  const isServiceOrder =
-    order != null &&
-    (order.shippingAddress == null || order.shippingAddress === "") &&
-    (order.shippingPhone == null || order.shippingPhone === "");
-  // Nút "Xác nhận hoàn thành dịch vụ" chỉ hiện khi: đơn dịch vụ + trạng thái đúng "Đã xác nhận"; đơn giao hàng chỉ khi "Đã giao". Ẩn hẳn khi đã Completed/Cancelled/Rejected.
-  const canComplete =
-    order != null &&
-    order.status !== "Completed" &&
-    order.status !== "Cancelled" &&
-    order.status !== "Rejected" &&
-    (isServiceOrder
-      ? order.status === "Confirmed"
-      : order.status === "Delivered");
-  const canReturn = order?.status === "Completed" && !isServiceOrder;
+  const canComplete = order?.status === "Delivered";
+  const canReturn = order?.status === "Completed";
   const isCancelled = order?.status === "Cancelled";
-  const steps = isServiceOrder ? STATUS_STEPS_SERVICE : STATUS_STEPS;
   const currentStepIndex = isCancelled
     ? -1
-    : steps.indexOf(order?.status ?? "");
+    : STATUS_STEPS.indexOf(order?.status ?? "");
 
   return (
     <>
@@ -231,7 +208,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
               <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
               <p className="text-sm font-semibold text-green-700">
-                Payment successful! Your order is being processed.
+                Thanh toán thành công! Đơn hàng của bạn đang được xử lý.
               </p>
             </div>
           )}
@@ -239,7 +216,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="text-sm font-semibold text-red-700">
-                Payment failed or was cancelled. You can try again below.
+                Thanh toán thất bại hoặc đã bị hủy. Bạn có thể thử lại bên dưới.
               </p>
             </div>
           )}
@@ -254,7 +231,7 @@ export default function OrderDetailPage() {
             </Link>
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-                Order details
+                Chi tiết đơn hàng
               </span>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] font-heading">
                 #{orderId?.slice(0, 8).toUpperCase()}
@@ -273,7 +250,7 @@ export default function OrderDetailPage() {
                 onClick={fetchOrder}
                 className="text-[#D4AF37] hover:underline text-sm"
               >
-                Try again
+                Thử lại
               </button>
             </div>
           ) : order ? (
@@ -282,7 +259,7 @@ export default function OrderDetailPage() {
               {!isCancelled ? (
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <div className="flex items-center justify-between">
-                    {steps.map((step, idx) => {
+                    {STATUS_STEPS.map((step, idx) => {
                       const done = idx <= currentStepIndex;
                       const active = idx === currentStepIndex;
                       return (
@@ -290,7 +267,7 @@ export default function OrderDetailPage() {
                           key={step}
                           className="flex-1 flex flex-col items-center relative"
                         >
-                          {idx < steps.length - 1 && (
+                          {idx < STATUS_STEPS.length - 1 && (
                             <div
                               className={`absolute top-4 left-1/2 w-full h-0.5 transition-colors ${
                                 idx < currentStepIndex
@@ -324,43 +301,31 @@ export default function OrderDetailPage() {
                 <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-center gap-3">
                   <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm font-semibold text-red-600">
-                    Order cancelled
+                    Đơn hàng đã bị huỷ
                   </p>
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Shipping info — ẩn hoặc hiển thị "Đơn dịch vụ" khi không có giao hàng */}
+                {/* Shipping info */}
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    {order.shippingAddress != null &&
-                    order.shippingPhone != null
-                      ? "Shipping information"
-                      : "Service order"}
+                    Thông tin giao hàng
                   </h2>
                   <div className="space-y-3 text-sm">
-                    {order.shippingAddress != null &&
-                    order.shippingPhone != null ? (
-                      <>
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
-                          <span className="text-[#1A1A1A]">
-                            {order.shippingAddress}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-[#6B7280] shrink-0" />
-                          <span className="text-[#1A1A1A]">
-                            {order.shippingPhone}
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-[#6B7280]">
-                        Service-only order — no delivery.
-                      </p>
-                    )}
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
+                      <span className="text-[#1A1A1A]">
+                        {order.shippingAddress}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-[#6B7280] shrink-0" />
+                      <span className="text-[#1A1A1A]">
+                        {order.shippingPhone}
+                      </span>
+                    </div>
                     {order.note && (
                       <div className="flex items-start gap-2">
                         <FileText className="w-4 h-4 text-[#6B7280] mt-0.5 shrink-0" />
@@ -382,18 +347,18 @@ export default function OrderDetailPage() {
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-[#D4AF37]" />
-                    Payment summary
+                    Tóm tắt thanh toán
                   </h2>
                   <div className="space-y-2.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[#6B7280]">Subtotal</span>
+                      <span className="text-[#6B7280]">Tạm tính</span>
                       <span className="text-[#1A1A1A]">
                         {fmt(order.totalAmount)}
                       </span>
                     </div>
                     {order.discountAmount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-[#6B7280]">Discount</span>
+                        <span className="text-[#6B7280]">Giảm giá</span>
                         <span className="text-green-600">
                           - {fmt(order.discountAmount)}
                         </span>
@@ -401,7 +366,7 @@ export default function OrderDetailPage() {
                     )}
                     <div className="h-px bg-[#E5E7EB]" />
                     <div className="flex justify-between font-bold">
-                      <span className="text-[#1A1A1A]">Total</span>
+                      <span className="text-[#1A1A1A]">Tổng cộng</span>
                       <span className="text-[#D4AF37] text-lg">
                         {fmt(order.finalAmount ?? order.totalAmount)}
                       </span>
@@ -410,18 +375,12 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
-              {/* Order items — sản phẩm và/hoặc dịch vụ */}
+              {/* Order items */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    {order.orderItems?.some((i) => i.serviceId) &&
-                    !order.orderItems?.every((i) => i.serviceId)
-                      ? "Products & Services"
-                      : order.orderItems?.every((i) => i.serviceId)
-                        ? "Booked services"
-                        : "Products"}{" "}
-                    ({(order.orderItems ?? []).length})
+                    Sản phẩm ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
                 <div className="divide-y divide-[#E5E7EB]">
@@ -431,11 +390,12 @@ export default function OrderDetailPage() {
                       className="px-6 py-4 flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3">
+                        {/* Ảnh sản phẩm */}
                         <div className="w-14 h-14 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0 overflow-hidden border border-[#E5E7EB]">
                           {item.imageUrl ? (
                             <Image
                               src={item.imageUrl}
-                              alt={item.productName ?? "Product"}
+                              alt={item.productName ?? "Sản phẩm"}
                               width={56}
                               height={56}
                               className="w-full h-full object-cover"
@@ -448,33 +408,27 @@ export default function OrderDetailPage() {
                           <p className="text-sm font-semibold text-[#1A1A1A]">
                             {item.productName ??
                               (item.productVariantId
-                                ? "Frame"
+                                ? "Gọng kính"
                                 : item.lensesVariantId
-                                  ? "Lenses"
+                                  ? "Tròng kính"
                                   : item.comboItemId
                                     ? "Combo"
-                                    : "Service")}
+                                    : "Dịch vụ")}
                           </p>
-                          {item.serviceId && (
-                            <span className="text-xs text-[#6B7280] font-medium">
-                              Service
-                              {item.slotDisplay ? ` · ${item.slotDisplay}` : ""}
-                            </span>
-                          )}
-                          {!item.serviceId &&
-                            (() => {
-                              const rawId =
-                                item.productVariantId ??
-                                item.lensesVariantId ??
-                                item.comboItemId;
-                              return rawId ? (
-                                <p className="text-xs text-[#6B7280]">
-                                  #{rawId.slice(0, 8).toUpperCase()}
-                                </p>
-                              ) : null;
-                            })()}
+                          {(() => {
+                            const rawId =
+                              item.productVariantId ??
+                              item.lensesVariantId ??
+                              item.comboItemId ??
+                              item.serviceId;
+                            return rawId ? (
+                              <p className="text-xs text-[#6B7280]">
+                                #{rawId.slice(0, 8).toUpperCase()}
+                              </p>
+                            ) : null;
+                          })()}
                           {item.note && (
-                            <p className="text-xs text-[#9CA3AF] italic mt-0.5">
+                            <p className="text-xs text-[#9CA3AF] italic">
                               {item.note}
                             </p>
                           )}
@@ -495,7 +449,6 @@ export default function OrderDetailPage() {
 
               {/* Action buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {" "}
                 {canPay && (
                   <button
                     onClick={handlePayMomo}
@@ -507,7 +460,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4" />
-                        Pay with Momo
+                        Thanh toán qua Momo
                       </>
                     )}
                   </button>
@@ -523,7 +476,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <XCircle className="w-4 h-4" />
-                        Cancel order
+                        Huỷ đơn hàng
                       </>
                     )}
                   </button>
@@ -539,9 +492,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        {isServiceOrder
-                          ? "Confirm service completed"
-                          : "Confirm delivery received"}
+                        Xác nhận đã nhận hàng
                       </>
                     )}
                   </button>
@@ -552,7 +503,7 @@ export default function OrderDetailPage() {
                     className="flex-1 h-12 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] font-semibold text-sm hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    Request return / exchange
+                    Yêu cầu đổi / trả hàng
                   </Link>
                 )}
               </div>
