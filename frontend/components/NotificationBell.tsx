@@ -15,6 +15,70 @@ function timeAgo(timestamp: string): string {
   return `${Math.floor(hours / 24)} ngày trước`;
 }
 
+function localizeLegacyMessage(message: string): string {
+  const directMap: Record<string, string> = {
+    "Your order has been confirmed.": "Đơn hàng của bạn đã được xác nhận.",
+    "Your order is being prepared.": "Đơn hàng của bạn đang được chuẩn bị.",
+    "Your order is in manufacturing.":
+      "Đơn hàng của bạn đang trong quá trình sản xuất.",
+    "Your order has been shipped.": "Đơn hàng của bạn đang được giao.",
+    "Your order has been delivered. Thank you!":
+      "Đơn hàng của bạn đã được giao. Cảm ơn bạn!",
+    "Your order has been cancelled.": "Đơn hàng của bạn đã bị hủy.",
+    "Your order has been rejected.": "Đơn hàng của bạn đã bị từ chối.",
+    "Your order is completed.": "Đơn hàng của bạn đã hoàn tất.",
+  };
+
+  if (directMap[message]) return directMap[message];
+
+  if (
+    message ===
+    "Customer Sample Customer has confirmed receipt. Order completed."
+  ) {
+    return "Khách hàng Sample Customer đã xác nhận nhận hàng. Đơn đã hoàn tất.";
+  }
+
+  if (
+    message ===
+    "Sales confirmed order from Sample Customer. Please continue fulfillment workflow."
+  ) {
+    return "Sales đã xác nhận đơn của khách hàng Sample Customer. Vui lòng tiếp tục quy trình xử lý.";
+  }
+
+  if (message.includes("has confirmed receipt. Order completed.")) {
+    return message
+      .replace("Customer ", "Khách hàng ")
+      .replace(
+        " has confirmed receipt. Order completed.",
+        " đã xác nhận nhận hàng. Đơn đã hoàn tất.",
+      );
+  }
+
+  if (
+    message.includes("Sales confirmed order from ") &&
+    message.includes(". Please continue fulfillment workflow.")
+  ) {
+    return message
+      .replace(
+        "Sales confirmed order from ",
+        "Sales đã xác nhận đơn của khách hàng ",
+      )
+      .replace(
+        ". Please continue fulfillment workflow.",
+        ". Vui lòng tiếp tục quy trình xử lý.",
+      );
+  }
+
+  if (message.startsWith("Order status updated: ")) {
+    const status = message
+      .replace("Order status updated: ", "")
+      .replace(/\.$/, "");
+    return `Trạng thái đơn hàng đã được cập nhật: ${status}.`;
+  }
+
+  return message;
+}
+
 function statusColor(status?: string): string {
   switch (status) {
     case "Confirmed":
@@ -105,6 +169,10 @@ export default function NotificationBell({ mode = "customer" }: Props) {
   function handleNotificationClick(n: OrderNotification) {
     onMarkRead(n.id);
     setOpen(false);
+    if (n.linkTo) {
+      router.push(n.linkTo);
+      return;
+    }
     if (isOperation) {
       router.push(`/operation/orders/${n.orderId}`);
     } else if (isSales) {
@@ -138,7 +206,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="font-semibold text-gray-800 text-sm">
               {isOperation
-                ? "Xác nhận nhận hàng"
+                ? "Xác nhận giao hàng"
                 : isSales
                   ? "Đơn hàng mới"
                   : "Thông báo"}
@@ -187,7 +255,7 @@ export default function NotificationBell({ mode = "customer" }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-800 leading-snug">
-                      {n.message}
+                      {localizeLegacyMessage(n.message)}
                     </p>
                     {isSales && n.totalAmount != null && (
                       <p className="text-xs text-amber-600 font-medium mt-0.5">

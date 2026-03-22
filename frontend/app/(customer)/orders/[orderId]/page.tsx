@@ -147,7 +147,7 @@ export default function OrderDetailPage() {
       if (resp.payUrl) {
         window.location.href = resp.payUrl;
       } else {
-        alert("Không lấy được link thanh toán Momo.");
+        alert("Không thể tạo liên kết thanh toán MoMo.");
       }
     } catch (e) {
       alert((e as Error).message);
@@ -157,7 +157,7 @@ export default function OrderDetailPage() {
   }
 
   async function handleCancel() {
-    if (!order || !confirm("Bạn có chắc muốn huỷ đơn hàng này?")) return;
+    if (!order || !confirm("Bạn có chắc muốn hủy đơn hàng này không?")) return;
     setCancelLoading(true);
     try {
       await cancelOrder(order.id);
@@ -170,13 +170,14 @@ export default function OrderDetailPage() {
   }
 
   async function handleComplete() {
-    if (
-      !order ||
-      !confirm(
-        "Bạn xác nhận đã nhận được hàng?\nSau khi xác nhận, đơn hàng sẽ hoàn thành và bạn có thể yêu cầu đổi/trả nếu cần.",
-      )
-    )
-      return;
+    if (!order) return;
+    const isService =
+      (order.shippingAddress == null || order.shippingAddress === "") &&
+      (order.shippingPhone == null || order.shippingPhone === "");
+    const msg = isService
+      ? "Xác nhận bạn đã hoàn tất dịch vụ?\nSau khi xác nhận, đơn hàng sẽ chuyển sang Hoàn tất."
+      : "Xác nhận bạn đã nhận được đơn hàng?\nSau khi xác nhận, bạn có thể yêu cầu đổi/trả nếu cần.";
+    if (!confirm(msg)) return;
     setCompleteLoading(true);
     try {
       await completeOrder(order.id);
@@ -215,7 +216,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="text-sm font-semibold text-red-700">
-                Thanh toán thất bại hoặc bị huỷ. Bạn có thể thử lại bên dưới.
+                Thanh toán thất bại hoặc đã bị hủy. Bạn có thể thử lại bên dưới.
               </p>
             </div>
           )}

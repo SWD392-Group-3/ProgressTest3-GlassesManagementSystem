@@ -55,7 +55,7 @@ public class PaymentController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> MomoCallback([FromQuery] MomoCallbackResponse callback)
     {
-        var orderId = callback.OrderId ?? "";
+        var orderId = ResolveOriginalOrderId(callback);
 
         if (callback.ResultCode == 0)
         {
@@ -87,5 +87,30 @@ public class PaymentController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    private static string ResolveOriginalOrderId(MomoCallbackResponse callback)
+    {
+        if (Guid.TryParse(callback.ExtraData, out var orderIdFromExtraData))
+            return orderIdFromExtraData.ToString();
+
+        if (Guid.TryParse(callback.OrderId, out var orderId))
+            return orderId.ToString();
+
+        if (!string.IsNullOrWhiteSpace(callback.OrderId))
+        {
+            var hyphenIndex = callback.OrderId.IndexOf('-');
+            if (hyphenIndex > 0)
+            {
+                var maybeGuidN = callback.OrderId[..hyphenIndex];
+                if (
+                    maybeGuidN.Length == 32
+                    && Guid.TryParseExact(maybeGuidN, "N", out var parsedGuidN)
+                )
+                    return parsedGuidN.ToString();
+            }
+        }
+
+        return "";
     }
 }

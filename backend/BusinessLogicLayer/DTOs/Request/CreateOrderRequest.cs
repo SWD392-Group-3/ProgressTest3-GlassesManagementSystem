@@ -9,6 +9,7 @@ namespace BusinessLogicLayer.DTOs.Request
     public class CreateOrderRequest
     {
         public Guid CartId { get; set; }
+        public List<Guid>? SelectedCartItemIds { get; set; }
         public Guid? PromotionId { get; set; }
         public string ShippingAddress { get; set; } = null!;
         public string ShippingPhone { get; set; } = null!;

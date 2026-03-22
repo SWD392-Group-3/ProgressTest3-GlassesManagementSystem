@@ -248,6 +248,31 @@ export function NotificationProvider({
     // ── Operation: nhận thông báo khách xác nhận nhận hàng ──
     if (isOperation) {
       connection.on(
+        "OrderConfirmedToOperation",
+        (data: {
+          orderId: string;
+          customerName: string;
+          message: string;
+          timestamp: string;
+        }) => {
+          if (!isMounted) return;
+          setOperationNotifications((prev) =>
+            [
+              {
+                id: `${Date.now()}-${Math.random()}`,
+                orderId: data.orderId,
+                customerName: data.customerName,
+                message: data.message,
+                timestamp: data.timestamp,
+                read: false,
+              },
+              ...prev,
+            ].slice(0, 50),
+          );
+        },
+      );
+
+      connection.on(
         "DeliveryConfirmed",
         (data: {
           orderId: string;

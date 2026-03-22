@@ -72,8 +72,8 @@ public class NotificationService : INotificationService
     /// <inheritdoc />
     public async Task SendNewOrderPaidToSalesAsync(Guid orderId, string customerName, decimal totalAmount)
     {
-        var title   = "Đơn hàng mới cần phê duyệt";
-        var message = $"Khách hàng {customerName} vừa đặt đơn hàng {totalAmount:N0}đ. Vui lòng xem xét và phê duyệt.";
+        var title   = "Đơn hàng mới chờ duyệt";
+        var message = $"Khách hàng {customerName} vừa đặt đơn {totalAmount:N0} VND. Vui lòng kiểm tra và xác nhận.";
         var linkTo  = $"/sales/orders/{orderId}";
         var now     = DateTime.UtcNow;
 
@@ -112,8 +112,8 @@ public class NotificationService : INotificationService
     public async Task SendPrescriptionRejectedAsync(Guid customerId, Guid prescriptionId, string? reason)
     {
         var message = string.IsNullOrWhiteSpace(reason)
-            ? "Yêu cầu kính đơn của bạn đã bị từ chối."
-            : $"Yêu cầu kính đơn của bạn đã bị từ chối. Lý do: {reason}";
+            ? "Yêu cầu kính theo toa của bạn đã bị từ chối."
+            : $"Yêu cầu kính theo toa của bạn đã bị từ chối. Lý do: {reason}";
         var linkTo = "/prescriptions";
         var now    = DateTime.UtcNow;
 
@@ -123,7 +123,7 @@ public class NotificationService : INotificationService
         {
             await SaveNotificationAsync(
                 userId.Value,
-                title:   "Yêu cầu kính đơn bị từ chối",
+                title:   "Yêu cầu kính theo toa bị từ chối",
                 content: message,
                 type:    "prescription_rejected",
                 linkTo:  linkTo,
@@ -145,7 +145,7 @@ public class NotificationService : INotificationService
     public async Task SendDeliveryConfirmedToOperationAsync(Guid orderId, string customerName)
     {
         var title   = "Khách hàng đã xác nhận nhận hàng";
-        var message = $"Khách hàng {customerName} đã xác nhận nhận đơn hàng. Đơn hàng đã hoàn thành.";
+        var message = $"Khách hàng {customerName} đã xác nhận nhận hàng. Đơn đã hoàn tất.";
         var linkTo  = $"/operation/orders/{orderId}";
         var now     = DateTime.UtcNow;
 
@@ -179,9 +179,77 @@ public class NotificationService : INotificationService
         });
     }
 
+    /// <inheritdoc />
+    public async Task SendOrderConfirmedToOperationAsync(Guid orderId, string customerName)
+    {
+        var title   = "Đơn hàng sẵn sàng xử lý";
+        var message = $"Sales đã xác nhận đơn của khách hàng {customerName}. Vui lòng tiếp tục quy trình xử lý.";
+        var linkTo  = $"/operation/orders/{orderId}";
+        var now     = DateTime.UtcNow;
+
+        var operationUsers = await _userRepo.FindAsync(u => u.Role == "Operation");
+        foreach (var user in operationUsers)
+        {
+            await _notificationRepo.AddAsync(new Notification
+            {
+                Id        = Guid.NewGuid(),
+                UserId    = user.Id,
+                Title     = title,
+                Content   = message,
+                Type      = "order_confirmed",
+                Status    = "unread",
+                LinkTo    = linkTo,
+                CreatedAt = now,
+                ReadAt    = null
+            });
+        }
+        if (operationUsers.Any())
+            await _unitOfWork.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("operation").SendAsync("OrderConfirmedToOperation", new
+        {
+            orderId      = orderId.ToString(),
+            customerName,
+            message,
+            timestamp    = now
+        });
+    }
+
     // ──────────────────────────────────────────────────────────────────────────
     // Public: Query / Mark read
     // ──────────────────────────────────────────────────────────────────────────
+
+    /// <inheritdoc />
+    public async Task SendEyeResultReadyAsync(Guid customerId, Guid orderId)
+    {
+        const string title   = "Đã có kết quả đo mắt";
+        var          message = "Nhân viên đã cập nhật kết quả đo mắt của bạn. Nhấn để xem chi tiết.";
+        var          linkTo  = $"/orders/{orderId}?tab=eye-result";
+        var          now     = DateTime.UtcNow;
+
+        // 1. Lưu vào DB (lookup UserId từ CustomerId)
+        var userId = await GetUserIdByCustomerIdAsync(customerId);
+        if (userId.HasValue)
+        {
+            await SaveNotificationAsync(
+                userId.Value,
+                title:   title,
+                content: message,
+                type:    "eye_result_ready",
+                linkTo:  linkTo,
+                now:     now);
+        }
+
+        // 2. Gửi real-time qua SignalR tới customer group
+        await _hubContext.Clients
+            .Group($"customer_{customerId}")
+            .SendAsync("EyeResultReady", new
+            {
+                orderId   = orderId.ToString(),
+                message,
+                timestamp = now
+            });
+    }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(Guid userId, int limit = 50)
@@ -270,21 +338,23 @@ public class NotificationService : INotificationService
         "ProcessingTemplate" => "Đơn hàng đang chuẩn bị",
         "Manufacturing"      => "Đơn hàng đang sản xuất",
         "Shipped"            => "Đơn hàng đang giao",
-        "Delivered"          => "Đơn hàng đã giao thành công",
-        "Cancelled"          => "Đơn hàng đã bị huỷ",
-        "Rejected"           => "Đơn hàng đã bị từ chối",
-        _                    => "Cập nhật đơn hàng"
+        "Delivered"          => "Đơn hàng đã giao",
+        "Cancelled"          => "Đơn hàng đã hủy",
+        "Rejected"           => "Đơn hàng bị từ chối",
+        "Completed"          => "Đơn hàng đã hoàn tất",
+        _                    => "Cập nhật trạng thái đơn hàng"
     };
 
     private static string BuildOrderMessage(string status) => status switch
     {
         "Confirmed"          => "Đơn hàng của bạn đã được xác nhận.",
-        "ProcessingTemplate" => "Đơn hàng đang được chuẩn bị mẫu.",
-        "Manufacturing"      => "Đơn hàng đang được sản xuất.",
-        "Shipped"            => "Đơn hàng đã được giao cho đơn vị vận chuyển.",
-        "Delivered"          => "Đơn hàng đã được giao thành công. Cảm ơn bạn!",
-        "Cancelled"          => "Đơn hàng đã bị huỷ.",
-        "Rejected"           => "Đơn hàng đã bị từ chối.",
-        _                    => $"Trạng thái đơn hàng cập nhật: {status}."
+        "ProcessingTemplate" => "Đơn hàng của bạn đang được chuẩn bị.",
+        "Manufacturing"      => "Đơn hàng của bạn đang trong quá trình sản xuất.",
+        "Shipped"            => "Đơn hàng của bạn đang được giao.",
+        "Delivered"          => "Đơn hàng của bạn đã được giao. Cảm ơn bạn!",
+        "Cancelled"          => "Đơn hàng của bạn đã bị hủy.",
+        "Rejected"           => "Đơn hàng của bạn đã bị từ chối.",
+        "Completed"          => "Đơn hàng của bạn đã hoàn tất.",
+        _                    => $"Trạng thái đơn hàng đã được cập nhật: {status}."
     };
 }

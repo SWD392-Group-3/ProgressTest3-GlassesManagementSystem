@@ -22,11 +22,12 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public async Task<MomoCreatePaymentResponse> CreatePaymentAsync(MomoCreatePaymentRequest request)
         {
-            var requestId = Guid.NewGuid().ToString();
-            var orderId = request.OrderId.ToString();
-            var orderInfo = request.OrderInfo ?? $"Thanh toán đơn hàng {orderId}";
+            var requestId = Guid.NewGuid().ToString("N");
+            var originalOrderId = request.OrderId.ToString();
+            var momoOrderId = $"{request.OrderId:N}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+            var orderInfo = request.OrderInfo ?? $"Thanh toán đơn hàng {originalOrderId}";
             var amount = request.Amount;
-            var extraData = "";
+            var extraData = originalOrderId;
 
             // Tạo raw signature theo chuẩn Momo v2
             var rawHash =
@@ -34,7 +35,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 $"&amount={amount}" +
                 $"&extraData={extraData}" +
                 $"&ipnUrl={_settings.NotifyUrl}" +
-                $"&orderId={orderId}" +
+                $"&orderId={momoOrderId}" +
                 $"&orderInfo={orderInfo}" +
                 $"&partnerCode={_settings.PartnerCode}" +
                 $"&redirectUrl={_settings.ReturnUrl}" +
@@ -50,7 +51,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 storeId = _settings.PartnerCode,
                 requestId,
                 amount,
-                orderId,
+                orderId = momoOrderId,
                 orderInfo,
                 redirectUrl = _settings.ReturnUrl,
                 ipnUrl = _settings.NotifyUrl,
@@ -76,7 +77,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 PayUrl = momoResponse.TryGetProperty("payUrl", out var payUrlProp)
                     ? payUrlProp.GetString() ?? ""
                     : "",
-                OrderId = orderId,
+                OrderId = originalOrderId,
                 RequestId = requestId,
                 Amount = amount
             };
@@ -84,6 +85,20 @@ namespace BusinessLogicLayer.Services.Implementations
 
         public bool ValidateCallback(MomoCallbackResponse callback)
         {
+            if (
+                string.IsNullOrWhiteSpace(callback.Signature)
+                || string.IsNullOrWhiteSpace(callback.PartnerCode)
+                || string.IsNullOrWhiteSpace(callback.OrderId)
+                || string.IsNullOrWhiteSpace(callback.OrderInfo)
+                || string.IsNullOrWhiteSpace(callback.OrderType)
+                || string.IsNullOrWhiteSpace(callback.RequestId)
+                || string.IsNullOrWhiteSpace(callback.Message)
+                || string.IsNullOrWhiteSpace(callback.PayType)
+            )
+            {
+                return false;
+            }
+
             // Tái tạo rawHash theo đúng thứ tự field Momo yêu cầu
             var rawHash =
                 $"accessKey={_settings.AccessKey}" +

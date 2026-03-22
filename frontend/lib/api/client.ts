@@ -49,6 +49,9 @@ export const API = {
   services: {
     getAll: "/api/manager/pricing-promotions/services",
   },
+  promotions: {
+    getAll: "/api/manager/pricing-promotions/promotions",
+  },
   prescription: {
     create: "/api/Prescription",
     getByCustomer: "/api/Prescription",
@@ -74,6 +77,23 @@ export const API = {
     markRead: (notificationId: string) =>
       `/api/notification/${notificationId}/read`,
     markAllRead: "/api/notification/read-all",
+  },
+  slots: {
+    available: (date: string) => `/api/slot/available?date=${date}`,
+  },
+  manager: {
+    revenue: {
+      overview: (from?: string, to?: string) => {
+        const p = new URLSearchParams();
+        if (from) p.set("from", from);
+        if (to) p.set("to", to);
+        const q = p.toString();
+        return `/api/manager/revenue/overview${q ? `?${q}` : ""}`;
+      },
+      monthly: (year: number) => `/api/manager/revenue/monthly/${year}`,
+      recentOrders: (count: number) =>
+        `/api/manager/revenue/recent-orders?count=${count}`,
+    },
   },
 } as const;
 

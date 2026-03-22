@@ -203,7 +203,7 @@ export default function CartPage() {
                     ) : (
                       <Square className="w-5 h-5 text-[#9CA3AF]" />
                     )}
-                    Chọn tất cả ({items.length} sản phẩm)
+                    Chọn tất cả ({checkedIds.size}/{items.length} sản phẩm)
                   </button>
                   {someChecked && (
                     <span className="ml-auto text-xs text-[#6B7280]">

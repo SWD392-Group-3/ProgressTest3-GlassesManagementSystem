@@ -35,6 +35,15 @@ namespace BusinessLogicLayer.Services.Interfaces
         /// </summary>
         Task SendDeliveryConfirmedToOperationAsync(Guid orderId, string customerName);
 
+        /// <summary>
+        /// Gửi thông báo tới toàn bộ nhân viên Operation khi Sales xác nhận đơn hàng.
+        /// </summary>
+        Task SendOrderConfirmedToOperationAsync(Guid orderId, string customerName);
+
+        /// <summary>
+        /// Gửi thông báo tới khách hàng khi Sale ghi kết quả khám mắt cho đơn hàng dịch vụ.
+        /// </summary>
+        Task SendEyeResultReadyAsync(Guid customerId, Guid orderId);
         /// <summary>Lấy danh sách thông báo của user (mới nhất trước).</summary>
         Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(Guid userId, int limit = 50);
 
