@@ -84,22 +84,6 @@ namespace BusinessLogicLayer.Services.Implementations
                 throw new Exception("Cart is empty.");
             }
 
-            // Đơn chỉ dịch vụ + slot: không yêu cầu giao hàng và không áp mã khuyến mãi
-            var isServiceOnlyOrder = cart.CartItems.All(i =>
-                i.ServiceId != null
-                && i.ProductId == null
-                && i.ProductVariantId == null
-                && i.LensesVariantId == null
-                && i.ComboItemId == null);
-
-            if (!isServiceOnlyOrder)
-            {
-                if (string.IsNullOrWhiteSpace(request.ShippingAddress))
-                    throw new Exception("Please enter shipping address.");
-                if (string.IsNullOrWhiteSpace(request.ShippingPhone))
-                    throw new Exception("Please enter shipping phone number.");
-            }
-
             var selectedCartItemIds = (request.SelectedCartItemIds ?? new List<Guid>())
                 .Distinct()
                 .ToHashSet();
