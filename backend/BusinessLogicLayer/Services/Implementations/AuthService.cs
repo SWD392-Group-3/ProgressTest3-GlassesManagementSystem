@@ -37,7 +37,7 @@ public class AuthService : IAuthService
             return (null, "Email hoặc mật khẩu không đúng.");
 
         if (user.Status != null && user.Status.Equals("Inactive", StringComparison.OrdinalIgnoreCase))
-            return (null, "Tài khoản đã bị vô hiệu hóa.");
+            return (null, "Account has been disabled.");
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return (null, "Email hoặc mật khẩu không đúng.");
@@ -72,11 +72,11 @@ public class AuthService : IAuthService
             return (null, "Email không được để trống.");
 
         if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
-            return (null, "Mật khẩu phải có ít nhất 8 ký tự.");
+            return (null, "Password must be at least 8 characters.");
 
         var existing = await _userRepository.GetByEmailAsync(email, cancellationToken);
         if (existing != null)
-            return (null, "Email này đã được sử dụng.");
+            return (null, "This email is already in use.");
 
         var now = DateTime.UtcNow;
         var user = new User

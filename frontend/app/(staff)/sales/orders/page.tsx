@@ -6,12 +6,13 @@ import { getOrders, OrderDto } from "@/lib/api/order";
 import { getUser } from "@/lib/auth-storage";
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Đã xác nhận",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Cancelled: "Đã huỷ",
+  Pending: "Pending",
+  Paid: "Paid",
+  Confirmed: "Confirmed",
+  Shipped: "Shipped",
+  Delivered: "Delivered",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -20,6 +21,7 @@ const STATUS_COLOR: Record<string, string> = {
   Confirmed: "bg-blue-100 text-blue-800",
   Shipped: "bg-purple-100 text-purple-800",
   Delivered: "bg-green-200 text-green-900",
+  Completed: "bg-gray-100 text-gray-800",
   Cancelled: "bg-red-100 text-red-800",
 };
 
@@ -56,7 +58,7 @@ export default function SalesOrdersPage() {
       setOrders(data);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Không thể tải danh sách đơn hàng";
+        err instanceof Error ? err.message : "Failed to load orders";
       setError(msg);
     } finally {
       setLoading(false);
@@ -94,9 +96,9 @@ export default function SalesOrdersPage() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý đơn hàng</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Order management</h1>
         <p className="text-gray-500 text-sm mt-1">
-          Danh sách tất cả đơn hàng trong hệ thống
+          All orders in the system
         </p>
       </div>
 
@@ -105,7 +107,7 @@ export default function SalesOrdersPage() {
         {/* Search */}
         <input
           type="text"
-          placeholder="Tìm theo mã đơn, số điện thoại..."
+          placeholder="Search by order ID, phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -120,6 +122,7 @@ export default function SalesOrdersPage() {
             "Confirmed",
             "Shipped",
             "Delivered",
+            "Completed",
             "Cancelled",
           ].map((status) => (
             <button
@@ -131,7 +134,7 @@ export default function SalesOrdersPage() {
                   : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
               }`}
             >
-              {status === "all" ? "Tất cả" : STATUS_LABEL[status]}
+              {status === "all" ? "All" : STATUS_LABEL[status]}
             </button>
           ))}
         </div>
@@ -142,7 +145,7 @@ export default function SalesOrdersPage() {
           disabled={loading}
           className="ml-auto px-4 py-2 bg-[#D4AF37] text-white rounded-lg text-sm font-medium hover:bg-[#C9A030] disabled:opacity-50 transition-colors"
         >
-          {loading ? "Đang tải..." : "Làm mới"}
+          {loading ? "Loading..." : "Refresh"}
         </button>
       </div>
 
@@ -165,7 +168,7 @@ export default function SalesOrdersPage() {
         <>
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              Không có đơn hàng nào
+              No orders
             </div>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200">
@@ -173,25 +176,25 @@ export default function SalesOrdersPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Mã đơn
+                      Order ID
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Ngày đặt
+                      Date
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      SĐT giao hàng
+                      Phone
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Địa chỉ
+                      Address
                     </th>
                     <th className="px-4 py-3 text-right font-semibold text-gray-600">
-                      Tổng tiền
+                      Total
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-600">
-                      Trạng thái
+                      Status
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-600">
-                      Thao tác
+                      Action
                     </th>
                   </tr>
                 </thead>
@@ -208,10 +211,10 @@ export default function SalesOrdersPage() {
                         {fmtDate(order.orderDate)}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
-                        {order.shippingPhone}
+                        {order.shippingPhone ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
-                        {order.shippingAddress}
+                        {order.shippingAddress ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900">
                         {fmt(order.finalAmount ?? order.totalAmount)}
@@ -233,7 +236,7 @@ export default function SalesOrdersPage() {
                           }
                           className="text-[#D4AF37] hover:text-[#C9A030] font-medium text-xs underline"
                         >
-                          Xem chi tiết
+                          View details
                         </button>
                       </td>
                     </tr>
@@ -245,7 +248,7 @@ export default function SalesOrdersPage() {
 
           {/* Summary */}
           <div className="mt-4 text-sm text-gray-500">
-            Hiển thị {filteredOrders.length} / {orders.length} đơn hàng
+            Displaying {filteredOrders.length} / {orders.length} orders
           </div>
         </>
       )}

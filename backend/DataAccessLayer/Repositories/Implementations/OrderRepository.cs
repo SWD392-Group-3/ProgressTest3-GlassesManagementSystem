@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,8 +34,12 @@ namespace DataAccessLayer.Repositories.Implementations
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Service)
                 .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Slot)
+                .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.ComboItem)
                         .ThenInclude(ci => ci!.Combo)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
                 .Include(o => o.Payments)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
         }

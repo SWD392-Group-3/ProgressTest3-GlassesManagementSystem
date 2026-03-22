@@ -120,7 +120,9 @@ export function NotificationProvider({
             newStatus:
               item.type === "prescription_rejected"
                 ? "PrescriptionRejected"
-                : item.type,
+                : item.type === "eye_result_ready"
+                  ? "EyeResultReady"
+                  : item.type,
             message: item.content,
             timestamp: item.createdAt,
             read: item.isRead,
@@ -207,6 +209,27 @@ export function NotificationProvider({
                 message: data.message,
                 timestamp: data.timestamp,
                 read: false,
+              },
+              ...prev,
+            ].slice(0, 50),
+          );
+        },
+      );
+
+      connection.on(
+        "EyeResultReady",
+        (data: { orderId: string; message: string; timestamp: string }) => {
+          if (!isMounted) return;
+          setNotifications((prev) =>
+            [
+              {
+                id: `${Date.now()}-${Math.random()}`,
+                orderId: data.orderId,
+                newStatus: "EyeResultReady",
+                message: data.message,
+                timestamp: data.timestamp,
+                read: false,
+                linkTo: `/orders/${data.orderId}?tab=eye-result`,
               },
               ...prev,
             ].slice(0, 50),

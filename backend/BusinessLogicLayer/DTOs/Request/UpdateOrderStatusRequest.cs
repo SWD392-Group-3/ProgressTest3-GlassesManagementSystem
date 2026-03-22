@@ -4,7 +4,7 @@ namespace BusinessLogicLayer.DTOs.Request
 {
     public class UpdateOrderStatusRequest
     {
-        [Required(ErrorMessage = "Trạng thái không được để trống.")]
+        [Required(ErrorMessage = "Status is required.")]
         public string Status { get; set; } = null!;
     }
 }

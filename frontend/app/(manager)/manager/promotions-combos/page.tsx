@@ -72,8 +72,8 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
                     <p className="text-sm font-medium text-primary leading-relaxed">{message}</p>
                 </div>
                 <div className="flex justify-end gap-3">
-                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Hủy</button>
-                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Xóa</button>
+                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Delete</button>
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@ function StatusBadge({ status }: { status?: string }) {
     const active = status === "Active";
     return (
         <span className={`text-xs font-semibold px-2 py-0.5 rounded ${active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}`}>
-            {active ? "Hoạt động" : "Dừng"}
+            {active ? "Active" : "Inactive"}
         </span>
     );
 }
@@ -127,46 +127,46 @@ function PromotionForm({ initial, onSaved, onClose }: {
         const url = isEdit ? `${BASE}/promotions/${initial!.id}` : `${BASE}/promotions`;
         const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: authHeaders(), body: JSON.stringify(body) });
         if (res.ok) { onSaved(); onClose(); }
-        else { setError(await res.text() || "Lỗi"); }
+        else { setError(await res.text() || "Error"); }
         setSaving(false);
     };
 
     return (
-        <ModalShell title={isEdit ? "Chỉnh sửa khuyến mãi" : "Tạo khuyến mãi mới"} onClose={onClose}>
+        <ModalShell title={isEdit ? "Edit promotion" : "Create promotion"} onClose={onClose}>
             <form onSubmit={handleSubmit}>
-                <Field label="Mã khuyến mãi *">
-                    <input className={inputCls} required value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="VD: SUMMER20" />
+                <Field label="Promotion code *">
+                    <input className={inputCls} required value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="e.g. SUMMER20" />
                 </Field>
-                <Field label="Tên chương trình">
+                <Field label="Program name">
                     <input className={inputCls} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                 </Field>
-                <Field label="Mô tả">
+                <Field label="Description">
                     <textarea className={inputCls} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </Field>
                 <div className="grid grid-cols-2 gap-4">
-                    <Field label="Giá trị giảm (VND) *">
+                    <Field label="Discount value (VND) *">
                         <input className={inputCls} required type="number" min="0" value={form.discountValue} onChange={e => setForm({ ...form, discountValue: e.target.value })} />
                     </Field>
-                    <Field label="Trạng thái">
+                    <Field label="Status">
                         <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
-                            <option value="Active">Hoạt động</option>
-                            <option value="Inactive">Dừng</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
                         </select>
                     </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <Field label="Ngày bắt đầu *">
+                    <Field label="Start date *">
                         <input className={inputCls} required type="date" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
                     </Field>
-                    <Field label="Ngày kết thúc *">
+                    <Field label="End date *">
                         <input className={inputCls} required type="date" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
                     </Field>
                 </div>
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-secondary transition-colors">Hủy</button>
+                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-secondary transition-colors">Cancel</button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-black transition-colors disabled:opacity-60">
-                        {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo mới"}
+                        {saving ? "Saving..." : isEdit ? "Update" : "Create"}
                     </button>
                 </div>
             </form>
@@ -196,14 +196,14 @@ function PromotionsTab({ promotions, loading, onRefresh }: { promotions: Promoti
             )}
             {deleteTarget && (
                 <ConfirmModal
-                    message={`Xóa khuyến mãi "${deleteTarget.code}"?`}
+                    message={`Delete promotion "${deleteTarget.code}"?`}
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteTarget(null)}
                 />
             )}
             <div className="flex justify-end mb-4">
                 <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-black transition-colors">
-                    <Plus size={16} /> Thêm khuyến mãi
+                    <Plus size={16} /> Add promotion
                 </button>
             </div>
             {loading ? (
@@ -213,7 +213,7 @@ function PromotionsTab({ promotions, loading, onRefresh }: { promotions: Promoti
             ) : promotions.length === 0 ? (
                 <div className="py-16 text-center text-muted bg-white rounded-xl border border-border">
                     <Tag size={48} className="mx-auto mb-4 opacity-20" />
-                    <p>Chưa có khuyến mãi nào.</p>
+                    <p>No promotions yet.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -265,21 +265,21 @@ function ServiceForm({ initial, onSaved, onClose }: {
         const url = isEdit ? `${BASE}/services/${initial!.id}` : `${BASE}/services`;
         const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: authHeaders(), body: JSON.stringify(body) });
         if (res.ok) { onSaved(); onClose(); }
-        else { setError(await res.text() || "Lỗi"); }
+        else { setError(await res.text() || "Error"); }
         setSaving(false);
     };
 
     return (
-        <ModalShell title={isEdit ? "Chỉnh sửa dịch vụ" : "Thêm dịch vụ"} onClose={onClose}>
+        <ModalShell title={isEdit ? "Edit service" : "Add service"} onClose={onClose}>
             <form onSubmit={handleSubmit}>
-                <Field label="Tên dịch vụ *">
-                    <input className={inputCls} required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="VD: Đo mắt" />
+                <Field label="Service name *">
+                    <input className={inputCls} required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Eye exam" />
                 </Field>
-                <Field label="Mô tả">
+                <Field label="Description">
                     <textarea className={inputCls} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </Field>
                 <div className="grid grid-cols-2 gap-4">
-                    <Field label="Giá (VND) *">
+                    <Field label="Price (VND) *">
                         <input className={inputCls} required type="number" min="0" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
                     </Field>
                     <Field label="Trạng thái">
@@ -291,9 +291,9 @@ function ServiceForm({ initial, onSaved, onClose }: {
                 </div>
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-secondary transition-colors">Hủy</button>
+                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-secondary transition-colors">Cancel</button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-black transition-colors disabled:opacity-60">
-                        {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo mới"}
+                        {saving ? "Saving..." : isEdit ? "Update" : "Create"}
                     </button>
                 </div>
             </form>
@@ -323,14 +323,14 @@ function ServicesTab({ services, loading, onRefresh }: { services: Service[]; lo
             )}
             {deleteTarget && (
                 <ConfirmModal
-                    message={`Xóa dịch vụ "${deleteTarget.name}"?`}
+                    message={`Delete service "${deleteTarget.name}"?`}
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteTarget(null)}
                 />
             )}
             <div className="flex justify-end mb-4">
                 <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-black transition-colors">
-                    <Plus size={16} /> Thêm dịch vụ
+                    <Plus size={16} /> Add service
                 </button>
             </div>
             {loading ? (
@@ -340,7 +340,7 @@ function ServicesTab({ services, loading, onRefresh }: { services: Service[]; lo
             ) : services.length === 0 ? (
                 <div className="py-16 text-center text-muted bg-white rounded-xl border border-border">
                     <Wrench size={48} className="mx-auto mb-4 opacity-20" />
-                    <p>Chưa có dịch vụ nào.</p>
+                    <p>No services yet.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -392,43 +392,43 @@ function ComboForm({ initial, onSaved, onClose }: {
         const url = isEdit ? `${BASE}/combos/${initial!.id}` : `${BASE}/combos`;
         const res = await fetch(url, { method: isEdit ? "PUT" : "POST", headers: authHeaders(), body: JSON.stringify(body) });
         if (res.ok) { onSaved(); onClose(); }
-        else { setError(await res.text() || "Lỗi"); }
+        else { setError(await res.text() || "Error"); }
         setSaving(false);
     };
 
     return (
-        <ModalShell title={isEdit ? "Chỉnh sửa combo" : "Tạo combo mới"} onClose={onClose}>
+        <ModalShell title={isEdit ? "Edit combo" : "Create combo"} onClose={onClose}>
             <form onSubmit={handleSubmit}>
-                <Field label="Tên combo *">
-                    <input className={inputCls} required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="VD: Gọng titan + tròng chống UV" />
+                <Field label="Combo name *">
+                    <input className={inputCls} required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Titan frame + UV lens" />
                 </Field>
-                <Field label="Mô tả">
+                <Field label="Description">
                     <textarea className={inputCls} rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </Field>
                 <div className="grid grid-cols-2 gap-4">
-                    <Field label="Giá gốc (VND) *">
+                    <Field label="Base price (VND) *">
                         <input className={inputCls} required type="number" min="0" value={form.basePrice} onChange={e => setForm({ ...form, basePrice: e.target.value })} />
                     </Field>
-                    <Field label="Trạng thái">
+                    <Field label="Status">
                         <select className={inputCls} value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
-                            <option value="Active">Hoạt động</option>
-                            <option value="Inactive">Dừng</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
                         </select>
                     </Field>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <Field label="Ngày bắt đầu *">
+                    <Field label="Start date *">
                         <input className={inputCls} required type="date" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} />
                     </Field>
-                    <Field label="Ngày kết thúc *">
+                    <Field label="End date *">
                         <input className={inputCls} required type="date" value={form.endDate} onChange={e => setForm({ ...form, endDate: e.target.value })} />
                     </Field>
                 </div>
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-secondary transition-colors">Hủy</button>
+                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-secondary transition-colors">Cancel</button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-black transition-colors disabled:opacity-60">
-                        {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo mới"}
+                        {saving ? "Saving..." : isEdit ? "Update" : "Create"}
                     </button>
                 </div>
             </form>
@@ -474,23 +474,23 @@ function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose:
         });
         setSaving(false);
         if (res.ok) onRefresh();
-        else alert("Lỗi khi thêm: " + await res.text());
+        else alert("Error adding: " + await res.text());
     };
 
     const handleRemoveItem = async (itemId: string) => {
-        if (!confirm("Bạn có chắc muốn xóa sản phẩm này khỏi combo?")) return;
+        if (!confirm("Remove this product from combo?")) return;
         const res = await fetch(`${BASE}/combos/${combo.id}/items/${itemId}`, { method: "DELETE", headers: authHeaders() });
         if (res.ok) onRefresh();
-        else alert("Lỗi khi xóa: " + await res.text());
+        else alert("Error removing: " + await res.text());
     };
 
     return (
-        <ModalShell title={`Chi tiết combo: ${combo.name}`} onClose={onClose}>
+        <ModalShell title={`Combo details: ${combo.name}`} onClose={onClose}>
             <div className="space-y-6">
                 <div>
-                    <h3 className="font-bold text-primary mb-3">Sản phẩm trong combo ({combo.comboItems.length})</h3>
+                    <h3 className="font-bold text-primary mb-3">Products in combo ({combo.comboItems.length})</h3>
                     {combo.comboItems.length === 0 ? (
-                        <p className="text-sm text-muted italic">Chưa có sản phẩm nào.</p>
+                        <p className="text-sm text-muted italic">No products yet.</p>
                     ) : (
                         <div className="space-y-2 border border-border rounded-lg p-2 max-h-60 overflow-y-auto">
                             {combo.comboItems.map((item: any) => (
@@ -502,7 +502,7 @@ function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose:
                                                 <span><span className="font-medium text-primary">[Gọng]</span> {item.frameVariant.productName} {item.frameVariant.color && `(${item.frameVariant.color})`}</span>
                                             ) : item.lensVariant ? (
                                                 <span><span className="font-medium text-primary">[Tròng]</span> {item.lensVariant.productName}</span>
-                                            ) : "Không xác định"}
+                                            ) : "Unknown"}
                                             <span className="mx-2 text-xs text-muted">x{item.quantity}</span>
                                         </div>
                                     </div>
@@ -516,14 +516,14 @@ function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose:
                 </div>
 
                 <form onSubmit={handleAddItem} className="bg-secondary/20 p-4 rounded-lg border border-border">
-                    <h3 className="font-bold text-primary mb-3 text-sm">Thêm sản phẩm</h3>
+                    <h3 className="font-bold text-primary mb-3 text-sm">Add product</h3>
                     <div className="grid grid-cols-2 gap-3 mb-3">
                         <select className={inputCls} value={itemType} onChange={e => { setItemType(e.target.value as any); setSelectedVariantId(""); }}>
-                            <option value="frame">Thêm Gọng kính</option>
-                            <option value="lens">Thêm Tròng kính</option>
+                            <option value="frame">Add frame</option>
+                            <option value="lens">Add lens</option>
                         </select>
                         <select className={inputCls} required value={selectedVariantId} onChange={e => setSelectedVariantId(e.target.value)} disabled={loadingProducts}>
-                            <option value="">-- Chọn sản phẩm --</option>
+                            <option value="">-- Select product --</option>
                             {itemType === "frame" ? (
                                 frames.map(f => (
                                     <option key={f.id} value={f.id}>{f.productName} {f.color && `- ${f.color}`} ({f.price?.toLocaleString()}đ)</option>
@@ -537,11 +537,11 @@ function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose:
                     </div>
                     <div className="flex items-end gap-3">
                         <div className="flex-1">
-                            <label className="block text-xs font-medium mb-1">Số lượng</label>
+                            <label className="block text-xs font-medium mb-1">Quantity</label>
                             <input type="number" min="1" required className={inputCls} value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} />
                         </div>
                         <button type="submit" disabled={saving || !selectedVariantId} className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-black disabled:opacity-50 h-[38px] flex items-center">
-                            {saving ? "..." : "Thêm vào Combo"}
+                            {saving ? "..." : "Add to combo"}
                         </button>
                     </div>
                 </form>
@@ -555,9 +555,19 @@ function ComboItemsModal({ combo, onClose, onRefresh }: { combo: Combo; onClose:
 
 function ComboCard({ combo, onEdit, onDelete, onManageItems }: { combo: Combo; onEdit: () => void; onDelete: () => void; onManageItems: () => void }) {
     const [expanded, setExpanded] = useState(false);
+
+    // Calculate total original price of all items in the combo
+    const originalTotal = combo.comboItems.reduce((acc, item) => {
+        const itemPrice = (item.frameVariant?.price || 0) + (item.lensVariant?.price || 0);
+        return acc + itemPrice * item.quantity;
+    }, 0);
+
+    // Check if the combo price is illogical (higher than original items sum)
+    const isOverpriced = originalTotal > 0 && combo.basePrice > originalTotal;
+
     return (
-        <div className="bg-white rounded-xl border border-border hover:shadow-md transition-shadow group">
-            <div className="p-5">
+        <div className="bg-white rounded-xl border border-border hover:shadow-md transition-shadow group flex flex-col">
+            <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                         <Box size={18} className="text-accent shrink-0" />
@@ -567,51 +577,74 @@ function ComboCard({ combo, onEdit, onDelete, onManageItems }: { combo: Combo; o
                     <ActionsRow onEdit={onEdit} onDelete={onDelete} />
                 </div>
                 {combo.description && <p className="text-sm text-muted mb-3">{combo.description}</p>}
-                <p className="text-accent font-bold text-lg mb-2">{combo.basePrice.toLocaleString("vi-VN")} VND</p>
-                <div className="flex items-center gap-1.5 text-xs text-muted mb-3">
+
+                <div className="flex items-end gap-2 mb-2">
+                    <p className={`font-bold text-lg ${isOverpriced ? "text-red-500" : "text-accent"}`}>
+                        {combo.basePrice.toLocaleString("vi-VN")} VND
+                    </p>
+                    {originalTotal > 0 && originalTotal !== combo.basePrice && (
+                        <p className="text-xs text-muted line-through mb-1" title="Original Total Price">
+                            {originalTotal.toLocaleString("vi-VN")} VND
+                        </p>
+                    )}
+                </div>
+                {isOverpriced && (
+                    <p className="text-xs text-red-500 mb-2 flex items-center gap-1 font-medium bg-red-50 p-1.5 rounded-md border border-red-100">
+                        <AlertTriangle size={12} />
+                        Giá combo đang cao hơn tổng giá gốc ({originalTotal.toLocaleString()}đ)
+                    </p>
+                )}
+
+                <div className="flex items-center gap-1.5 text-xs text-muted mb-4">
                     <Clock size={13} />
                     {new Date(combo.startDate).toLocaleDateString("vi-VN")} — {new Date(combo.endDate).toLocaleDateString("vi-VN")}
                 </div>
-                {combo.comboItems.length > 0 && (
+
+                {combo.comboItems.length > 0 ? (
                     <button
                         onClick={() => setExpanded(!expanded)}
-                        className="flex items-center gap-1 text-xs text-accent hover:underline mb-2"
+                        className="flex items-center gap-1 text-xs text-accent hover:underline mb-1"
                     >
                         {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         {combo.comboItems.length} sản phẩm trong combo
                     </button>
+                ) : (
+                    <span className="text-xs text-muted italic mb-1 block">Chưa có sản phẩm trong combo</span>
                 )}
-
-                <button onClick={onManageItems} className="w-full mt-2 py-1.5 text-sm font-medium border border-border rounded-md text-primary hover:bg-secondary/50 flex items-center justify-center gap-2 transition-colors">
-                    <Settings size={14} /> Quản lý sản phẩm
-                </button>
             </div>
+
             {expanded && combo.comboItems.length > 0 && (
-                <div className="border-t border-border px-5 pb-4 pt-3 space-y-2">
+                <div className="border-t border-border px-5 py-4 space-y-2 bg-secondary/20">
                     {combo.comboItems.map(item => (
                         <div key={item.id} className="flex items-center gap-3 text-sm">
                             <Package size={14} className="text-muted shrink-0" />
                             <div className="flex-1">
                                 {item.frameVariant && (
-                                    <span className="text-primary">
-                                        <span className="font-medium">[Gọng]</span> {item.frameVariant.productName ?? "—"}
+                                    <span className="text-primary truncate block w-full">
+                                        <span className="font-medium opacity-80">[Gọng]</span> {item.frameVariant.productName ?? "—"}
                                         {item.frameVariant.color && ` · ${item.frameVariant.color}`}
                                         {item.frameVariant.size && ` · ${item.frameVariant.size}`}
-                                        {" · "}<span className="text-accent">{item.frameVariant.price.toLocaleString("vi-VN")} VND</span>
+                                        <span className="text-accent ml-2">{item.frameVariant.price.toLocaleString("vi-VN")} VND</span>
                                     </span>
                                 )}
                                 {item.lensVariant && (
-                                    <span className="text-primary">
-                                        <span className="font-medium">[Tròng]</span> {item.lensVariant.productName ?? "—"}
-                                        {" · "}<span className="text-accent">{item.lensVariant.price.toLocaleString("vi-VN")} VND</span>
+                                    <span className="text-primary truncate block w-full">
+                                        <span className="font-medium opacity-80">[Tròng]</span> {item.lensVariant.productName ?? "—"}
+                                        <span className="text-accent ml-2">{item.lensVariant.price.toLocaleString("vi-VN")} VND</span>
                                     </span>
                                 )}
                             </div>
-                            <span className="text-muted text-xs">x{item.quantity}</span>
+                            <span className="text-muted text-xs font-medium">x{item.quantity}</span>
                         </div>
                     ))}
                 </div>
             )}
+
+            <div className="p-4 pt-3 border-t border-border mt-auto">
+                <button onClick={onManageItems} className="w-full py-2 text-sm font-medium bg-secondary/50 text-primary rounded-lg hover:bg-secondary flex items-center justify-center gap-2 transition-colors border border-border/50 hover:border-border">
+                    <Settings size={15} /> Quản lý sản phẩm
+                </button>
+            </div>
         </div>
     );
 }
@@ -675,7 +708,7 @@ function CombosTab({ combos, loading, onRefresh }: { combos: Combo[]; loading: b
             )}
             <div className="flex justify-end mb-4">
                 <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm hover:bg-black transition-colors">
-                    <Plus size={16} /> Tạo combo
+                    <Plus size={16} /> Create combo
                 </button>
             </div>
             {loading ? (

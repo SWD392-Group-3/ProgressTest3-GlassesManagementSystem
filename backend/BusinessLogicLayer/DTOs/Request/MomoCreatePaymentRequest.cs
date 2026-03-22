@@ -13,7 +13,7 @@ namespace BusinessLogicLayer.DTOs.Request
         /// <summary>
         /// Số tiền thanh toán (VND, không có phần thập phân).
         /// </summary>
-        [Required, Range(1000, double.MaxValue, ErrorMessage = "Số tiền tối thiểu là 1,000 VND.")]
+        [Required, Range(1000, double.MaxValue, ErrorMessage = "Minimum amount is 1,000 VND.")]
         public long Amount { get; set; }
 
         public string? OrderInfo { get; set; }

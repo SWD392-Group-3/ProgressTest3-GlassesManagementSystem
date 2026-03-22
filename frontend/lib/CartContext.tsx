@@ -58,7 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(async (body: AddCartItemRequest) => {
     const user = getUser();
-    if (!user) throw new Error("Vui lòng đăng nhập.");
+    if (!user) throw new Error("Please log in.");
     const data = await addCartItem(body);
     setCart(data);
   }, []);

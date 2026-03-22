@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,7 +25,7 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             if (dto == null)
             {
-                throw new Exception("Dữ liệu đầu vào không được để trống");
+                throw new Exception("Input data cannot be empty.");
             }
 
             var category = new Category
@@ -66,7 +66,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var categories = await _categoryRepository.GetAllAsync();
             if (!categories.Any())
             {
-                throw new Exception("Không có danh mục sản phẩm nào.");
+                throw new Exception("No product categories found.");
             }
 
             return categories.Select(c => new CategoryDto
@@ -83,7 +83,7 @@ namespace BusinessLogicLayer.Services.Implementations
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
             {
-                throw new Exception("Không có danh mục sản phẩm này.");
+                throw new Exception("Category not found.");
             }
 
             return new CategoryDto
@@ -100,12 +100,12 @@ namespace BusinessLogicLayer.Services.Implementations
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null)
             {
-                throw new Exception("Không có danh mục sản phẩm này.");
+                throw new Exception("Category not found.");
             }
 
             if (dto == null)
             {
-                throw new Exception("Không được để trống.");
+                throw new Exception("This field is required.");
             }
 
             category.Name = dto.Name;

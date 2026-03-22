@@ -89,14 +89,14 @@ const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.
                                 });
                                 resolve(newFile);
                             } else {
-                                reject(new Error("Chuyển đổi ảnh thất bại"));
+                                reject(new Error("Image conversion failed"));
                             }
                         },
                         "image/webp",
                         quality
                     );
                 } else {
-                    reject(new Error("Lỗi Canvas"));
+                    reject(new Error("Canvas error"));
                 }
             };
             img.onerror = (error) => reject(error);
@@ -132,8 +132,8 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
                     <p className="text-sm font-medium text-primary leading-relaxed">{message}</p>
                 </div>
                 <div className="flex justify-end gap-3">
-                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Hủy</button>
-                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Xóa</button>
+                    <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-border text-primary text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+                    <button onClick={onConfirm} className="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">Delete</button>
                 </div>
             </div>
         </div>
@@ -223,8 +223,8 @@ function ProductFormModal({
                 setImageFile(compressed);
                 setImagePreview(URL.createObjectURL(compressed));
             } catch (err) {
-                console.error("Lỗi nén ảnh:", err);
-                alert("Không thể xử lý hình ảnh này.");
+                console.error("Image compression error:", err);
+                alert("Unable to process this image.");
             }
         }
     };
@@ -245,7 +245,7 @@ function ProductFormModal({
                     body: formData
                 });
                 if (!uploadRes.ok) {
-                    throw new Error("Lỗi tải ảnh lên server.");
+                    throw new Error("Failed to upload image to server.");
                 }
                 const uploadData = await uploadRes.json();
                 finalImageUrl = uploadData.url;
@@ -274,44 +274,44 @@ function ProductFormModal({
             onSaved();
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Lỗi không xác định");
+            setError(err instanceof Error ? err.message : "Unknown error");
         } finally {
             setSaving(false);
         }
     };
 
     return (
-        <ModalShell title={isEdit ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"} onClose={onClose} maxWidth="max-w-4xl">
+        <ModalShell title={isEdit ? "Edit product" : "Add new product"} onClose={onClose} maxWidth="max-w-4xl">
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
                     {/* Cột 1 */}
                     <div>
-                        <InputField label="Tên sản phẩm *" id="pname" value={name} onChange={(e) => setName(e.target.value)} required />
-                        <InputField label="Giá (VND) *" id="pprice" type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} required />
-                        <SelectField label="Trạng thái" id="pstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
+                        <InputField label="Product name *" id="pname" value={name} onChange={(e) => setName(e.target.value)} required />
+                        <InputField label="Price (VND) *" id="pprice" type="number" min="0" value={price} onChange={(e) => setPrice(e.target.value)} required />
+                        <SelectField label="Status" id="pstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </SelectField>
-                        <TextareaField label="Mô tả" id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
+                        <TextareaField label="Description" id="pdesc" value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} />
                     </div>
 
                     {/* Cột 2 */}
                     <div>
-                        <SelectField label="Danh mục" id="pcat" value={catId} onChange={(e) => setCatId(e.target.value)}>
-                            <option value="">-- Chọn danh mục --</option>
+                        <SelectField label="Category" id="pcat" value={catId} onChange={(e) => setCatId(e.target.value)}>
+                            <option value="">-- Select category --</option>
                             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </SelectField>
-                        <SelectField label="Thương hiệu" id="pbrand" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
-                            <option value="">-- Chọn thương hiệu --</option>
+                        <SelectField label="Brand" id="pbrand" value={brandId} onChange={(e) => setBrandId(e.target.value)}>
+                            <option value="">-- Select brand --</option>
                             {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                         </SelectField>
-                        <SelectField label="Chính sách bảo hành *" id="ppolicy" value={policyId} onChange={(e) => setPolicyId(e.target.value)} required>
-                            <option value="">-- Chọn chính sách --</option>
-                            {policies.map((pol) => <option key={pol.id} value={pol.id}>{pol.name} ({pol.durationMonths} tháng)</option>)}
+                        <SelectField label="Warranty policy *" id="ppolicy" value={policyId} onChange={(e) => setPolicyId(e.target.value)} required>
+                            <option value="">-- Select policy --</option>
+                            {policies.map((pol) => <option key={pol.id} value={pol.id}>{pol.name} ({pol.durationMonths} months)</option>)}
                         </SelectField>
 
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-primary mb-1">Hình ảnh sản phẩm</label>
+                            <label className="block text-sm font-medium text-primary mb-1">Product image</label>
                             <div className="border border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center relative hover:bg-secondary/20 transition-colors h-[180px]">
                                 {imagePreview ? (
                                     <div className="relative w-full h-full flex items-center justify-center z-10">
@@ -327,8 +327,8 @@ function ProductFormModal({
                                 ) : (
                                     <div className="py-6 text-center text-muted flex flex-col items-center gap-2">
                                         <UploadCloud size={32} className="opacity-50" />
-                                        <span className="text-sm font-medium">Nhấn để tải ảnh lên</span>
-                                        <span className="text-xs opacity-70">JPG, PNG, WEBP (Tối đa 5MB)</span>
+                                        <span className="text-sm font-medium">Click to upload image</span>
+                                        <span className="text-xs opacity-70">JPG, PNG, WEBP (Max 5MB)</span>
                                     </div>
                                 )}
                                 <input
@@ -336,7 +336,7 @@ function ProductFormModal({
                                     accept="image/*"
                                     onChange={handleImageChange}
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-0"
-                                    title="Chọn hình ảnh"
+                                    title="Choose image"
                                 />
                             </div>
                         </div>
@@ -345,9 +345,9 @@ function ProductFormModal({
 
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
                 <div className="flex justify-end gap-3 pt-4 border-t border-border mt-2">
-                    <button type="button" onClick={onClose} className="px-5 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm font-medium">Hủy</button>
+                    <button type="button" onClick={onClose} className="px-5 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm font-medium">Cancel</button>
                     <button type="submit" disabled={saving} className="px-5 py-2 rounded-lg bg-primary text-white hover:bg-black transition-colors text-sm font-medium disabled:opacity-60">
-                        {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo mới"}
+                        {saving ? "Saving..." : isEdit ? "Update" : "Create"}
                     </button>
                 </div>
             </form>
@@ -379,19 +379,19 @@ function CategoryModal({
         onChanged();
     };
     return (
-        <ModalShell title="Quản lý danh mục" onClose={onClose}>
+        <ModalShell title="Manage categories" onClose={onClose}>
             {deleteId && (
                 <ConfirmModal
-                    message="Bạn có chắc chắn muốn xóa danh mục này?"
+                    message="Are you sure you want to delete this category?"
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteId(null)}
                 />
             )}
             <button onClick={openAdd} className="mb-4 flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-sm hover:bg-black transition-colors">
-                <Plus size={16} /> Thêm danh mục
+                <Plus size={16} /> Add category
             </button>
             {categories.length === 0 ? (
-                <p className="text-muted text-sm text-center py-6">Chưa có danh mục nào.</p>
+                <p className="text-muted text-sm text-center py-6">No categories yet.</p>
             ) : (
                 <div className="space-y-2">
                     {categories.map((c) => (
@@ -402,7 +402,7 @@ function CategoryModal({
                                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.status === "Active"
                                         ? "bg-green-100 text-green-700"
                                         : "bg-gray-100 text-gray-500"
-                                        }`}>{c.status === "Active" ? "Hoạt động" : "Dừng hoạt động"}</span>
+                                        }`}>{c.status === "Active" ? "Active" : "Inactive"}</span>
                                 </div>
                                 {c.description && <p className="text-xs text-muted mt-0.5">{c.description}</p>}
                             </div>
@@ -449,26 +449,26 @@ function CategoryFormModal({
             onSaved();
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Lỗi");
+            setError(err instanceof Error ? err.message : "Error");
         } finally {
             setSaving(false);
         }
     };
 
     return (
-        <ModalShell title={isEdit ? "Sửa danh mục" : "Thêm danh mục"} onClose={onClose}>
+        <ModalShell title={isEdit ? "Edit category" : "Add category"} onClose={onClose}>
             <form onSubmit={handleSubmit}>
-                <InputField label="Tên danh mục *" id="cname" value={name} onChange={(e) => setName(e.target.value)} required />
-                <TextareaField label="Mô tả" id="cdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
-                <SelectField label="Trạng thái" id="cstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <InputField label="Category name *" id="cname" value={name} onChange={(e) => setName(e.target.value)} required />
+                <TextareaField label="Description" id="cdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
+                <SelectField label="Status" id="cstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                 </SelectField>
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm">Hủy</button>
+                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm">Cancel</button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-black transition-colors text-sm disabled:opacity-60">
-                        {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo"}
+                        {saving ? "Saving..." : isEdit ? "Update" : "Create"}
                     </button>
                 </div>
             </form>
@@ -500,19 +500,19 @@ function BrandModal({
         onChanged();
     };
     return (
-        <ModalShell title="Quản lý thương hiệu" onClose={onClose}>
+        <ModalShell title="Manage brands" onClose={onClose}>
             {deleteId && (
                 <ConfirmModal
-                    message="Bạn có chắc chắn muốn xóa thương hiệu này?"
+                    message="Are you sure you want to delete this brand?"
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteId(null)}
                 />
             )}
             <button onClick={openAdd} className="mb-4 flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg text-sm hover:bg-black transition-colors">
-                <Plus size={16} /> Thêm thương hiệu
+                <Plus size={16} /> Add brand
             </button>
             {brands.length === 0 ? (
-                <p className="text-muted text-sm text-center py-6">Chưa có thương hiệu nào.</p>
+                <p className="text-muted text-sm text-center py-6">No brands yet.</p>
             ) : (
                 <div className="space-y-2">
                     {brands.map((b) => (
@@ -523,7 +523,7 @@ function BrandModal({
                                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${b.status === "Active"
                                         ? "bg-green-100 text-green-700"
                                         : "bg-gray-100 text-gray-500"
-                                        }`}>{b.status === "Active" ? "Hoạt động" : "Dừng hoạt động"}</span>
+                                        }`}>{b.status === "Active" ? "Active" : "Inactive"}</span>
                                 </div>
                                 {b.country && <p className="text-xs text-muted mt-0.5">{b.country}</p>}
                             </div>
@@ -571,27 +571,27 @@ function BrandFormModal({
             onSaved();
             onClose();
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Lỗi");
+            setError(err instanceof Error ? err.message : "Error");
         } finally {
             setSaving(false);
         }
     };
 
     return (
-        <ModalShell title={isEdit ? "Sửa thương hiệu" : "Thêm thương hiệu"} onClose={onClose}>
+        <ModalShell title={isEdit ? "Edit brand" : "Add brand"} onClose={onClose}>
             <form onSubmit={handleSubmit}>
-                <InputField label="Tên thương hiệu *" id="bname" value={name} onChange={(e) => setName(e.target.value)} required />
-                <InputField label="Quốc gia" id="bcountry" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Vietnam, Italy..." />
-                <TextareaField label="Mô tả" id="bdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
-                <SelectField label="Trạng thái" id="bstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <InputField label="Brand name *" id="bname" value={name} onChange={(e) => setName(e.target.value)} required />
+                <InputField label="Country" id="bcountry" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Vietnam, Italy..." />
+                <TextareaField label="Description" id="bdesc" value={desc} onChange={(e) => setDesc(e.target.value)} />
+                <SelectField label="Status" id="bstatus" value={status} onChange={(e) => setStatus(e.target.value)}>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
                 </SelectField>
                 {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
                 <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm">Hủy</button>
+                    <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-primary hover:bg-secondary transition-colors text-sm">Cancel</button>
                     <button type="submit" disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-black transition-colors text-sm disabled:opacity-60">
-                        {saving ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo"}
+                        {saving ? "Saving..." : isEdit ? "Update" : "Create"}
                     </button>
                 </div>
             </form>
@@ -651,7 +651,7 @@ function ProductVariantsModal({ product, onClose, onRefresh }: { product: Produc
                 setFColor(""); setFSize(""); setFMaterial(""); setFPrice("0");
                 await refreshVariants();
             } else {
-                alert("Lỗi: " + await res.text());
+                alert("Error: " + await res.text());
             }
         } finally { setLoading(false); }
     };
@@ -675,68 +675,68 @@ function ProductVariantsModal({ product, onClose, onRefresh }: { product: Produc
                 setLDoCau(""); setLDoTru(""); setLChiSo(""); setLPrice("0");
                 await refreshVariants();
             } else {
-                alert("Lỗi: " + await res.text());
+                alert("Error: " + await res.text());
             }
         } finally { setLoading(false); }
     };
 
     const handleDeleteFrame = async (id: string) => {
-        if (!confirm("Xóa gọng kính này?")) return;
+        if (!confirm("Delete this frame variant?")) return;
         setLoading(true);
         try {
             const res = await fetch(`${API}/frame-variants/${id}`, { method: "DELETE", headers: authHeaders() });
             if (res.ok) await refreshVariants();
-            else alert("Lỗi: " + await res.text());
+            else alert("Error: " + await res.text());
         } finally { setLoading(false); }
     };
 
     const handleDeleteLens = async (id: string) => {
-        if (!confirm("Xóa tròng kính này?")) return;
+        if (!confirm("Delete this lens variant?")) return;
         setLoading(true);
         try {
             const res = await fetch(`${API}/lens-variants/${id}`, { method: "DELETE", headers: authHeaders() });
             if (res.ok) await refreshVariants();
-            else alert("Lỗi: " + await res.text());
+            else alert("Error: " + await res.text());
         } finally { setLoading(false); }
     };
 
     return (
-        <ModalShell title={`Biến thể: ${product.name}`} onClose={onClose} maxWidth="max-w-3xl">
+        <ModalShell title={`Variants: ${product.name}`} onClose={onClose} maxWidth="max-w-3xl">
             <div className="flex gap-2 border-b border-border mb-4">
                 <button
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "frame" ? "border-accent text-accent" : "border-transparent text-muted hover:text-primary"}`}
                     onClick={() => setActiveTab("frame")}
                 >
-                    Gọng Kính ({frames.length})
+                    Frames ({frames.length})
                 </button>
                 <button
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === "lens" ? "border-accent text-accent" : "border-transparent text-muted hover:text-primary"}`}
                     onClick={() => setActiveTab("lens")}
                 >
-                    Tròng Kính ({lenses.length})
+                    Lenses ({lenses.length})
                 </button>
             </div>
 
             {activeTab === "frame" && (
                 <div className="space-y-4">
                     <form onSubmit={handleAddFrame} className="bg-secondary/30 p-4 rounded-lg border border-border">
-                        <h4 className="font-bold text-sm mb-3">Thêm Gọng Kính</h4>
+                        <h4 className="font-bold text-sm mb-3">Add frame</h4>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                            <div><label className="text-xs font-medium block mb-1">Màu sắc</label><input required value={fColor} onChange={e => setFColor(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="VD: Đen" /></div>
-                            <div><label className="text-xs font-medium block mb-1">Kích thước</label><input value={fSize} onChange={e => setFSize(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="VD: M, 52-18-140" /></div>
-                            <div><label className="text-xs font-medium block mb-1">Chất liệu</label><input value={fMaterial} onChange={e => setFMaterial(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="VD: Nhựa dẻo" /></div>
-                            <div><label className="text-xs font-medium block mb-1">Giá cộng thêm (VND)</label><input type="number" required value={fPrice} onChange={e => setFPrice(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Color</label><input required value={fColor} onChange={e => setFColor(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="e.g. Black" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Size</label><input value={fSize} onChange={e => setFSize(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="e.g. M, 52-18-140" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Material</label><input value={fMaterial} onChange={e => setFMaterial(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="e.g. Plastic" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Extra price (VND)</label><input type="number" required value={fPrice} onChange={e => setFPrice(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" /></div>
                         </div>
-                        <div className="flex justify-end"><button disabled={loading} className="bg-primary text-white text-xs px-3 py-1.5 rounded disabled:opacity-50">Thêm Gọng</button></div>
+                        <div className="flex justify-end"><button disabled={loading} className="bg-primary text-white text-xs px-3 py-1.5 rounded disabled:opacity-50">Add frame</button></div>
                     </form>
 
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {frames.length === 0 ? <p className="text-xs text-muted text-center py-4">Chưa có gọng kính nào.</p> :
+                        {frames.length === 0 ? <p className="text-xs text-muted text-center py-4">No frames yet.</p> :
                             frames.map(f => (
                                 <div key={f.id} className="flex items-center justify-between p-3 border rounded-lg bg-white">
                                     <div className="text-sm">
-                                        <p className="font-medium">Màu {f.color}</p>
-                                        <p className="text-xs text-muted">Size: {f.size || 'N/A'} • Chất liệu: {f.material || 'N/A'} • Giá: +{f.price?.toLocaleString()}đ</p>
+                                        <p className="font-medium">Color {f.color}</p>
+                                        <p className="text-xs text-muted">Size: {f.size || 'N/A'} • Material: {f.material || 'N/A'} • Price: +{f.price?.toLocaleString()}đ</p>
                                     </div>
                                     <button onClick={() => handleDeleteFrame(f.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 size={16} /></button>
                                 </div>
@@ -748,23 +748,23 @@ function ProductVariantsModal({ product, onClose, onRefresh }: { product: Produc
             {activeTab === "lens" && (
                 <div className="space-y-4">
                     <form onSubmit={handleAddLens} className="bg-secondary/30 p-4 rounded-lg border border-border">
-                        <h4 className="font-bold text-sm mb-3">Thêm Tròng Kính</h4>
+                        <h4 className="font-bold text-sm mb-3">Add lens</h4>
                         <div className="grid grid-cols-2 gap-3 mb-3">
-                            <div><label className="text-xs font-medium block mb-1">Độ Cận (Diopter)</label><input type="number" step="0.25" value={lDoCau} onChange={e => setLDoCau(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="-2.00" /></div>
-                            <div><label className="text-xs font-medium block mb-1">Độ Loạn (Cylinder)</label><input type="number" step="0.25" value={lDoTru} onChange={e => setLDoTru(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="-0.50" /></div>
-                            <div><label className="text-xs font-medium block mb-1">Chiết xuất</label><input type="number" step="0.01" value={lChiSo} onChange={e => setLChiSo(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="1.56, 1.60..." /></div>
-                            <div><label className="text-xs font-medium block mb-1">Giá cộng thêm (VND)</label><input type="number" required value={lPrice} onChange={e => setLPrice(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Sphere (Diopter)</label><input type="number" step="0.25" value={lDoCau} onChange={e => setLDoCau(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="-2.00" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Cylinder</label><input type="number" step="0.25" value={lDoTru} onChange={e => setLDoTru(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="-0.50" /></div>
+                            <div><label className="text-xs font-medium block mb-1">Refractive index</label><input type="number" step="0.01" value={lChiSo} onChange={e => setLChiSo(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" placeholder="1.56, 1.60..." /></div>
+                            <div><label className="text-xs font-medium block mb-1">Extra price (VND)</label><input type="number" required value={lPrice} onChange={e => setLPrice(e.target.value)} className="w-full border rounded px-2 py-1 text-sm" /></div>
                         </div>
-                        <div className="flex justify-end"><button disabled={loading} className="bg-primary text-white text-xs px-3 py-1.5 rounded disabled:opacity-50">Thêm Tròng</button></div>
+                        <div className="flex justify-end"><button disabled={loading} className="bg-primary text-white text-xs px-3 py-1.5 rounded disabled:opacity-50">Add lens</button></div>
                     </form>
 
                     <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {lenses.length === 0 ? <p className="text-xs text-muted text-center py-4">Chưa có tròng kính nào.</p> :
+                        {lenses.length === 0 ? <p className="text-xs text-muted text-center py-4">No lenses yet.</p> :
                             lenses.map(l => (
                                 <div key={l.id} className="flex items-center justify-between p-3 border rounded-lg bg-white">
                                     <div className="text-sm">
-                                        <p className="font-medium">Tròng kính</p>
-                                        <p className="text-xs text-muted">Cận(Cầu): {l.doCau || '0.00'} • Loạn(Trụ): {l.doTru || '0.00'} • CX: {l.chiSoKhucXa || 'N/A'} • Giá: +{l.price?.toLocaleString()}đ</p>
+                                        <p className="font-medium">Lens</p>
+                                        <p className="text-xs text-muted">Sphere: {l.doCau || '0.00'} • Cylinder: {l.doTru || '0.00'} • RI: {l.chiSoKhucXa || 'N/A'} • Price: +{l.price?.toLocaleString()}đ</p>
                                     </div>
                                     <button onClick={() => handleDeleteLens(l.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 size={16} /></button>
                                 </div>
@@ -788,6 +788,17 @@ export default function ProductsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [modal, setModal] = useState<Modal>({ type: "none" });
     const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
+    const [addError, setAddError] = useState("");
+
+    const handleOpenAddProduct = () => {
+        if (categories.length === 0 || brands.length === 0) {
+            setAddError("You must create at least one category and one brand before adding a product.");
+            setTimeout(() => setAddError(""), 5000);
+            return;
+        }
+        setAddError("");
+        setModal({ type: "addProduct" });
+    };
 
     const fetchProducts = useCallback(async () => {
         try {
@@ -840,7 +851,7 @@ export default function ProductsPage() {
         try {
             const res = await fetch(`${API}/${deleteProductId}`, { method: "DELETE", headers: authHeaders() });
             if (res.ok) fetchProducts();
-            else alert("Xóa thất bại.");
+            else alert("Delete failed.");
         } catch (e) {
             console.error(e);
         } finally {
@@ -871,7 +882,7 @@ export default function ProductsPage() {
             )}
             {deleteProductId && (
                 <ConfirmModal
-                    message="Bạn có chắc chắn muốn xóa sản phẩm này?"
+                    message="Are you sure you want to delete this product?"
                     onConfirm={handleDelete}
                     onCancel={() => setDeleteProductId(null)}
                 />
@@ -922,9 +933,10 @@ export default function ProductsPage() {
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-primary mb-2">Product Catalog</h1>
                         <p className="text-muted">Manage frames, lenses, and variant configurations.</p>
+                        {addError && <p className="text-red-500 text-sm mt-3 font-medium animate-pulse">{addError}</p>}
                     </div>
                     <button
-                        onClick={() => setModal({ type: "addProduct" })}
+                        onClick={handleOpenAddProduct}
                         className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-md hover:bg-black transition-colors"
                     >
                         <Plus size={18} />
@@ -977,10 +989,10 @@ export default function ProductsPage() {
                             <Package size={48} className="mx-auto mb-4 opacity-20" />
                             <p className="text-lg mb-2">No products found.</p>
                             <button
-                                onClick={() => setModal({ type: "addProduct" })}
+                                onClick={handleOpenAddProduct}
                                 className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-black transition-colors text-sm"
                             >
-                                <Plus size={16} /> Thêm sản phẩm đầu tiên
+                                <Plus size={16} /> Add first product
                             </button>
                         </div>
                     ) : (
@@ -994,7 +1006,7 @@ export default function ProductsPage() {
                                     )}
                                     <div className="absolute top-3 right-3">
                                         <span className={`px-2 py-1 rounded text-xs font-semibold ${product.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>
-                                            {product.status === "Active" ? "Hoạt động" : "Dừng hoạt động"}
+                                            {product.status === "Active" ? "Active" : "Inactive"}
                                         </span>
                                     </div>
                                 </div>
@@ -1022,7 +1034,7 @@ export default function ProductsPage() {
                                                 onClick={() => setModal({ type: "variants", product })}
                                                 className="px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded hover:bg-accent/20 transition-colors"
                                             >
-                                                Cấu hình biến thể
+                                                Configure variants
                                             </button>
                                             <button
                                                 onClick={() => setModal({ type: "editProduct", product })}

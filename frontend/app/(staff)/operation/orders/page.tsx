@@ -6,14 +6,14 @@ import { getOrders, OrderDto } from "@/lib/api/order";
 import { getUser } from "@/lib/auth-storage";
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Chờ xử lý (Mới)",
-  ProcessingTemplate: "Đang xử lý mẫu",
-  Manufacturing: "Đang mài kính",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Cancelled: "Đã huỷ",
+  Pending: "Pending",
+  Paid: "Paid",
+  Confirmed: "Awaiting processing (New)",
+  ProcessingTemplate: "Processing template",
+  Manufacturing: "Manufacturing",
+  Shipped: "Shipped",
+  Delivered: "Delivered",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -44,6 +44,13 @@ function fmtDate(dateStr: string) {
   });
 }
 
+function isServiceOrder(o: OrderDto): boolean {
+  return (
+    (o.shippingAddress == null || o.shippingAddress === "") &&
+    (o.shippingPhone == null || o.shippingPhone === "")
+  );
+}
+
 export default function OperationOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -57,17 +64,18 @@ export default function OperationOrdersPage() {
     setError(null);
     try {
       const data = await getOrders();
-      // Operation thường chỉ quan tâm các đơn đã Confirmed trở đi
+      // Operation chỉ xử lý đơn có giao hàng; loại trừ đơn dịch vụ (Sales + Customer xử lý)
       const operationOrders = data.filter(
         (o) =>
           o.status !== "Pending" &&
           o.status !== "Paid" &&
-          o.status !== "Cancelled",
+          o.status !== "Cancelled" &&
+          !isServiceOrder(o),
       );
       setOrders(operationOrders);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Không thể tải danh sách đơn hàng";
+        err instanceof Error ? err.message : "Failed to load orders";
       setError(msg);
     } finally {
       setLoading(false);
@@ -102,10 +110,10 @@ export default function OperationOrdersPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          Tiếp nhận & Xử lý đơn hàng
+          Receive & process orders
         </h1>
         <p className="text-gray-500 text-sm mt-1">
-          Danh sách các đơn hàng chờ mài kính, ráp gọng, và vận chuyển
+          Orders awaiting manufacturing, assembly and shipping
         </p>
       </div>
 
@@ -114,7 +122,7 @@ export default function OperationOrdersPage() {
         {/* Search */}
         <input
           type="text"
-          placeholder="Tìm theo mã đơn, số điện thoại..."
+          placeholder="Search by order ID, phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-full md:w-72 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
@@ -139,7 +147,7 @@ export default function OperationOrdersPage() {
                   : "bg-white text-gray-600 border-gray-300 hover:border-[#D4AF37]"
               }`}
             >
-              {status === "all" ? "Tất cả" : STATUS_LABEL[status]}
+              {status === "all" ? "All" : STATUS_LABEL[status]}
             </button>
           ))}
         </div>
@@ -150,7 +158,7 @@ export default function OperationOrdersPage() {
           disabled={loading}
           className="ml-auto flex items-center gap-2 px-4 py-2 bg-[#D4AF37] text-white rounded-lg text-sm font-semibold hover:bg-[#C9A030] disabled:opacity-50 transition-colors"
         >
-          {loading ? "Đang tải..." : "🔄 Làm mới"}
+          {loading ? "Loading..." : "🔄 Refresh"}
         </button>
       </div>
 
@@ -173,7 +181,7 @@ export default function OperationOrdersPage() {
         <>
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
-              Không có đơn hàng nào chờ xử lý
+              No orders pending processing
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-200">
@@ -181,25 +189,25 @@ export default function OperationOrdersPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Mã đơn
+                      Order ID
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Ngày đặt
+                      Date
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      SĐT Khách
+                      Phone
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
-                      Địa chỉ
+                      Address
                     </th>
                     <th className="px-4 py-3 text-right font-semibold text-gray-600">
-                      Tổng tiền
+                      Total
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-600">
-                      Trạng thái
+                      Status
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-gray-600">
-                      Thao tác
+                      Action
                     </th>
                   </tr>
                 </thead>
@@ -216,10 +224,10 @@ export default function OperationOrdersPage() {
                         {fmtDate(order.orderDate)}
                       </td>
                       <td className="px-4 py-3 text-gray-700 font-medium">
-                        {order.shippingPhone}
+                        {order.shippingPhone ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700 max-w-[200px] truncate">
-                        {order.shippingAddress}
+                        {order.shippingAddress ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-gray-900">
                         {fmt(order.finalAmount ?? order.totalAmount)}
@@ -241,7 +249,7 @@ export default function OperationOrdersPage() {
                           }
                           className="px-3 py-1.5 bg-[#D4AF37] text-white font-medium text-xs rounded-lg hover:bg-[#C9A030] transition-colors"
                         >
-                          Xử lý ngay →
+                          Process →
                         </button>
                       </td>
                     </tr>
@@ -253,7 +261,7 @@ export default function OperationOrdersPage() {
 
           {/* Summary */}
           <div className="mt-4 text-sm text-gray-500">
-            Hiển thị {filteredOrders.length} / {orders.length} đơn hàng
+            Displaying {filteredOrders.length} / {orders.length} orders
           </div>
         </>
       )}

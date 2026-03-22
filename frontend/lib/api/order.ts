@@ -25,6 +25,8 @@ export interface OrderItemDto {
   note: string | null;
   productName: string | null;
   imageUrl: string | null;
+  /** Dịch vụ: ngày giờ slot, ví dụ "07/03/2025 09:00 - 09:30" */
+  slotDisplay: string | null;
 }
 
 export interface OrderDto {
@@ -36,8 +38,8 @@ export interface OrderDto {
   discountAmount: number;
   finalAmount: number;
   paymentStatus: string | null;
-  shippingAddress: string;
-  shippingPhone: string;
+  shippingAddress: string | null;
+  shippingPhone: string | null;
   note: string | null;
   orderDate: string;
   orderItems: OrderItemDto[];
@@ -47,8 +49,8 @@ export interface CreateOrderRequest {
   cartId: string;
   selectedCartItemIds?: string[] | null;
   promotionId?: string | null;
-  shippingAddress: string;
-  shippingPhone: string;
+  shippingAddress?: string | null;
+  shippingPhone?: string | null;
   note?: string | null;
 }
 

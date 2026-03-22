@@ -47,6 +47,8 @@ public static class AddDependencyInjection
         serviceCollection.AddScoped<IRevenueService, RevenueService>();
         serviceCollection.AddScoped<ICategoryService, CategoryService>();
         serviceCollection.AddScoped<INotificationService, NotificationService>();
+        serviceCollection.AddScoped<IEyeResultService, EyeResultService>();
+        serviceCollection.AddScoped<ISlotService, SlotService>();
 
         // Repositories
         serviceCollection.AddScoped<IUserRepository, UserRepository>();
@@ -66,5 +68,6 @@ public static class AddDependencyInjection
         serviceCollection.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
         serviceCollection.AddScoped<ICategoryRepository, CategoryRepository>();
         serviceCollection.AddScoped<INotificationRepository, NotificationRepository>();
+        serviceCollection.AddScoped<IEyeResultRepository, EyeResultRepository>();
     }
 }
