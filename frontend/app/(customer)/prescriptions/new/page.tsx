@@ -67,7 +67,7 @@ export default function NewPrescriptionPage() {
 
     try {
       if (!formData.serviceId) {
-        setError("Vui lòng chọn Dịch vụ đo mắt/lắp ráp.");
+        setError("Please select an eye exam/fitting service.");
         setLoading(false);
         return;
       }
@@ -90,12 +90,12 @@ export default function NewPrescriptionPage() {
             onClick={() => router.back()}
             className="flex items-center gap-2 text-sm font-medium text-[#6B7280] hover:text-[#1A1A1A] mb-6 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Quay lại
+            <ArrowLeft className="w-4 h-4" /> Back
           </button>
 
           <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 sm:p-8 shadow-sm">
             <h1 className="text-2xl font-bold text-[#1A1A1A] mb-8 font-heading">
-              Khai báo thông số đo mắt
+              Enter eye measurement details
             </h1>
 
             {error && (
@@ -105,33 +105,33 @@ export default function NewPrescriptionPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Dịch vụ */}
+              {/* Service */}
               <div className="space-y-4">
                 <h3 className="text-base font-bold text-[#1A1A1A] border-b pb-2">
-                  Dịch vụ áp dụng
+                  Applicable service
                 </h3>
                 {loadingServices ? (
                   <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 className="w-4 h-4 animate-spin" /> Đang tải danh
-                    sách dịch vụ...
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading
+                    services...
                   </div>
                 ) : (
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Chọn dịch vụ <span className="text-red-500">*</span>
+                      Select service <span className="text-red-500">*</span>
                     </label>
                     <select
                       name="serviceId"
-                      aria-label="Chọn dịch vụ"
+                      aria-label="Select service"
                       value={formData.serviceId}
                       onChange={handleChange}
                       required
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm bg-white"
                     >
-                      <option value="">-- Chọn dịch vụ --</option>
+                      <option value="">-- Select service --</option>
                       {services.map((svc) => (
                         <option key={svc.id} value={svc.id}>
-                          {svc.name} ({svc.price.toLocaleString("vi-VN")}đ)
+                          {svc.name} ({svc.price.toLocaleString("en-US")} VND)
                         </option>
                       ))}
                     </select>
@@ -139,115 +139,115 @@ export default function NewPrescriptionPage() {
                 )}
               </div>
 
-              {/* Thông số Gọng Kính */}
+              {/* Frame measurements */}
               <div className="space-y-4">
                 <h3 className="text-base font-bold text-[#1A1A1A] border-b pb-2">
-                  Chi tiết Kích thước & Lựa chọn
+                  Size & selection details
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Càng Kính
+                      Temple
                     </label>
                     <input
-                      aria-label="Càng Kính"
+                      aria-label="Temple"
                       type="text"
                       name="cangKinh"
                       value={formData.cangKinh}
                       onChange={handleChange}
-                      placeholder="Nhập kích thước hoặc loại..."
+                      placeholder="Enter size or type..."
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Bản Lề
+                      Hinge
                     </label>
                     <input
-                      aria-label="Bản Lề"
+                      aria-label="Hinge"
                       type="text"
                       name="banLe"
                       value={formData.banLe}
                       onChange={handleChange}
-                      placeholder="Nhập loại bản lề..."
+                      placeholder="Enter hinge type..."
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Viền Gọng
+                      Rim
                     </label>
                     <input
-                      aria-label="Viền Gọng"
+                      aria-label="Rim"
                       type="text"
                       name="vienGong"
                       value={formData.vienGong}
                       onChange={handleChange}
-                      placeholder="Nhập thông tin viền gọng..."
+                      placeholder="Enter rim details..."
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Chân Ve Mũi
+                      Nose pad
                     </label>
                     <input
-                      aria-label="Chân Ve Mũi"
+                      aria-label="Nose pad"
                       type="text"
                       name="chanVeMui"
                       value={formData.chanVeMui}
                       onChange={handleChange}
-                      placeholder="Nhập thông tin chân ve mũi..."
+                      placeholder="Enter nose pad details..."
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Cầu Gọng
+                      Bridge
                     </label>
                     <input
-                      aria-label="Cầu Gọng"
+                      aria-label="Bridge"
                       type="text"
                       name="cauGong"
                       value={formData.cauGong}
                       onChange={handleChange}
-                      placeholder="Nhập kích thước cầu gọng..."
+                      placeholder="Enter bridge size..."
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Đuôi Gọng
+                      Temple tip
                     </label>
                     <input
-                      aria-label="Đuôi Gọng"
+                      aria-label="Temple tip"
                       type="text"
                       name="duoiGong"
                       value={formData.duoiGong}
                       onChange={handleChange}
-                      placeholder="Nhập thông tin đuôi gọng..."
+                      placeholder="Enter temple tip details..."
                       className="w-full h-11 px-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all text-sm"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Ghi chú */}
+              {/* Notes */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Ghi chú thêm
+                  Additional notes
                 </label>
                 <textarea
                   name="note"
                   rows={4}
                   value={formData.note}
                   onChange={handleChange}
-                  placeholder="Yêu cầu khác về gọng kính..."
+                  placeholder="Other frame requirements..."
                   className="w-full p-4 rounded-xl border border-gray-300 focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent outline-none transition-all resize-none text-sm"
                 />
               </div>
 
-              {/* Nộp */}
+              {/* Submit */}
               <div className="pt-6 flex justify-end border-t border-gray-100">
                 <button
                   type="submit"
@@ -255,7 +255,7 @@ export default function NewPrescriptionPage() {
                   className="h-12 px-8 rounded-full bg-[#D4AF37] text-white font-semibold flex items-center gap-2 hover:bg-[#C9A030] transition-colors disabled:opacity-50 hover:shadow-md"
                 >
                   {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  Lưu Thông Số Gọng Kính
+                  Save measurement profile
                 </button>
               </div>
             </form>

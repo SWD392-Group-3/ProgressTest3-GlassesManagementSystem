@@ -169,27 +169,39 @@ VALUES
      'Le Van Minh', '0978123456', 'Male', '1995-03-10', '789 Le Loi', 'Hanoi', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Id") DO NOTHING;
 
--- -----------------------------------------------------------------------------
--- 13. SLOTS (Status: English only - Available, Booked, Completed, Cancelled)
+-- 13. SLOTS (Dynamic seed - always valid, no outdated dates)
+-- Status: Available | Booked | Completed | Cancelled
 -- -----------------------------------------------------------------------------
 INSERT INTO "SLOTS" ("Id", "StartTime", "EndTime", "Date", "Status", "Note")
-VALUES
-    ('bc000000-4000-8000-0000-000000000001'::uuid,
-     (CURRENT_DATE + TIME '08:00') AT TIME ZONE 'UTC',
-     (CURRENT_DATE + TIME '08:30') AT TIME ZONE 'UTC', '2026-03-03', 'Available', 'Morning slot'),
-    ('bc000000-4000-8000-0000-000000000002'::uuid,
-     (CURRENT_DATE + TIME '09:00') AT TIME ZONE 'UTC',
-     (CURRENT_DATE + TIME '09:30') AT TIME ZONE 'UTC', '2026-03-03', 'Available', NULL),
-    ('bc000000-4000-8000-0000-000000000003'::uuid,
-     (CURRENT_DATE + TIME '10:00') AT TIME ZONE 'UTC',
-     (CURRENT_DATE + TIME '10:30') AT TIME ZONE 'UTC', '2026-03-03', 'Available', NULL),
-    ('bc000000-4000-8000-0000-000000000004'::uuid,
-     (CURRENT_DATE + TIME '14:00') AT TIME ZONE 'UTC',
-     (CURRENT_DATE + TIME '14:30') AT TIME ZONE 'UTC', '2026-03-03', 'Available', 'Afternoon slot'),
-    ('bc000000-4000-8000-0000-000000000005'::uuid,
-     (CURRENT_DATE + TIME '15:00') AT TIME ZONE 'UTC',
-     (CURRENT_DATE + TIME '15:30') AT TIME ZONE 'UTC', '2026-03-03', 'Available', NULL)
-ON CONFLICT ("Id") DO NOTHING;
+SELECT
+    gen_random_uuid(),
+
+    -- StartTime
+    (d + s.start_time) AT TIME ZONE 'UTC',
+
+    -- EndTime
+    (d + s.end_time) AT TIME ZONE 'UTC',
+
+    -- Date (đồng bộ với StartTime)
+    d::date,
+
+    'Available',
+
+    s.note
+FROM generate_series(
+    CURRENT_DATE,                    -- hôm nay
+    CURRENT_DATE + INTERVAL '6 days', -- +6 ngày = tổng 7 ngày
+    INTERVAL '1 day'
+) AS d
+
+CROSS JOIN (
+    VALUES
+        (TIME '08:00', TIME '08:30', 'Morning slot'),
+        (TIME '09:00', TIME '09:30', NULL),
+        (TIME '10:00', TIME '10:30', NULL),
+        (TIME '14:00', TIME '14:30', 'Afternoon slot'),
+        (TIME '15:00', TIME '15:30', NULL)
+) AS s(start_time, end_time, note);
 
 -- -----------------------------------------------------------------------------
 -- 14. PRESCRIPTIONS (CustomerId, ServiceId)
