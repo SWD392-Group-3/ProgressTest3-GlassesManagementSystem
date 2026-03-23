@@ -13,6 +13,7 @@ export interface FeedbackResponse {
   productId: string;
   rating: number;
   comment?: string | null;
+  status: string;
   createdAt: string;
 }
 
@@ -49,6 +50,33 @@ export async function checkCanFeedback(
   return apiRequest<{ canFeedback: boolean }>(
     API.feedback.checkCanFeedback(orderItemId),
     { method: "GET" },
+    { auth: true },
+  );
+}
+
+/** GET /api/feedback/all - Lấy tất cả đánh giá (Manager) */
+export async function getAllFeedbacks(): Promise<FeedbackResponse[]> {
+  return apiRequest<FeedbackResponse[]>(
+    "/api/feedback/all",
+    { method: "GET" },
+    { auth: true },
+  );
+}
+
+/** PUT /api/feedback/{id}/approve - Duyệt đánh giá (Manager) */
+export async function approveFeedback(id: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(
+    `/api/feedback/${id}/approve`,
+    { method: "PUT" },
+    { auth: true },
+  );
+}
+
+/** PUT /api/feedback/{id}/reject - Từ chối đánh giá (Manager) */
+export async function rejectFeedback(id: string): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(
+    `/api/feedback/${id}/reject`,
+    { method: "PUT" },
     { auth: true },
   );
 }

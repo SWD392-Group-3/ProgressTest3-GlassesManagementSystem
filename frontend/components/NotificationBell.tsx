@@ -122,7 +122,7 @@ function statusColor(status?: string): string {
 
 interface Props {
   /** "customer" = nhận OrderStatusChanged | "sales" = nhận NewOrderPaid | "operation" = nhận DeliveryConfirmed */
-  mode?: "customer" | "sales" | "operation";
+  mode?: "customer" | "sales" | "operation" | "manager";
 }
 
 export default function NotificationBell({ mode = "customer" }: Props) {
@@ -142,35 +142,51 @@ export default function NotificationBell({ mode = "customer" }: Props) {
     markOperationRead,
     markAllOperationRead,
     clearAllOperation,
+    managerNotifications,
+    managerUnreadCount,
+    markManagerRead,
+    markAllManagerRead,
+    clearAllManager,
   } = useNotifications();
 
   const isSales = mode === "sales";
   const isOperation = mode === "operation";
-  const items: OrderNotification[] = isOperation
-    ? operationNotifications
-    : isSales
-      ? salesNotifications
-      : notifications;
-  const count = isOperation
-    ? operationUnreadCount
-    : isSales
-      ? salesUnreadCount
-      : unreadCount;
-  const onMarkRead = isOperation
-    ? markOperationRead
-    : isSales
-      ? markSalesRead
-      : markRead;
-  const onMarkAll = isOperation
-    ? markAllOperationRead
-    : isSales
-      ? markAllSalesRead
-      : markAllRead;
-  const onClear = isOperation
-    ? clearAllOperation
-    : isSales
-      ? clearAllSales
-      : clearAll;
+  const isManager = mode === "manager";
+  const items: OrderNotification[] = isManager
+    ? managerNotifications
+    : isOperation
+      ? operationNotifications
+      : isSales
+        ? salesNotifications
+        : notifications;
+  const count = isManager
+    ? managerUnreadCount
+    : isOperation
+      ? operationUnreadCount
+      : isSales
+        ? salesUnreadCount
+        : unreadCount;
+  const onMarkRead = isManager
+    ? markManagerRead
+    : isOperation
+      ? markOperationRead
+      : isSales
+        ? markSalesRead
+        : markRead;
+  const onMarkAll = isManager
+    ? markAllManagerRead
+    : isOperation
+      ? markAllOperationRead
+      : isSales
+        ? markAllSalesRead
+        : markAllRead;
+  const onClear = isManager
+    ? clearAllManager
+    : isOperation
+      ? clearAllOperation
+      : isSales
+        ? clearAllSales
+        : clearAll;
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -198,6 +214,8 @@ export default function NotificationBell({ mode = "customer" }: Props) {
     }
     if (isOperation) {
       router.push(`/operation/orders/${n.orderId}`);
+    } else if (isManager) {
+      router.push(`/manager/feedbacks`);
     } else if (isSales) {
       router.push(`/sales/orders/${n.orderId}`);
     } else if (n.newStatus === "PrescriptionRejected") {
@@ -230,9 +248,11 @@ export default function NotificationBell({ mode = "customer" }: Props) {
             <span className="font-semibold text-gray-800 text-sm">
               {isOperation
                 ? "Confirm delivery"
-                : isSales
-                  ? "New orders"
-                  : "Notifications"}
+                : isManager
+                  ? "New reviews"
+                  : isSales
+                    ? "New orders"
+                    : "Notifications"}
             </span>
             <div className="flex items-center gap-2">
               {count > 0 && (

@@ -13,10 +13,12 @@ namespace BusinessLogicLayer.Services.Implementations
     public class FeedbackService : IFeedbackService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
-        public FeedbackService(IUnitOfWork unitOfWork)
+        public FeedbackService(IUnitOfWork unitOfWork, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<(bool Success, string? Error)> CreateFeedbackAsync(
@@ -84,11 +86,18 @@ namespace BusinessLogicLayer.Services.Implementations
                     OrderItemId = request.OrderItemId,
                     Rating = request.Rating,
                     Comment = request.Comment,
+                    Status = "Pending",
                     CreatedAt = DateTime.UtcNow
                 };
 
                 await _unitOfWork.GetRepository<Feedback>().AddAsync(feedback);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await _notificationService.SendNewFeedbackToManagerAsync(
+                    feedback.Id,
+                    request.ProductId,
+                    customer.FullName ?? "Customer",
+                    request.Rating);
 
                 return (true, null);
             }
@@ -116,7 +125,7 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<ProductFeedbackSummaryResponse> GetProductFeedbacksAsync(Guid productId, CancellationToken cancellationToken = default)
         {
             var feedbacks = await _unitOfWork.GetRepository<Feedback>()
-                .FindAsync(f => f.ProductId == productId, cancellationToken);
+                .FindAsync(f => f.ProductId == productId && f.Status == "Approved", cancellationToken);
 
             var feedbackList = feedbacks.ToList();
             if (!feedbackList.Any())
@@ -153,6 +162,53 @@ namespace BusinessLogicLayer.Services.Implementations
                 AverageRating = Math.Round(responseList.Average(r => r.Rating), 1),
                 Feedbacks = responseList.OrderByDescending(f => f.CreatedAt).ToList()
             };
+        }
+
+        public async Task<IEnumerable<FeedbackResponse>> GetAllFeedbacksAsync(CancellationToken cancellationToken = default)
+        {
+            var feedbacks = await _unitOfWork.GetRepository<Feedback>().GetAllAsync(cancellationToken);
+            var responseList = new List<FeedbackResponse>();
+
+            foreach (var f in feedbacks)
+            {
+                var customer = await _unitOfWork.GetRepository<Customer>().GetByIdAsync(f.CustomerId, cancellationToken);
+                responseList.Add(new FeedbackResponse
+                {
+                    Id = f.Id,
+                    ProductId = f.ProductId,
+                    CustomerName = customer?.FullName ?? "Anonymous",
+                    Rating = f.Rating,
+                    Comment = f.Comment,
+                    Status = f.Status,
+                    CreatedAt = f.CreatedAt
+                });
+            }
+
+            return responseList.OrderByDescending(f => f.CreatedAt);
+        }
+
+        public async Task<(bool Success, string? Error)> ApproveFeedbackAsync(Guid feedbackId, CancellationToken cancellationToken = default)
+        {
+            var feedback = await _unitOfWork.GetRepository<Feedback>().GetByIdAsync(feedbackId, cancellationToken);
+            if (feedback == null) return (false, "Feedback not found.");
+
+            feedback.Status = "Approved";
+            _unitOfWork.GetRepository<Feedback>().Update(feedback);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return (true, null);
+        }
+
+        public async Task<(bool Success, string? Error)> RejectFeedbackAsync(Guid feedbackId, CancellationToken cancellationToken = default)
+        {
+            var feedback = await _unitOfWork.GetRepository<Feedback>().GetByIdAsync(feedbackId, cancellationToken);
+            if (feedback == null) return (false, "Feedback not found.");
+
+            feedback.Status = "Rejected";
+            _unitOfWork.GetRepository<Feedback>().Update(feedback);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return (true, null);
         }
     }
 }
