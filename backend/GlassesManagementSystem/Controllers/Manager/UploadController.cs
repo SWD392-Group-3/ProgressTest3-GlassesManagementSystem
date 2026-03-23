@@ -7,7 +7,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Manager,Admin")] // Assuming only authorized users can upload
+    [Authorize(Roles = "Manager")] // Assuming only authorized users can upload
     public class UploadController : ControllerBase
     {
         private readonly ICloudinaryService _cloudinaryService;

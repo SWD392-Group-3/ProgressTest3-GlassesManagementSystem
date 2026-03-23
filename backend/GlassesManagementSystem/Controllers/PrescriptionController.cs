@@ -58,7 +58,7 @@ namespace GlassesManagementSystem.Controllers
         /// Sales xem toàn bộ danh sách Prescription của tất cả khách hàng.
         /// </summary>
         [HttpGet("all")]
-        [Authorize(Roles = "Sales,Admin")]
+        [Authorize(Roles = "Sales")]
         public async Task<IActionResult> GetAll()
         {
             var results = await _prescriptionService.GetAllAsync();
@@ -69,7 +69,7 @@ namespace GlassesManagementSystem.Controllers
         /// Lấy chi tiết một đơn Prescription theo ID.
         /// </summary>
         [HttpGet("{id:guid}")]
-        [Authorize(Roles = "Customer,Sales,Admin")]
+        [Authorize(Roles = "Customer,Sales")]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _prescriptionService.GetByIdAsync(id);
@@ -103,7 +103,7 @@ namespace GlassesManagementSystem.Controllers
         /// Sales duyệt Prescription. Hệ thống sẽ tự động tạo Order tương ứng với Gọng và Tròng đã chọn.
         /// </summary>
         [HttpPatch("{id:guid}/confirm")]
-        [Authorize(Roles = "Sales,Admin")]
+        [Authorize(Roles = "Sales")]
         public async Task<IActionResult> Confirm(Guid id, [FromBody] ConfirmPrescriptionRequest request)
         {
             try
@@ -121,7 +121,7 @@ namespace GlassesManagementSystem.Controllers
         /// Sales từ chối yêu cầu Prescription.
         /// </summary>
         [HttpPatch("{id:guid}/reject")]
-        [Authorize(Roles = "Sales,Admin")]
+        [Authorize(Roles = "Sales")]
         public async Task<IActionResult> Reject(Guid id, [FromBody] RejectPrescriptionRequest request)
         {
             try

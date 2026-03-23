@@ -22,7 +22,7 @@ public class OrderController : ControllerBase
     /// Lấy danh sách tất cả đơn hàng (dành cho Operation/Sales).
     /// </summary>
     [HttpGet("orders")]
-    [Authorize(Roles = "Operation,Sales,Admin")]
+    [Authorize(Roles = "Operation,Sales")]
     [ProducesResponseType(typeof(IEnumerable<OrderDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -44,7 +44,7 @@ public class OrderController : ControllerBase
     /// Lấy chi tiết một đơn hàng theo ID.
     /// </summary>
     [HttpGet("{orderId:guid}")]
-    [Authorize(Roles = "Customer,Sales,Operation,Admin")]
+    [Authorize(Roles = "Customer,Sales,Operation")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(Guid orderId)
@@ -141,7 +141,7 @@ public class OrderController : ControllerBase
     /// Sales: đơn dịch vụ có thể chuyển Confirmed → Completed (không qua Operation).
     /// </summary>
     [HttpPatch("{orderId:guid}/status")]
-    [Authorize(Roles = "Operation,Sales,Admin")]
+    [Authorize(Roles = "Operation,Sales")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -160,7 +160,7 @@ public class OrderController : ControllerBase
 
         var isServiceOrder =
             string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone);
-        if (isServiceOrder && User.IsInRole("Operation") && !User.IsInRole("Admin"))
+        if (isServiceOrder && User.IsInRole("Operation"))
             return StatusCode(403, new { message = "Service orders can only be confirmed by Sales, not Operation." });
 
         try
@@ -213,7 +213,7 @@ public class OrderController : ControllerBase
     /// Sales xác nhận đơn hàng thường.
     /// </summary>
     [HttpPatch("{orderId:guid}/confirm")]
-    [Authorize(Roles = "Sales,Admin")]
+    [Authorize(Roles = "Sales")]
     public async Task<IActionResult> Confirm(Guid orderId)
     {
         try
@@ -232,7 +232,7 @@ public class OrderController : ControllerBase
     /// Sales từ chối đơn hàng thường.
     /// </summary>
     [HttpPatch("{orderId:guid}/reject")]
-    [Authorize(Roles = "Sales,Admin")]
+    [Authorize(Roles = "Sales")]
     public async Task<IActionResult> Reject(Guid orderId, [FromBody] string? reason)
     {
         try
