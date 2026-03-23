@@ -8,7 +8,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/revenue")]
     [ApiController]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Manager")]
     public class RevenueController : ControllerBase
     {
         private readonly IRevenueService _revenueService;

@@ -115,7 +115,7 @@ namespace GlassesManagementSystem.Controllers
         /// Sales lấy danh sách yêu cầu hoàn hàng chờ xử lý
         /// </summary>
         [HttpGet("pending")]
-        [Authorize(Roles = "Sales,Admin")]
+        [Authorize(Roles = "Sales")]
         [ProducesResponseType(typeof(IEnumerable<ReturnExchangeResponse>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetPendingReturnExchanges(
             CancellationToken cancellationToken
@@ -155,7 +155,7 @@ namespace GlassesManagementSystem.Controllers
         /// Sales xem xét và phê duyệt/từ chối yêu cầu hoàn hàng
         /// </summary>
         [HttpPost("review")]
-        [Authorize(Roles = "Sales,Admin")]
+        [Authorize(Roles = "Sales")]
         [ProducesResponseType(typeof(ReturnExchangeResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -271,7 +271,7 @@ namespace GlassesManagementSystem.Controllers
             if (files.Count > 5)
                 return BadRequest(new { message = "Maximum 5 images allowed." });
 
-            // Xác định thư mục theo role hiện tại (Customer / Sales / Operation / Admin)
+            // Xác định thư mục theo role hiện tại (Customer / Sales / Operation )
             var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "Customer";
 
             // Upload lên Cloudinary, không gắn với item cụ thể (sẽ gắn khi tạo/ cập nhật ReturnExchange)

@@ -20,7 +20,7 @@ public class EyeResultController : ControllerBase
 
     /// <summary>
     /// Lấy danh sách kết quả đo mắt theo đơn hàng.
-    /// Sales/Admin xem để nhập liệu; Customer xem kết quả của mình.
+    /// Sales xem để nhập liệu; Customer xem kết quả của mình.
     /// </summary>
     [HttpGet("order/{orderId:guid}")]
     [Authorize]
@@ -84,7 +84,7 @@ public class EyeResultController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật kết quả đo mắt (Sales/Admin, chỉ người tạo hoặc Admin).
+    /// Cập nhật kết quả đo mắt (Sales chỉ người tạo).
     /// </summary>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Sales")]

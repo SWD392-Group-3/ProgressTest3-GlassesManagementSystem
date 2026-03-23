@@ -7,6 +7,8 @@ using DataAccessLayer.Repositories;
 using DataAccessLayer.Repositories.Interfaces;
 using DataAccessLayer.Repositories.Implementations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace GlassesManagementSystem.Extensions;
 

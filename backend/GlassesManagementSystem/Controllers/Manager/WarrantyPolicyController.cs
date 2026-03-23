@@ -7,7 +7,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/policies")]
     [ApiController]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Manager")]
     public class WarrantyPolicyController : ControllerBase
     {
         private readonly IWarrantyPolicyService _warrantyPolicyService;

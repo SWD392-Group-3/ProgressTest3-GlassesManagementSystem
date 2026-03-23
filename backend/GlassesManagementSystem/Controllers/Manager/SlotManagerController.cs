@@ -8,7 +8,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/slots")]
     [ApiController]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Manager")]
     public class SlotManagerController : ControllerBase
     {
         private readonly ISlotService _slotService;

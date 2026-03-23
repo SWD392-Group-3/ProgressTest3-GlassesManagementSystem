@@ -7,7 +7,7 @@ namespace GlassesManagementSystem.Controllers.Manager
 {
     [Route("api/manager/pricing-promotions")]
     [ApiController]
-    [Authorize(Roles = "Admin,Manager")]
+    [Authorize(Roles = "Manager")]
     public class PricingPromotionController : ControllerBase
     {
         private readonly IPricingPromotionService _pricingPromotionService;
