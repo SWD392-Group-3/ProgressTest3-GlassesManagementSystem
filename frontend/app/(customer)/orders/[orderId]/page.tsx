@@ -34,14 +34,14 @@ import { checkCanFeedback } from "@/lib/api/feedback";
 import FeedbackModal from "@/components/FeedbackModal";
 
 function fmt(amount: number) {
-  return new Intl.NumberFormat("vi-VN", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "VND",
   }).format(amount);
 }
 
 function fmtDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("vi-VN", {
+  return new Date(dateStr).toLocaleDateString("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -60,13 +60,13 @@ const STATUS_STEPS = [
 ];
 
 const STATUS_LABEL: Record<string, string> = {
-  Pending: "Chờ xác nhận",
-  Paid: "Đã thanh toán",
-  Confirmed: "Đã xác nhận",
-  Shipped: "Đang giao",
-  Delivered: "Đã giao",
-  Completed: "Hoàn thành",
-  Cancelled: "Đã huỷ",
+  Pending: "Pending Confirmation",
+  Paid: "Paid",
+  Confirmed: "Confirmed",
+  Shipped: "Shipping",
+  Delivered: "Delivered",
+  Completed: "Completed",
+  Cancelled: "Cancelled",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -120,7 +120,7 @@ export default function OrderDetailPage() {
             } catch {
               return { id: item.id, canReview: false };
             }
-          })
+          }),
         );
         const newReviewedSets = new Set<string>();
         // If canReview is false, it means they already reviewed
@@ -156,7 +156,7 @@ export default function OrderDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentStatus]);
 
-  // Cập nhật status real-time khi nhận thông báo SignalR cho đơn hàng này
+  // Update order status in real-time when receiving SignalR notifications
   useEffect(() => {
     if (notifications.length === 0) return;
     const latest = notifications[0];
@@ -174,12 +174,12 @@ export default function OrderDetailPage() {
       const resp = await createMomoPayment(
         order.id,
         Math.round(order.finalAmount ?? order.totalAmount),
-        `Thanh toán đơn hàng #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
+        `Payment for order #${(order.id ?? "").slice(0, 8).toUpperCase()}`,
       );
       if (resp.payUrl) {
         window.location.href = resp.payUrl;
       } else {
-        alert("Không thể tạo liên kết thanh toán MoMo.");
+        alert("Unable to create MoMo payment link.");
       }
     } catch (e) {
       alert((e as Error).message);
@@ -189,7 +189,8 @@ export default function OrderDetailPage() {
   }
 
   async function handleCancel() {
-    if (!order || !confirm("Bạn có chắc muốn hủy đơn hàng này không?")) return;
+    if (!order || !confirm("Are you sure you want to cancel this order?"))
+      return;
     setCancelLoading(true);
     try {
       await cancelOrder(order.id);
@@ -207,8 +208,8 @@ export default function OrderDetailPage() {
       (order.shippingAddress == null || order.shippingAddress === "") &&
       (order.shippingPhone == null || order.shippingPhone === "");
     const msg = isService
-      ? "Xác nhận bạn đã hoàn tất dịch vụ?\nSau khi xác nhận, đơn hàng sẽ chuyển sang Hoàn tất."
-      : "Xác nhận bạn đã nhận được đơn hàng?\nSau khi xác nhận, bạn có thể yêu cầu đổi/trả nếu cần.";
+      ? "Confirm that you have completed the service?\nAfter confirmation, the order will move to Completed."
+      : "Confirm that you have received this order?\nAfter confirmation, you can request return/exchange if needed.";
     if (!confirm(msg)) return;
     setCompleteLoading(true);
     try {
@@ -224,8 +225,10 @@ export default function OrderDetailPage() {
   const canCancel = order?.status === "Pending";
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
   const canComplete = order?.status === "Delivered";
-  const canReturn = order?.status === "Completed" || order?.status === "Delivered";
-  const canReview = order?.status === "Completed" || order?.status === "Delivered";
+  const canReturn =
+    order?.status === "Completed" || order?.status === "Delivered";
+  const canReview =
+    order?.status === "Completed" || order?.status === "Delivered";
   const isCancelled = order?.status === "Cancelled";
   const currentStepIndex = isCancelled
     ? -1
@@ -241,7 +244,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-green-50 border border-green-200 rounded-2xl px-5 py-4">
               <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
               <p className="text-sm font-semibold text-green-700">
-                Thanh toán thành công! Đơn hàng của bạn đang được xử lý.
+                Payment successful! Your order is being processed.
               </p>
             </div>
           )}
@@ -249,7 +252,7 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-3 mb-6 bg-red-50 border border-red-200 rounded-2xl px-5 py-4">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <p className="text-sm font-semibold text-red-700">
-                Thanh toán thất bại hoặc đã bị hủy. Bạn có thể thử lại bên dưới.
+                Payment failed or was cancelled. You can try again below.
               </p>
             </div>
           )}
@@ -264,7 +267,7 @@ export default function OrderDetailPage() {
             </Link>
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-[#D4AF37]">
-                Chi tiết đơn hàng
+                Order Details
               </span>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] font-heading">
                 #{orderId?.slice(0, 8).toUpperCase()}
@@ -283,7 +286,7 @@ export default function OrderDetailPage() {
                 onClick={fetchOrder}
                 className="text-[#D4AF37] hover:underline text-sm"
               >
-                Thử lại
+                Try again
               </button>
             </div>
           ) : order ? (
@@ -334,7 +337,7 @@ export default function OrderDetailPage() {
                 <div className="bg-red-50 border border-red-100 rounded-2xl px-5 py-4 flex items-center gap-3">
                   <XCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm font-semibold text-red-600">
-                    Đơn hàng đã bị huỷ
+                    Order has been cancelled
                   </p>
                 </div>
               )}
@@ -344,7 +347,7 @@ export default function OrderDetailPage() {
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    Thông tin giao hàng
+                    Shipping Information
                   </h2>
                   <div className="space-y-3 text-sm">
                     <div className="flex items-start gap-2">
@@ -380,18 +383,18 @@ export default function OrderDetailPage() {
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] mb-4 flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-[#D4AF37]" />
-                    Tóm tắt thanh toán
+                    Payment Summary
                   </h2>
                   <div className="space-y-2.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[#6B7280]">Tạm tính</span>
+                      <span className="text-[#6B7280]">Subtotal</span>
                       <span className="text-[#1A1A1A]">
                         {fmt(order.totalAmount)}
                       </span>
                     </div>
                     {order.discountAmount > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-[#6B7280]">Giảm giá</span>
+                        <span className="text-[#6B7280]">Discount</span>
                         <span className="text-green-600">
                           - {fmt(order.discountAmount)}
                         </span>
@@ -413,7 +416,7 @@ export default function OrderDetailPage() {
                 <div className="px-6 py-4 border-b border-[#E5E7EB]">
                   <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                     <Package className="w-4 h-4 text-[#D4AF37]" />
-                    Sản phẩm ({(order.orderItems ?? []).length})
+                    Items ({(order.orderItems ?? []).length})
                   </h2>
                 </div>
                 <div className="divide-y divide-[#E5E7EB]">
@@ -423,12 +426,12 @@ export default function OrderDetailPage() {
                       className="px-6 py-4 flex items-center justify-between gap-4"
                     >
                       <div className="flex items-center gap-3">
-                        {/* Ảnh sản phẩm */}
+                        {/* Product image */}
                         <div className="w-14 h-14 rounded-xl bg-[#F5F5F5] flex items-center justify-center shrink-0 overflow-hidden border border-[#E5E7EB]">
                           {item.imageUrl ? (
                             <Image
                               src={item.imageUrl}
-                              alt={item.productName ?? "Sản phẩm"}
+                              alt={item.productName ?? "Product"}
                               width={56}
                               height={56}
                               className="w-full h-full object-cover"
@@ -441,12 +444,12 @@ export default function OrderDetailPage() {
                           <p className="text-sm font-semibold text-[#1A1A1A]">
                             {item.productName ??
                               (item.productVariantId
-                                ? "Gọng kính"
+                                ? "Frame"
                                 : item.lensesVariantId
-                                  ? "Tròng kính"
+                                  ? "Lens"
                                   : item.comboItemId
                                     ? "Combo"
-                                    : "Dịch vụ")}
+                                    : "Service")}
                           </p>
                           {(() => {
                             const rawId =
@@ -483,7 +486,7 @@ export default function OrderDetailPage() {
                               setFeedbackItem({
                                 productId: item.productId!,
                                 orderItemId: item.id,
-                                productName: item.productName || "Sản phẩm",
+                                productName: item.productName || "Product",
                               });
                             }}
                             disabled={reviewedItems.has(item.id)}
@@ -493,7 +496,9 @@ export default function OrderDetailPage() {
                                 : "text-[#D4AF37] border border-[#D4AF37] hover:bg-yellow-50"
                             }`}
                           >
-                            {reviewedItems.has(item.id) ? "Đã đánh giá" : "Viết đánh giá"}
+                            {reviewedItems.has(item.id)
+                              ? "Reviewed"
+                              : "Write a review"}
                           </button>
                         )}
                       </div>
@@ -515,7 +520,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4" />
-                        Thanh toán qua Momo
+                        Pay with MoMo
                       </>
                     )}
                   </button>
@@ -531,7 +536,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <XCircle className="w-4 h-4" />
-                        Huỷ đơn hàng
+                        Cancel Order
                       </>
                     )}
                   </button>
@@ -547,7 +552,7 @@ export default function OrderDetailPage() {
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        Xác nhận đã nhận hàng
+                        Confirm Delivery
                       </>
                     )}
                   </button>
@@ -558,7 +563,7 @@ export default function OrderDetailPage() {
                     className="flex-1 h-12 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] font-semibold text-sm hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" />
-                    Yêu cầu đổi / trả hàng
+                    Request Return / Exchange
                   </Link>
                 )}
               </div>
@@ -575,7 +580,9 @@ export default function OrderDetailPage() {
               onClose={() => setFeedbackItem(null)}
               onSuccess={() => {
                 // Mark this item as reviewed so button updates immediately
-                setReviewedItems((prev) => new Set(prev).add(feedbackItem.orderItemId));
+                setReviewedItems((prev) =>
+                  new Set(prev).add(feedbackItem.orderItemId),
+                );
               }}
             />
           )}

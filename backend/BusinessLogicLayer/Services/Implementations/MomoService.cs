@@ -68,15 +68,52 @@ namespace BusinessLogicLayer.Services.Implementations
             var httpResponse = await _httpClient.PostAsync(_settings.MomoApiUrl, content);
             var responseBody = await httpResponse.Content.ReadAsStringAsync();
 
-            var momoResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            JsonElement momoResponse;
+            try
+            {
+                momoResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
+            }
+            catch (JsonException)
+            {
+                var preview = responseBody.Length > 300
+                    ? responseBody[..300] + "..."
+                    : responseBody;
+
+                throw new InvalidOperationException(
+                    $"MoMo returned an invalid response format. HTTP {(int)httpResponse.StatusCode}. " +
+                    $"Please verify Momo configuration (URL/keys/returnUrl/notifyUrl). Response: {preview}"
+                );
+            }
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                var errorMessage = momoResponse.TryGetProperty("message", out var messageProp)
+                    ? messageProp.GetString() ?? "MoMo request failed."
+                    : "MoMo request failed.";
+
+                throw new InvalidOperationException(
+                    $"MoMo request failed (HTTP {(int)httpResponse.StatusCode}): {errorMessage}"
+                );
+            }
+
+            if (!momoResponse.TryGetProperty("resultCode", out var resultCodeProp))
+            {
+                throw new InvalidOperationException("MoMo response is missing 'resultCode'.");
+            }
+
+            var resultCode = resultCodeProp.GetInt32();
+            var message = momoResponse.TryGetProperty("message", out var msgProp)
+                ? msgProp.GetString() ?? ""
+                : "";
+            var payUrl = momoResponse.TryGetProperty("payUrl", out var payUrlProp)
+                ? payUrlProp.GetString() ?? ""
+                : "";
 
             return new MomoCreatePaymentResponse
             {
-                ResultCode = momoResponse.GetProperty("resultCode").GetInt32(),
-                Message = momoResponse.GetProperty("message").GetString() ?? "",
-                PayUrl = momoResponse.TryGetProperty("payUrl", out var payUrlProp)
-                    ? payUrlProp.GetString() ?? ""
-                    : "",
+                ResultCode = resultCode,
+                Message = message,
+                PayUrl = payUrl,
                 OrderId = originalOrderId,
                 RequestId = requestId,
                 Amount = amount
