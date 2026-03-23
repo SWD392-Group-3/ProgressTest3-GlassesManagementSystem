@@ -45,7 +45,17 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (orderItem == null)
                     return (false, "Order item not found.");
                     
-                if (orderItem.ProductId != request.ProductId)
+                // Validate order item belongs to the requested product
+                // Support both direct product items and variant-based items
+                bool productMatches = orderItem.ProductId == request.ProductId;
+                if (!productMatches && orderItem.ProductVariantId.HasValue)
+                {
+                    // Item was added via productVariantId — resolve its productId
+                    var variant = await _unitOfWork.GetRepository<DataAccessLayer.Database.Entities.ProductVariant>()
+                        .GetByIdAsync(orderItem.ProductVariantId.Value, cancellationToken);
+                    productMatches = variant?.ProductId == request.ProductId;
+                }
+                if (!productMatches)
                 {
                     return (false, "This item does not match the product.");
                 }
