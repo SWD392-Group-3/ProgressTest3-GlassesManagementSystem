@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: "/manager/products", icon: Package, label: "Products" },
   { href: "/manager/promotions-combos", icon: Tag, label: "Pricing & Promos" },
   { href: "/manager/slots", icon: Calendar, label: "Slots & Schedule" },
+  { href: "/manager/feedbacks", icon: FileText, label: "Reviews" },
   { href: "/manager/users", icon: Users, label: "Users & Sales" },
 ];
 

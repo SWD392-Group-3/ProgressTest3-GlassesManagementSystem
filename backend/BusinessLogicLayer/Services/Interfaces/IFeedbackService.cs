@@ -11,5 +11,10 @@ namespace BusinessLogicLayer.Services.Interfaces
         Task<(bool Success, string? Error)> CreateFeedbackAsync(CreateFeedbackRequest request, Guid customerUserId, CancellationToken cancellationToken = default);
         Task<ProductFeedbackSummaryResponse> GetProductFeedbacksAsync(Guid productId, CancellationToken cancellationToken = default);
         Task<bool> CanCustomerFeedbackAsync(Guid customerUserId, Guid orderItemId, CancellationToken cancellationToken = default);
+        
+        // Manager methods
+        Task<IEnumerable<FeedbackResponse>> GetAllFeedbacksAsync(CancellationToken cancellationToken = default);
+        Task<(bool Success, string? Error)> ApproveFeedbackAsync(Guid feedbackId, CancellationToken cancellationToken = default);
+        Task<(bool Success, string? Error)> RejectFeedbackAsync(Guid feedbackId, CancellationToken cancellationToken = default);
     }
 }

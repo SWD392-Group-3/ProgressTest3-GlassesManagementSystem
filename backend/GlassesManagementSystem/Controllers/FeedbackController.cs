@@ -60,5 +60,31 @@ namespace GlassesManagementSystem.Controllers
             bool canFeedback = await _feedbackService.CanCustomerFeedbackAsync(customerUserId, orderItemId, cancellationToken);
             return Ok(new { canFeedback });
         }
+
+        [HttpGet("all")]
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> GetAllFeedbacks(CancellationToken cancellationToken)
+        {
+            var feedbacks = await _feedbackService.GetAllFeedbacksAsync(cancellationToken);
+            return Ok(feedbacks);
+        }
+
+        [HttpPut("{id}/approve")]
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> ApproveFeedback(Guid id, CancellationToken cancellationToken)
+        {
+            var (success, error) = await _feedbackService.ApproveFeedbackAsync(id, cancellationToken);
+            if (!success) return BadRequest(new { message = error });
+            return Ok(new { message = "Feedback approved successfully." });
+        }
+
+        [HttpPut("{id}/reject")]
+        [Authorize(Roles = "Manager")]
+        public async Task<IActionResult> RejectFeedback(Guid id, CancellationToken cancellationToken)
+        {
+            var (success, error) = await _feedbackService.RejectFeedbackAsync(id, cancellationToken);
+            if (!success) return BadRequest(new { message = error });
+            return Ok(new { message = "Feedback rejected successfully." });
+        }
     }
 }
