@@ -53,6 +53,19 @@ public class NotificationHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, "operation");
     }
 
+    /// <summary>
+    /// Manager join group "manager" để nhận thông báo khi có đánh giá mới.
+    /// </summary>
+    public async Task JoinManagerGroup()
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "manager");
+    }
+
+    public async Task LeaveManagerGroup()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "manager");
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         await base.OnDisconnectedAsync(exception);

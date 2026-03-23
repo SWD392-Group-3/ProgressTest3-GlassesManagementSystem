@@ -252,6 +252,44 @@ public class NotificationService : INotificationService
     }
 
     /// <inheritdoc />
+    public async Task SendNewFeedbackToManagerAsync(Guid feedbackId, Guid productId, string customerName, int rating)
+    {
+        var title = "New customer review";
+        var message = $"Customer {customerName} submitted a {rating}-star review.";
+        var linkTo = "/manager/feedbacks";
+        var now = DateTime.UtcNow;
+
+        var managerUsers = await _userRepo.FindAsync(u => u.Role == "Manager" || u.Role == "manager");
+        foreach (var user in managerUsers)
+        {
+            await _notificationRepo.AddAsync(new Notification
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Title = title,
+                Content = message,
+                Type = "new_feedback",
+                Status = "unread",
+                LinkTo = linkTo,
+                CreatedAt = now,
+                ReadAt = null
+            });
+        }
+        if (managerUsers.Any())
+            await _unitOfWork.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("manager").SendAsync("NewFeedbackSubmitted", new
+        {
+            feedbackId = feedbackId.ToString(),
+            productId = productId.ToString(),
+            customerName,
+            rating,
+            message,
+            timestamp = now
+        });
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(Guid userId, int limit = 50)
     {
         var items = await _notificationRepo.GetByUserIdAsync(userId, limit);

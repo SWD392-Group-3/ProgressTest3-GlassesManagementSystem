@@ -44,6 +44,11 @@ namespace BusinessLogicLayer.Services.Interfaces
         /// Gửi thông báo tới khách hàng khi Sale ghi kết quả khám mắt cho đơn hàng dịch vụ.
         /// </summary>
         Task SendEyeResultReadyAsync(Guid customerId, Guid orderId);
+
+        /// <summary>
+        /// Gửi thông báo tới Manager khi có đánh giá mới từ khách hàng.
+        /// </summary>
+        Task SendNewFeedbackToManagerAsync(Guid feedbackId, Guid productId, string customerName, int rating);
         /// <summary>Lấy danh sách thông báo của user (mới nhất trước).</summary>
         Task<IReadOnlyList<NotificationDto>> GetByUserIdAsync(Guid userId, int limit = 50);
 

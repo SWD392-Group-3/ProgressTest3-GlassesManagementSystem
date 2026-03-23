@@ -13,10 +13,12 @@ namespace BusinessLogicLayer.Services.Implementations
     public class FeedbackService : IFeedbackService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
-        public FeedbackService(IUnitOfWork unitOfWork)
+        public FeedbackService(IUnitOfWork unitOfWork, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<(bool Success, string? Error)> CreateFeedbackAsync(
@@ -90,6 +92,12 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 await _unitOfWork.GetRepository<Feedback>().AddAsync(feedback);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                await _notificationService.SendNewFeedbackToManagerAsync(
+                    feedback.Id,
+                    request.ProductId,
+                    customer.FullName ?? "Customer",
+                    request.Rating);
 
                 return (true, null);
             }

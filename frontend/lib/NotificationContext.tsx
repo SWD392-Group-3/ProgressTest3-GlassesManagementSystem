@@ -50,6 +50,12 @@ interface NotificationContextValue {
   markOperationRead: (id: string) => void;
   markAllOperationRead: () => void;
   clearAllOperation: () => void;
+  /** Thông báo dành cho Manager (đánh giá mới từ khách hàng) */
+  managerNotifications: OrderNotification[];
+  managerUnreadCount: number;
+  markManagerRead: (id: string) => void;
+  markAllManagerRead: () => void;
+  clearAllManager: () => void;
 }
 
 const SALES_ROLES = ["Sales", "Admin"];
@@ -74,6 +80,11 @@ const NotificationContext = createContext<NotificationContextValue>({
   markOperationRead: () => {},
   markAllOperationRead: () => {},
   clearAllOperation: () => {},
+  managerNotifications: [],
+  managerUnreadCount: 0,
+  markManagerRead: () => {},
+  markAllManagerRead: () => {},
+  clearAllManager: () => {},
 });
 
 export function NotificationProvider({
@@ -88,6 +99,9 @@ export function NotificationProvider({
   const [operationNotifications, setOperationNotifications] = useState<
     OrderNotification[]
   >([]);
+  const [managerNotifications, setManagerNotifications] = useState<
+    OrderNotification[]
+  >([]);
   const connectionRef = useRef<signalR.HubConnection | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -95,6 +109,7 @@ export function NotificationProvider({
   const operationUnreadCount = operationNotifications.filter(
     (n) => !n.read,
   ).length;
+  const managerUnreadCount = managerNotifications.filter((n) => !n.read).length;
 
   // ── Load lịch sử thông báo từ DB khi mount ──
   useEffect(() => {
@@ -104,7 +119,8 @@ export function NotificationProvider({
     const isCustomer = user.role === "Customer";
     const isSalesUser = SALES_ROLES.includes(user.role ?? "");
     const isOperationUser = user.role === "Operation";
-    if (!isCustomer && !isSalesUser && !isOperationUser) return;
+    const isManager = user.role === "Manager";
+    if (!isCustomer && !isSalesUser && !isOperationUser && !isManager) return;
 
     fetchNotifications(50)
       .then((items) => {
@@ -133,6 +149,7 @@ export function NotificationProvider({
         if (isCustomer) setNotifications(mapped);
         else if (isSalesUser) setSalesNotifications(mapped);
         else if (isOperationUser) setOperationNotifications(mapped);
+        else if (isManager) setManagerNotifications(mapped);
       })
       .catch(() => {});
   }, []);
@@ -145,8 +162,9 @@ export function NotificationProvider({
     const isCustomer = user.role === "Customer" && !!user.customerId;
     const isSales = SALES_ROLES.includes(user.role ?? "");
     const isOperation = user.role === "Operation";
+    const isManager = user.role === "Manager";
 
-    if (!isCustomer && !isSales && !isOperation) return;
+    if (!isCustomer && !isSales && !isOperation && !isManager) return;
 
     let isMounted = true;
 
@@ -321,6 +339,35 @@ export function NotificationProvider({
       );
     }
 
+    if (isManager) {
+      connection.on(
+        "NewFeedbackSubmitted",
+        (data: {
+          feedbackId: string;
+          productId: string;
+          customerName: string;
+          rating: number;
+          message: string;
+          timestamp: string;
+        }) => {
+          if (!isMounted) return;
+          setManagerNotifications((prev) =>
+            [
+              {
+                id: `${Date.now()}-${Math.random()}`,
+                orderId: data.feedbackId,
+                message: data.message,
+                timestamp: data.timestamp,
+                read: false,
+                linkTo: "/manager/feedbacks",
+              },
+              ...prev,
+            ].slice(0, 50),
+          );
+        },
+      );
+    }
+
     connection
       .start()
       .then(async () => {
@@ -332,6 +379,7 @@ export function NotificationProvider({
           await connection.invoke("JoinCustomerGroup", user.customerId!);
         if (isSales) await connection.invoke("JoinSalesGroup");
         if (isOperation) await connection.invoke("JoinOperationGroup");
+        if (isManager) await connection.invoke("JoinManagerGroup");
         connectionRef.current = connection;
       })
       .catch(() => {
@@ -352,6 +400,8 @@ export function NotificationProvider({
           leaves.push(conn.invoke("LeaveSalesGroup").catch(() => {}));
         if (isOperation)
           leaves.push(conn.invoke("LeaveOperationGroup").catch(() => {}));
+        if (isManager)
+          leaves.push(conn.invoke("LeaveManagerGroup").catch(() => {}));
         Promise.all(leaves).finally(() => conn.stop().catch(() => {}));
       }
     };
@@ -399,6 +449,18 @@ export function NotificationProvider({
   };
   const clearAllOperation = () => setOperationNotifications([]);
 
+  const markManagerRead = (id: string) => {
+    if (isDbGuid(id)) markNotificationRead(id).catch(() => {});
+    setManagerNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+    );
+  };
+  const markAllManagerRead = () => {
+    markAllNotificationsRead().catch(() => {});
+    setManagerNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+  const clearAllManager = () => setManagerNotifications([]);
+
   return (
     <NotificationContext.Provider
       value={{
@@ -417,6 +479,11 @@ export function NotificationProvider({
         markOperationRead,
         markAllOperationRead,
         clearAllOperation,
+        managerNotifications,
+        managerUnreadCount,
+        markManagerRead,
+        markAllManagerRead,
+        clearAllManager,
       }}
     >
       {children}
