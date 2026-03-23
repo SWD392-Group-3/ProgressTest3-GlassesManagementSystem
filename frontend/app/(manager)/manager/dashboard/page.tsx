@@ -141,7 +141,7 @@ export default function ManagerDashboard() {
                                         tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`}
                                     />
                                     <Tooltip
-                                        formatter={(value: number) => [formatCurrency(value), "Revenue"]}
+                                        formatter={(value: any) => [formatCurrency(Number(value)), "Revenue"]}
                                         labelFormatter={(_, payload) => payload?.[0]?.payload?.name && `${MONTH_NAMES[payload[0].payload.month - 1]} ${chartYear}`}
                                         contentStyle={{ borderRadius: "8px", border: "1px solid var(--border)" }}
                                     />

@@ -169,6 +169,7 @@ VALUES
      'Le Van Minh', '0978123456', 'Male', '1995-03-10', '789 Le Loi', 'Hanoi', NOW() AT TIME ZONE 'UTC', NOW() AT TIME ZONE 'UTC')
 ON CONFLICT ("Id") DO NOTHING;
 
+-- -----------------------------------------------------------------------------
 -- 13. SLOTS (Dynamic seed - always valid, no outdated dates)
 -- Status: Available | Booked | Completed | Cancelled
 -- -----------------------------------------------------------------------------
@@ -202,7 +203,6 @@ CROSS JOIN (
         (TIME '14:00', TIME '14:30', 'Afternoon slot'),
         (TIME '15:00', TIME '15:30', NULL)
 ) AS s(start_time, end_time, note);
-
 -- -----------------------------------------------------------------------------
 -- 14. PRESCRIPTIONS (CustomerId, ServiceId)
 -- -----------------------------------------------------------------------------

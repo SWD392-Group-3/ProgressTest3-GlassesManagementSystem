@@ -451,7 +451,8 @@ namespace BusinessLogicLayer.Services.Implementations
                     {
                         Id = oi.Id,
                         OrderId = oi.OrderId,
-                        ProductId = oi.ProductId,
+                        // Nếu item mua qua variant (ProductId null), lấy từ variant.ProductId
+                        ProductId = oi.ProductId ?? oi.ProductVariant?.ProductId,
                         ProductVariantId = oi.ProductVariantId,
                         LensesVariantId = oi.LensesVariantId,
                         ComboItemId = oi.ComboItemId,

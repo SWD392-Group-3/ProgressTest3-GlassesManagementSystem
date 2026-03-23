@@ -46,6 +46,8 @@ namespace DataAccessLayer.Database
 
         public DbSet<Notification> Notification { get; set; }
 
+        public DbSet<Feedback> Feedback { get; set; }
+
         public new DbSet<T> Set<T>()
             where T : class => base.Set<T>();
 
@@ -86,6 +88,7 @@ namespace DataAccessLayer.Database
             modelBuilder.ApplyConfiguration<ProductVariant>(new ProductVariantConfiguration());
             modelBuilder.ApplyConfiguration<LensVariant>(new LensVariantConfiguration());
             modelBuilder.ApplyConfiguration<Notification>(new NotificationConfiguration());
+            modelBuilder.ApplyConfiguration<Feedback>(new FeedbackConfiguration());
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
