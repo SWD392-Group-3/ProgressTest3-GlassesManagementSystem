@@ -97,7 +97,7 @@ namespace BusinessLogicLayer.Services.Implementations
             // Chỉ người tạo hoặc Admin mới được sửa
             var staff = await _userRepository.GetByIdAsync(staffUserId);
             if (staff == null) return null;
-            if (eyeResult.StaffId != staffUserId && staff.Role != "Admin")
+            if (eyeResult.StaffId != staffUserId)
                 throw new UnauthorizedAccessException("You do not have permission to edit this result.");
 
             eyeResult.EyeLeft = request.EyeLeft;
@@ -120,7 +120,7 @@ namespace BusinessLogicLayer.Services.Implementations
 
             var staff = await _userRepository.GetByIdAsync(staffUserId);
             if (staff == null) return false;
-            if (eyeResult.StaffId != staffUserId && staff.Role != "Admin")
+            if (eyeResult.StaffId != staffUserId)
                 throw new UnauthorizedAccessException("You do not have permission to delete this result.");
 
             _eyeResultRepository.Delete(eyeResult);
