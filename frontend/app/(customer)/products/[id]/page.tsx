@@ -106,7 +106,7 @@ export default function ProductDetailPage({ params }: PageProps) {
         if (data.productVariants.length > 0) {
           setSelectedVariant(data.productVariants[0]);
         }
-        
+
         // Fetch feedbacks
         getProductFeedbacks(id)
           .then(setFeedbacks)
@@ -198,7 +198,7 @@ export default function ProductDetailPage({ params }: PageProps) {
         <Navbar />
         <main className="pt-32 pb-20 text-center">
           <h1 className="text-2xl font-bold text-[#1A1A1A]">
-            Không tìm thấy sản phẩm
+            Product not found
           </h1>
           <Link
             href="/products"
@@ -340,21 +340,21 @@ export default function ProductDetailPage({ params }: PageProps) {
                   {feedbacks?.averageRating || 5}
                 </span>
                 <span className="text-sm text-[#6B7280]">
-                  ({feedbacks?.totalFeedbacks || 0} đánh giá)
+                  ({feedbacks?.totalFeedbacks || 0} reviews)
                 </span>
               </div>
 
               {/* Price */}
               <div className="flex items-baseline gap-3 mb-2">
                 <span className="text-3xl font-bold text-[#1A1A1A]">
-                  {displayPrice.toLocaleString("vi-VN")}₫
+                  {displayPrice.toLocaleString("en-US")}₫
                 </span>
                 {/* Hiển thị unitPrice gốc nếu variant có giá khác */}
                 {selectedVariant &&
                   selectedVariant.price > 0 &&
                   selectedVariant.price !== dto.unitPrice && (
                     <span className="text-base text-[#6B7280] line-through">
-                      {dto.unitPrice.toLocaleString("vi-VN")}₫
+                      {dto.unitPrice.toLocaleString("en-US")}₫
                     </span>
                   )}
               </div>
@@ -372,7 +372,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                       {" "}
                       · Selected variant price:{" "}
                       <span className="text-[#D4AF37] font-semibold">
-                        {selectedVariant.price.toLocaleString("vi-VN")}₫
+                        {selectedVariant.price.toLocaleString("en-US")}₫
                       </span>
                     </span>
                   )}
@@ -589,18 +589,20 @@ export default function ProductDetailPage({ params }: PageProps) {
               className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-8"
               style={{ fontFamily: "var(--font-heading)" }}
             >
-              Đánh giá từ khách hàng
+              Customer Reviews
             </h2>
 
-            {(!feedbacks || feedbacks.totalFeedbacks === 0) ? (
+            {!feedbacks || feedbacks.totalFeedbacks === 0 ? (
               <p className="text-[#6B7280] bg-[#F9FAFB] p-6 rounded-2xl border border-[#E5E7EB] text-center">
-                Chưa có đánh giá nào cho sản phẩm này.
+                No reviews yet for this product.
               </p>
             ) : (
               <div className="grid lg:grid-cols-3 gap-10">
                 {/* Summary */}
                 <div className="lg:col-span-1 bg-[#F9FAFB] p-8 rounded-3xl border border-[#E5E7EB] flex flex-col items-center justify-center text-center">
-                  <span className="text-6xl font-bold text-[#1A1A1A] mb-2">{feedbacks.averageRating}</span>
+                  <span className="text-6xl font-bold text-[#1A1A1A] mb-2">
+                    {feedbacks.averageRating}
+                  </span>
                   <div className="flex items-center gap-1 mb-2">
                     {[...Array(5)].map((_, i) => (
                       <Star
@@ -613,22 +615,32 @@ export default function ProductDetailPage({ params }: PageProps) {
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-[#6B7280]">Dựa trên {feedbacks.totalFeedbacks} đánh giá</span>
+                  <span className="text-sm text-[#6B7280]">
+                    Based on {feedbacks.totalFeedbacks} reviews
+                  </span>
                 </div>
 
                 {/* Reviews List */}
                 <div className="lg:col-span-2 space-y-6">
                   {feedbacks.feedbacks.map((fb) => (
-                    <div key={fb.id} className="bg-white p-6 rounded-3xl border border-[#E5E7EB]">
+                    <div
+                      key={fb.id}
+                      className="bg-white p-6 rounded-3xl border border-[#E5E7EB]"
+                    >
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <p className="font-bold text-[#1A1A1A] text-lg">{fb.customerName}</p>
+                          <p className="font-bold text-[#1A1A1A] text-lg">
+                            {fb.customerName}
+                          </p>
                           <p className="text-xs text-[#9CA3AF]">
-                            {new Date(fb.createdAt).toLocaleDateString("vi-VN", {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric"
-                            })}
+                            {new Date(fb.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              },
+                            )}
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
@@ -645,7 +657,11 @@ export default function ProductDetailPage({ params }: PageProps) {
                         </div>
                       </div>
                       <p className="text-[#4B5563] text-sm leading-relaxed whitespace-pre-line">
-                        {fb.comment || <span className="italic text-[#9CA3AF]">Không có bình luận</span>}
+                        {fb.comment || (
+                          <span className="italic text-[#9CA3AF]">
+                            No comment
+                          </span>
+                        )}
                       </p>
                     </div>
                   ))}
@@ -661,7 +677,7 @@ export default function ProductDetailPage({ params }: PageProps) {
                 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-8"
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Có thể bạn thích
+                You May Also Like
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
                 {relatedProducts.map((p) => (

@@ -68,7 +68,7 @@ export default function ProductsPage() {
         const dtos = await getProducts();
         setApiProducts(dtos.map(mapProductDto));
       } catch {
-        setError("Không thể tải sản phẩm. Vui lòng thử lại sau.");
+        setError("Unable to load products. Please try again later.");
       } finally {
         setLoading(false);
       }
