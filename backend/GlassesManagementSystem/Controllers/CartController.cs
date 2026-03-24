@@ -96,16 +96,7 @@ public class CartController : ControllerBase
 
         try
         {
-            var cart = await _cartService.AddItemAsync(
-                userId,
-                request.ProductId,
-                request.ProductVariantId,
-                request.LensesVariantId,
-                request.ComboItemId,
-                request.ServiceId,
-                request.SlotId,
-                request.Quantity,
-                request.Note);
+            var cart = await _cartService.AddItemAsync(userId, request);
 
             return Ok(cart);
         }
