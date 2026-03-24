@@ -196,7 +196,11 @@ export default function ReturnExchangesPage() {
                           Request Type
                         </p>
                         <p className="text-[#1A1A1A] font-medium">
-                          {req.type === "Return" ? "Return" : "Exchange"}
+                          {req.type === "Return"
+                            ? "Return"
+                            : req.type === "Exchange"
+                              ? "Exchange"
+                              : "—"}
                         </p>
                       </div>
                       <div>

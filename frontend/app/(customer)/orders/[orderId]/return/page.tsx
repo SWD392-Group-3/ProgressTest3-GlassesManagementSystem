@@ -57,8 +57,10 @@ export default function OrderReturnPage() {
     setLoading(true);
     try {
       const data = await getOrderById(orderId);
-      if (data.status !== "Delivered") {
-        throw new Error("Return/exchange is only available for Delivered orders.");
+      if (data.status !== "Delivered" && data.status !== "Completed") {
+        throw new Error(
+          "Return/exchange is only available for Delivered or Completed orders."
+        );
       }
       const isServiceOrder =
         (data.shippingAddress == null || data.shippingAddress === "") &&
