@@ -4,7 +4,6 @@ using BusinessLogicLayer.Services.Interfaces;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories;
 using DataAccessLayer.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace BusinessLogicLayer.Services.Implementations
 {
@@ -16,6 +15,7 @@ namespace BusinessLogicLayer.Services.Implementations
         private readonly IReturnExchangeImageRepository _returnExchangeImageRepository;
         private readonly IReturnExchangeHistoryRepository _returnExchangeHistoryRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly INotificationService _notificationService;
 
         public ReturnExchangeService(
             IUnitOfWork unitOfWork,
@@ -23,7 +23,8 @@ namespace BusinessLogicLayer.Services.Implementations
             IReturnExchangeItemRepository returnExchangeItemRepository,
             IReturnExchangeImageRepository returnExchangeImageRepository,
             IReturnExchangeHistoryRepository returnExchangeHistoryRepository,
-            ICustomerRepository customerRepository
+            ICustomerRepository customerRepository,
+            INotificationService notificationService
         )
         {
             _unitOfWork = unitOfWork;
@@ -32,6 +33,7 @@ namespace BusinessLogicLayer.Services.Implementations
             _returnExchangeImageRepository = returnExchangeImageRepository;
             _returnExchangeHistoryRepository = returnExchangeHistoryRepository;
             _customerRepository = customerRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<(
@@ -59,13 +61,22 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (order.CustomerId != customer.Id)
                     return (null, "This order does not belong to this customer.");
 
-                // Chỉ được hoàn hàng khi đơn đã giao (Delivered) hoặc khách đã xác nhận nhận hàng (Completed)
-                if (order.Status != "Delivered" && order.Status != "Completed")
-                    return (null, "Return is only allowed when the order has been delivered or completed.");
+                if (order.Status == "Returned")
+                    return (
+                        null,
+                        "This order has been fully returned. New return or exchange requests are not allowed."
+                    );
 
-                // Đơn dịch vụ (không giao hàng) không hỗ trợ đổi trả
-                if (string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone))
-                    return (null, "Service orders do not support return or exchange requests.");
+                // Delivered / Completed / PartiallyReturned (còn dòng hàng có thể đổi trả)
+                if (
+                    order.Status != "Delivered"
+                    && order.Status != "Completed"
+                    && order.Status != "PartiallyReturned"
+                )
+                    return (
+                        null,
+                        "Return is only allowed when the order has been delivered, completed, or partially returned."
+                    );
 
                 // Lấy tất cả OrderItem thuộc order này để validate
                 var orderItemRepo = _unitOfWork.GetRepository<OrderItem>();
@@ -73,13 +84,26 @@ namespace BusinessLogicLayer.Services.Implementations
                     oi => oi.OrderId == request.OrderId,
                     cancellationToken
                 );
-                var orderItemDict = orderItems.ToDictionary(oi => oi.Id);
+                var orderItemsList = orderItems.ToList();
+                var orderItemDict = orderItemsList.ToDictionary(oi => oi.Id);
+
+                if (!orderItemsList.Any(IsOrderItemEligibleForReturnExchange))
+                    return (
+                        null,
+                        "Return/exchange only applies to orders that include products or lenses. Pure service lines are not eligible."
+                    );
 
                 // Validate từng item trong request
                 foreach (var item in request.Items)
                 {
                     if (!orderItemDict.TryGetValue(item.OrderItemId, out var orderItem))
                         return (null, $"Item {item.OrderItemId} does not belong to this order.");
+
+                    if (!IsOrderItemEligibleForReturnExchange(orderItem))
+                        return (
+                            null,
+                            "Return/exchange does not apply to service-only order lines (consultation / booking). Only products or lenses can be returned."
+                        );
 
                     if (item.Quantity <= 0)
                         return (null, "Return quantity must be greater than 0.");
@@ -443,7 +467,25 @@ namespace BusinessLogicLayer.Services.Implementations
                     );
                 }
 
+                (Guid customerId, string newOrderStatus)? orderStatusNotify = null;
+                if (returnExchange.Status == "Completed")
+                {
+                    orderStatusNotify = await TrySyncOrderStatusAfterReturnWorkflowCompletedAsync(
+                        returnExchange.OrderId,
+                        cancellationToken
+                    );
+                }
+
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                if (orderStatusNotify.HasValue)
+                {
+                    await _notificationService.SendOrderStatusChangedAsync(
+                        orderStatusNotify.Value.customerId,
+                        returnExchange.OrderId,
+                        orderStatusNotify.Value.newOrderStatus
+                    );
+                }
 
                 return await GetReturnExchangeByIdAsync(returnExchange.Id, cancellationToken);
             }
@@ -688,6 +730,76 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 return (false, $"Lỗi khi thêm hình ảnh: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Cập nhật Order.Status sau khi phiếu đổi/trả chuyển sang Completed:
+        /// Returned nếu mọi dòng hàng đã được nhận hoàn thành công (Received) đủ số lượng;
+        /// PartiallyReturned nếu chỉ một phần.
+        /// Thông báo gửi sau SaveChanges ở caller.
+        /// </summary>
+        private async Task<(Guid customerId, string newOrderStatus)?> TrySyncOrderStatusAfterReturnWorkflowCompletedAsync(
+            Guid orderId,
+            CancellationToken cancellationToken
+        )
+        {
+            var orderRepo = _unitOfWork.GetRepository<Order>();
+            var order = await orderRepo.GetByIdAsync(orderId, cancellationToken);
+            if (order == null || order.Status == "Cancelled" || order.Status == "Returned")
+                return null;
+
+            var orderItemRepo = _unitOfWork.GetRepository<OrderItem>();
+            var orderItems = (
+                await orderItemRepo.FindAsync(oi => oi.OrderId == orderId, cancellationToken)
+            ).ToList();
+            if (orderItems.Count == 0)
+                return null;
+
+            var returnableOrderItems = orderItems.Where(IsOrderItemEligibleForReturnExchange).ToList();
+            if (returnableOrderItems.Count == 0)
+                return null;
+
+            var qtyByItem =
+                await _returnExchangeItemRepository.GetReceivedQuantityByOrderItemForCompletedReturnsAsync(
+                    orderId,
+                    cancellationToken
+                );
+
+            var allFullyReturned = returnableOrderItems.All(oi =>
+                qtyByItem.TryGetValue(oi.Id, out var q) && q >= oi.Quantity
+            );
+            var anyReturned = returnableOrderItems.Any(oi =>
+                qtyByItem.TryGetValue(oi.Id, out var q) && q > 0
+            );
+
+            string? newStatus = null;
+            if (allFullyReturned)
+                newStatus = "Returned";
+            else if (anyReturned)
+                newStatus = "PartiallyReturned";
+
+            if (newStatus == null || order.Status == newStatus)
+                return null;
+
+            var allowedFrom = new[] { "Delivered", "Completed", "PartiallyReturned" };
+            if (order.Status == null || !allowedFrom.Contains(order.Status))
+                return null;
+
+            order.Status = newStatus;
+            orderRepo.Update(order);
+
+            return (order.CustomerId, newStatus);
+        }
+
+        /// <summary>
+        /// Đổi trả chỉ cho gọng / tròng / combo (và productId). Dòng chỉ dịch vụ (chỉ ServiceId, không sản phẩm) không áp dụng.
+        /// </summary>
+        private static bool IsOrderItemEligibleForReturnExchange(OrderItem oi)
+        {
+            return oi.ProductId.HasValue
+                || oi.ProductVariantId.HasValue
+                || oi.LensesVariantId.HasValue
+                || oi.ComboItemId.HasValue;
         }
     }
 }

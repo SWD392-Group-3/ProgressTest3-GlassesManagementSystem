@@ -12,6 +12,7 @@ import {
   LogOut,
   Package,
   Eye,
+  RefreshCw,
 } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { getUser, clearAuth, StoredUser } from "@/lib/auth-storage";
@@ -176,6 +177,16 @@ export default function Navbar() {
                         </Link>
                         {!isSalesUser(user) && !isOperationUser(user) && (
                           <Link
+                            href="/return-exchanges"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
+                          >
+                            <RefreshCw className="w-4 h-4 text-[#6B7280]" />
+                            Returns & exchanges
+                          </Link>
+                        )}
+                        {!isSalesUser(user) && !isOperationUser(user) && (
+                          <Link
                             href="/eye-results"
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1A1A1A] hover:bg-[#F5F5F5] transition-colors"
@@ -284,6 +295,15 @@ export default function Navbar() {
               >
                 Orders
               </Link>
+              {!isSalesUser(user) && !isOperationUser(user) && (
+                <Link
+                  href="/return-exchanges"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium tracking-wide text-[#1A1A1A] hover:text-[#D4AF37] transition-colors"
+                >
+                  Returns & exchanges
+                </Link>
+              )}
               {!isSalesUser(user) && !isOperationUser(user) && (
                 <Link
                   href="/eye-results"

@@ -94,7 +94,8 @@ export interface CreateReturnExchangeItemRequest {
   isExchanged: boolean;
   quantity: number;
   reason: string;
-  images: string[];
+  /** Khớp backend `ReturnItemRequest.ImageUrls` (JSON: imageUrls) */
+  imageUrls: string[];
 }
 
 export interface CreateReturnExchangeRequest {
