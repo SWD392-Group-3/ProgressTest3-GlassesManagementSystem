@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BusinessLogicLayer.DTOs.Response;
+using BusinessLogicLayer.DTOs.Request;
 using BusinessLogicLayer.Services.Interfaces;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
@@ -44,10 +45,10 @@ namespace BusinessLogicLayer.Services.Implementations
             throw new Exception("Customer not found.");
         }
 
-        public async Task<CartDto> AddItemAsync(Guid userId, Guid? productId, Guid? productVariantId, Guid? lensesVariantId, Guid? comboItemId, Guid? serviceId, Guid? slotId, int quantity, string? note)
+        public async Task<CartDto> AddItemAsync(Guid userId, AddCartItemRequest request)
         {
             var customerId = await ResolveCustomerIdAsync(userId);
-
+            
             // Tự tạo cart nếu chưa có
             var cart = await _cartRepository.GetCartByCustomerIdAsync(customerId);
             if (cart == null)
@@ -68,31 +69,31 @@ namespace BusinessLogicLayer.Services.Implementations
             // Tính UnitPrice dựa theo loại item được chọn
             decimal unitPrice = 0;
 
-            if (productId.HasValue && !productVariantId.HasValue)
+            if (request.ProductId.HasValue && !request.ProductVariantId.HasValue)
             {
                 var product = await _unitOfWork.GetRepository<Product>()
-                    .GetByIdAsync(productId.Value);
+                    .GetByIdAsync(request.ProductId.Value);
                 unitPrice += product?.UnitPrice ?? 0;
             }
 
-            if (productVariantId.HasValue)
+            if (request.ProductVariantId.HasValue)
             {
                 var productVariant = await _unitOfWork.GetRepository<ProductVariant>()
-                    .GetByIdAsync(productVariantId.Value);
+                    .GetByIdAsync(request.ProductVariantId.Value);
                 unitPrice += productVariant?.Price ?? 0;
             }
 
-            if (lensesVariantId.HasValue)
+            if (request.LensesVariantId.HasValue)
             {
                 var lensVariant = await _unitOfWork.GetRepository<LensVariant>()
-                    .GetByIdAsync(lensesVariantId.Value);
+                    .GetByIdAsync(request.LensesVariantId.Value);
                 unitPrice += lensVariant?.Price ?? 0;
             }
 
-            if (comboItemId.HasValue)
+            if (request.ComboItemId.HasValue)
             {
                 var comboItem = await _unitOfWork.GetRepository<ComboItem>()
-                    .GetByIdAsync(comboItemId.Value);
+                    .GetByIdAsync(request.ComboItemId.Value);
                 var combo = comboItem != null
                     ? await _unitOfWork.GetRepository<Combo>()
                         .GetByIdAsync(comboItem.ComboId)
@@ -100,18 +101,18 @@ namespace BusinessLogicLayer.Services.Implementations
                 unitPrice += combo?.BasePrice ?? 0;
             }
 
-            if (serviceId.HasValue)
+            if (request.ServiceId.HasValue)
             {
                 var service = await _unitOfWork.GetRepository<Service>()
-                    .GetByIdAsync(serviceId.Value);
+                    .GetByIdAsync(request.ServiceId.Value);
                 unitPrice += service?.Price ?? 0;
             }
 
             // Khi chọn dịch vụ kèm slot: kiểm tra slot tồn tại và còn trống
-            if (slotId.HasValue)
+            if (request.SlotId.HasValue)
             {
                 var slot = await _unitOfWork.GetRepository<Slot>()
-                    .GetByIdAsync(slotId.Value);
+                    .GetByIdAsync(request.SlotId.Value);
                 if (slot == null)
                     throw new Exception("Slot does not exist.");
                 var isAvailable = slot.Status == null || slot.Status == "Available";
@@ -125,15 +126,15 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 Id = Guid.NewGuid(),
                 CartId = cart.Id,
-                ProductId = productId,
-                ProductVariantId = productVariantId,
-                LensesVariantId = lensesVariantId,
-                ComboItemId = comboItemId,
-                ServiceId = serviceId,
-                SlotId = slotId,
-                Quantity = quantity,
+                ProductId = request.ProductId,
+                ProductVariantId = request.ProductVariantId,
+                LensesVariantId = request.LensesVariantId,
+                ComboItemId = request.ComboItemId,
+                ServiceId = request.ServiceId,
+                SlotId = request.SlotId,
+                Quantity = request.Quantity,
                 UnitPrice = unitPrice,
-                Note = note
+                Note = request.Note
             };
 
             cart.CartItems.Add(cartItem);
