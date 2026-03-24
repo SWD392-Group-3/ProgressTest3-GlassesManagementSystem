@@ -59,9 +59,9 @@ namespace BusinessLogicLayer.Services.Implementations
                 if (order.CustomerId != customer.Id)
                     return (null, "This order does not belong to this customer.");
 
-                // Chỉ được hoàn hàng khi đơn đã giao
-                if (order.Status != "Delivered")
-                    return (null, "Return is only allowed when the order has been delivered.");
+                // Chỉ được hoàn hàng khi đơn đã giao (Delivered) hoặc khách đã xác nhận nhận hàng (Completed)
+                if (order.Status != "Delivered" && order.Status != "Completed")
+                    return (null, "Return is only allowed when the order has been delivered or completed.");
 
                 // Đơn dịch vụ (không giao hàng) không hỗ trợ đổi trả
                 if (string.IsNullOrEmpty(order.ShippingAddress) && string.IsNullOrEmpty(order.ShippingPhone))
@@ -458,7 +458,8 @@ namespace BusinessLogicLayer.Services.Implementations
             string? Error
         )> GetReturnExchangeByIdAsync(
             Guid returnExchangeId,
-            CancellationToken cancellationToken = default
+            CancellationToken cancellationToken = default,
+            Guid? customerUserIdMustOwnRequest = null
         )
         {
             try
@@ -470,6 +471,15 @@ namespace BusinessLogicLayer.Services.Implementations
 
                 if (returnExchange == null)
                     return (null, "Return request not found.");
+
+                if (customerUserIdMustOwnRequest.HasValue)
+                {
+                    var customer = await _customerRepository.GetByUserIdAsync(
+                        customerUserIdMustOwnRequest.Value
+                    );
+                    if (customer == null || customer.Id != returnExchange.CustomerId)
+                        return (null, "Return request not found.");
+                }
 
                 var items = await _returnExchangeItemRepository.GetByReturnExchangeIdAsync(
                     returnExchangeId

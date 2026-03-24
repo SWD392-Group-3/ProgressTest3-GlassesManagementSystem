@@ -213,9 +213,7 @@ export default function SalesReturnsPage() {
         { auth: true },
       );
       setSuccess(
-        isApproved
-          ? "Return request approved."
-          : "Return request rejected.",
+        isApproved ? "Return request approved." : "Return request rejected.",
       );
       setExpandedId(null);
       fetchReturns();
@@ -433,7 +431,7 @@ export default function SalesReturnsPage() {
 
                             {/* Operation: per-item receive form */}
                             {isOperation && receiveForm.items[item.id] && (
-                                <div className="mt-2 space-y-2 border-t pt-2 border-dashed border-[#E5E7EB]">
+                              <div className="mt-2 space-y-2 border-t pt-2 border-dashed border-[#E5E7EB]">
                                 <div className="flex flex-wrap gap-3">
                                   <div>
                                     <label className="block text-xs font-semibold text-[#6B7280] mb-1">
