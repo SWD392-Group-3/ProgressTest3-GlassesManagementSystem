@@ -75,6 +75,24 @@ const STATUS_MAP: Record<string, StatusConfig> = {
     bg: "bg-green-50 border-green-100",
     icon: <CheckCircle2 className="w-3.5 h-3.5" />,
   },
+  Completed: {
+    label: "Completed",
+    color: "text-green-700",
+    bg: "bg-green-50 border-green-100",
+    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+  },
+  PartiallyReturned: {
+    label: "Partial return",
+    color: "text-amber-700",
+    bg: "bg-amber-50 border-amber-100",
+    icon: <RefreshCw className="w-3.5 h-3.5" />,
+  },
+  Returned: {
+    label: "Returned / closed",
+    color: "text-emerald-700",
+    bg: "bg-emerald-50 border-emerald-100",
+    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+  },
   Cancelled: {
     label: "Cancelled",
     color: "text-red-500",

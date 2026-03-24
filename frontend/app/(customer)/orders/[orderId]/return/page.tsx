@@ -13,7 +13,12 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { getUser } from "@/lib/auth-storage";
-import { getOrderById, OrderDto, OrderItemDto } from "@/lib/api/order";
+import {
+  getOrderById,
+  OrderDto,
+  isOrderItemReturnEligible,
+  orderHasReturnEligibleItems,
+} from "@/lib/api/order";
 import {
   createReturnExchange,
   uploadReturnImages,
@@ -57,21 +62,30 @@ export default function OrderReturnPage() {
     setLoading(true);
     try {
       const data = await getOrderById(orderId);
-      if (data.status !== "Delivered" && data.status !== "Completed") {
+      if (data.status === "Returned") {
         throw new Error(
-          "Return/exchange is only available for Delivered or Completed orders."
+          "This order has been fully returned. Return or exchange is no longer available."
         );
       }
-      const isServiceOrder =
-        (data.shippingAddress == null || data.shippingAddress === "") &&
-        (data.shippingPhone == null || data.shippingPhone === "");
-      if (isServiceOrder) {
-        throw new Error("Service orders do not support return or exchange.");
+      if (
+        data.status !== "Delivered" &&
+        data.status !== "Completed" &&
+        data.status !== "PartiallyReturned"
+      ) {
+        throw new Error(
+          "Return/exchange is only available for Delivered, Completed, or partially returned orders."
+        );
+      }
+      if (!orderHasReturnEligibleItems(data)) {
+        throw new Error(
+          "Return/exchange only applies to orders that include products or lenses. Service-only lines (e.g. consultation) are not eligible."
+        );
       }
       setOrder(data);
 
       const initialForm: Record<string, UIItemData> = {};
       data.orderItems.forEach((item) => {
+        if (!isOrderItemReturnEligible(item)) return;
         initialForm[item.id] = {
           selected: false,
           orderItemId: item.id,
@@ -184,7 +198,7 @@ export default function OrderReturnPage() {
           isExchanged: returnType === "Exchange",
           quantity: item.quantity,
           reason: item.reason,
-          images: uploadedUrls,
+          imageUrls: uploadedUrls,
         });
       }
 
@@ -296,7 +310,7 @@ export default function OrderReturnPage() {
                     Select defective product(s)
                   </h3>
 
-                  {order.orderItems.map((item) => {
+                  {order.orderItems.filter(isOrderItemReturnEligible).map((item) => {
                     const uiData = itemForms[item.id];
                     if (!uiData) return null;
 

@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Images,
   Loader2,
   Package,
   RefreshCw,
@@ -36,7 +37,7 @@ interface ReturnExchangeItem {
   note: string | null;
   inspectionResult: string | null;
   createdAt: string;
-  images: ReturnExchangeImage[];
+  images?: ReturnExchangeImage[] | null;
 }
 
 interface ReturnExchange {
@@ -94,6 +95,47 @@ function fmtDate(d: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function ItemEvidencePhotos({ images }: { images: ReturnExchangeImage[] }) {
+  if (images.length === 0) {
+    return (
+      <p className="text-xs text-[#9CA3AF] mt-2">
+        Không có ảnh đính kèm · No photos uploaded
+      </p>
+    );
+  }
+  return (
+    <div className="mt-3 pt-3 border-t border-[#E5E7EB]">
+      <div className="flex items-center gap-2 mb-2">
+        <Images className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280]">
+          Ảnh sản phẩm bị hỏng · Evidence photos
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        {images.map((img) => (
+          <a
+            key={img.id}
+            href={img.imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block shrink-0 rounded-xl overflow-hidden border border-[#E5E7EB] bg-white shadow-sm ring-0 transition-all hover:ring-2 hover:ring-[#D4AF37]/40"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.imageUrl}
+              alt="Ảnh minh chứng lỗi sản phẩm"
+              className="w-24 h-24 sm:w-28 sm:h-28 object-cover"
+            />
+          </a>
+        ))}
+      </div>
+      <p className="text-[10px] text-[#9CA3AF] mt-2">
+        Bấm ảnh để xem kích thước đầy đủ
+      </p>
+    </div>
+  );
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -391,11 +433,13 @@ export default function SalesReturnsPage() {
                         Returned items
                       </p>
                       <div className="space-y-3">
-                        {re.items.map((item) => (
-                          <div
-                            key={item.id}
-                            className="p-3 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] space-y-2"
-                          >
+                        {re.items.map((item) => {
+                          const evidencePhotos = item.images ?? [];
+                          return (
+                            <div
+                              key={item.id}
+                              className="p-3 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] space-y-2"
+                            >
                             <div className="flex justify-between items-center">
                               <span className="text-xs text-[#6B7280] font-mono">
                                 Item #
@@ -410,24 +454,7 @@ export default function SalesReturnsPage() {
                                 Reason: {item.reason}
                               </p>
                             )}
-                            {item.images.length > 0 && (
-                              <div className="flex gap-2 flex-wrap">
-                                {item.images.map((img) => (
-                                  <a
-                                    key={img.id}
-                                    href={img.imageUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <img
-                                      src={img.imageUrl}
-                                      alt="Return image"
-                                      className="w-14 h-14 object-cover rounded-lg border border-[#E5E7EB] hover:opacity-80 transition-opacity"
-                                    />
-                                  </a>
-                                ))}
-                              </div>
-                            )}
+                            <ItemEvidencePhotos images={evidencePhotos} />
 
                             {/* Operation: per-item receive form */}
                             {isOperation && receiveForm.items[item.id] && (
@@ -512,8 +539,9 @@ export default function SalesReturnsPage() {
                                 />
                               </div>
                             )}
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 

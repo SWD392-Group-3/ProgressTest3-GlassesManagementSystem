@@ -155,9 +155,18 @@ export default function ReturnExchangesPage() {
               <h2 className="text-2xl font-bold text-[#1A1A1A] mb-3 font-heading">
                 No requests yet
               </h2>
-              <p className="text-[#6B7280] mb-8">
-                You have not submitted any return or exchange requests.
+              <p className="text-[#6B7280] mb-6 max-w-sm mx-auto">
+                You have not submitted any return or exchange requests. Open an
+                order that has been delivered, then use &quot;Request Return /
+                Exchange&quot;.
               </p>
+              <Link
+                href="/orders"
+                className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-[#D4AF37] text-white font-semibold text-sm hover:bg-[#C9A030] transition-colors"
+              >
+                Go to my orders
+                <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           ) : (
             <div className="space-y-4">
@@ -166,16 +175,27 @@ export default function ReturnExchangesPage() {
                   key={req.id}
                   className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#F5F5F5] flex items-center justify-center">
-                        <RefreshCcw className="w-4 h-4 text-[#D4AF37]" />
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-b border-[#E5E7EB]">
+                    <div className="flex flex-wrap items-center gap-4 sm:gap-8">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#F5F5F5] flex items-center justify-center shrink-0">
+                          <RefreshCcw className="w-4 h-4 text-[#D4AF37]" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6B7280]">Request ID</p>
+                          <p className="text-sm font-mono font-semibold text-[#1A1A1A]">
+                            #{(req.id ?? "").slice(0, 8).toUpperCase()}
+                          </p>
+                        </div>
                       </div>
                       <div>
-                        <p className="text-xs text-[#6B7280]">Request ID</p>
-                        <p className="text-sm font-mono font-semibold text-[#1A1A1A]">
-                          #{(req.id ?? "").slice(0, 8).toUpperCase()}
-                        </p>
+                        <p className="text-xs text-[#6B7280]">Order</p>
+                        <Link
+                          href={`/orders/${req.orderId}`}
+                          className="text-sm font-mono font-semibold text-[#D4AF37] hover:text-[#C9A030] hover:underline"
+                        >
+                          #{(req.orderId ?? "").slice(0, 8).toUpperCase()}
+                        </Link>
                       </div>
                     </div>
                     <StatusBadge status={req.status} />

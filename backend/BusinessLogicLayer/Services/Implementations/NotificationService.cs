@@ -380,6 +380,8 @@ public class NotificationService : INotificationService
         "Cancelled"          => "Order cancelled",
         "Rejected"           => "Order rejected",
         "Completed"          => "Order completed",
+        "PartiallyReturned"  => "Partial return processed",
+        "Returned"           => "Return / exchange completed",
         _                    => "Order status updated"
     };
 
@@ -393,6 +395,10 @@ public class NotificationService : INotificationService
         "Cancelled"          => "Your order has been cancelled.",
         "Rejected"           => "Your order has been rejected.",
         "Completed"          => "Your order is completed.",
+        "PartiallyReturned"  =>
+            "Part of your order has been processed for return or exchange. You can still request return/exchange for remaining items if applicable.",
+        "Returned"           =>
+            "Return or exchange for this order has been completed. The order is now closed for new return requests.",
         _                    => $"Order status updated: {status}."
     };
 }
