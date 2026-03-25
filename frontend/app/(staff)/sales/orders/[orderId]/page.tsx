@@ -60,7 +60,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
 
 // Sales: đơn giao hàng chỉ chuyển tới Confirmed; đơn dịch vụ có thể chuyển Confirmed -> Completed
 const NEXT_STATUS: Record<string, string | null> = {
-  Pending: null,
+  Pending: "Confirmed",
   Paid: "Confirmed",
   Confirmed: null,
   Shipped: null,
@@ -68,7 +68,7 @@ const NEXT_STATUS: Record<string, string | null> = {
   Cancelled: null,
 };
 const NEXT_STATUS_SERVICE: Record<string, string | null> = {
-  Pending: null,
+  Pending: "Confirmed",
   Paid: "Confirmed",
   Confirmed: "Completed",
   Completed: null,
@@ -466,9 +466,18 @@ export default function SalesOrderDetailPage() {
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                   <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                    Delivery information
+                    Delivery & Customer information
                   </h2>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex flex-col gap-1 border-b border-gray-50 pb-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Customer:</span>
+                        <span className="text-gray-900 font-bold">{order.customerName ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-500 text-xs">
+                        <span>{order.customerEmail ?? "—"}</span>
+                      </div>
+                    </div>
                     <div className="flex items-start gap-2">
                       <MapPin className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                       <span className="text-gray-700">

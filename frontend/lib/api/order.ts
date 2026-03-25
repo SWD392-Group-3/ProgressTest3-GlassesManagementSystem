@@ -39,6 +39,8 @@ export interface OrderDto {
   discountAmount: number;
   finalAmount: number;
   paymentStatus: string | null;
+  customerName: string | null;
+  customerEmail: string | null;
   shippingAddress: string | null;
   shippingPhone: string | null;
   note: string | null;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +19,8 @@ namespace BusinessLogicLayer.DTOs.Response
         public DateTime OrderDate { get; set; }
         public string? ShippingAddress { get; set; }
         public string? ShippingPhone { get; set; }
-        public string? Note { get; set; }
+        public string? CustomerName { get; set; }
+        public string? CustomerEmail { get; set; }
         public IEnumerable<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
     }
 }

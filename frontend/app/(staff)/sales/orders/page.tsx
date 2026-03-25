@@ -182,6 +182,9 @@ export default function SalesOrdersPage() {
                       Date
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
+                      Customer
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-600">
                       Phone
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600">
@@ -209,6 +212,9 @@ export default function SalesOrdersPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-700">
                         {fmtDate(order.orderDate)}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700 font-medium">
+                        {order.customerName ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
                         {order.shippingPhone ?? "—"}

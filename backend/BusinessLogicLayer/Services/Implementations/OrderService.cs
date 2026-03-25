@@ -346,7 +346,7 @@ namespace BusinessLogicLayer.Services.Implementations
                     .ToList(),
             };
         }
-
+//
         public async Task<IEnumerable<OrderDto>> GetAllAsync()
         {
             var orders = await _orderRepository.GetAll();
@@ -361,6 +361,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 FinalAmount = o.TotalAmount - o.DiscountAmount,
                 PaymentStatus = o.Payments.FirstOrDefault()?.Status,
                 OrderDate = o.OrderDate,
+                CustomerName = o.Customer?.FullName,
+                CustomerEmail = o.Customer?.User?.Email, // Assuming Customer has User reference
                 ShippingAddress = o.ShippingAddress,
                 ShippingPhone = o.ShippingPhone,
                 Note = o.Note,
@@ -403,6 +405,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 FinalAmount = o.TotalAmount - o.DiscountAmount,
                 PaymentStatus = o.Payments.FirstOrDefault()?.Status,
                 OrderDate = o.OrderDate,
+                CustomerName = o.Customer?.FullName,
+                CustomerEmail = o.Customer?.User?.Email,
                 ShippingAddress = o.ShippingAddress,
                 ShippingPhone = o.ShippingPhone,
                 Note = o.Note,
@@ -443,6 +447,8 @@ namespace BusinessLogicLayer.Services.Implementations
                 FinalAmount = order.TotalAmount - order.DiscountAmount,
                 PaymentStatus = order.Payments.FirstOrDefault()?.Status,
                 OrderDate = order.OrderDate,
+                CustomerName = order.Customer?.FullName,
+                CustomerEmail = order.Customer?.User?.Email,
                 ShippingAddress = order.ShippingAddress,
                 ShippingPhone = order.ShippingPhone,
                 Note = order.Note,
@@ -492,6 +498,7 @@ namespace BusinessLogicLayer.Services.Implementations
             {
                 validTransitions = new Dictionary<string, string[]>
                 {
+                    { "Pending", new[] { "Confirmed" } },
                     { "Paid", new[] { "Confirmed" } },
                     { "Confirmed", new[] { "Completed" } },
                 };
@@ -501,6 +508,7 @@ namespace BusinessLogicLayer.Services.Implementations
                 // Đơn có hàng giao: Paid -> Confirmed -> ... -> Shipped -> Delivered
                 validTransitions = new Dictionary<string, string[]>
                 {
+                    { "Pending", new[] { "Confirmed" } },
                     { "Paid", new[] { "Confirmed" } },
                     { "Confirmed", new[] { "ProcessingTemplate", "Shipped" } },
                     { "ProcessingTemplate", new[] { "Manufacturing" } },
