@@ -77,9 +77,20 @@ namespace GlassesManagementSystem.Controllers
             CancellationToken cancellationToken
         )
         {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var role = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            var customerScope =
+                string.Equals(role, "Customer", StringComparison.OrdinalIgnoreCase)
+                    ? userId.Value
+                    : (Guid?)null;
+
             var (response, error) = await _returnExchangeService.GetReturnExchangeByIdAsync(
                 id,
-                cancellationToken
+                cancellationToken,
+                customerScope
             );
 
             if (response == null)

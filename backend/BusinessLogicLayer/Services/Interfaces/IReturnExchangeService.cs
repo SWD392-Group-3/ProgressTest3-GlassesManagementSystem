@@ -44,9 +44,13 @@ namespace BusinessLogicLayer.Services.Interfaces
         )> GetApprovedReturnExchangesAsync(CancellationToken cancellationToken = default);
 
         // Common actions
+        /// <param name="customerUserIdMustOwnRequest">
+        /// Nếu có (JWT của Customer), chỉ trả về khi đơn thuộc khách đó; không khớp → lỗi như không tìm thấy.
+        /// </param>
         Task<(ReturnExchangeResponse? Response, string? Error)> GetReturnExchangeByIdAsync(
             Guid returnExchangeId,
-            CancellationToken cancellationToken = default
+            CancellationToken cancellationToken = default,
+            Guid? customerUserIdMustOwnRequest = null
         );
 
         Task<(bool Success, string? Error)> AddImagesAsync(

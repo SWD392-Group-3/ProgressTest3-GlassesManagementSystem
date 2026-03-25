@@ -15,11 +15,17 @@ export interface ReturnExchangeItemDto {
   id: string;
   returnExchangeId?: string;
   orderItemId: string;
-  isReturned: boolean;
-  isExchanged: boolean;
+  isReturned?: boolean;
+  isExchanged?: boolean;
   quantity: number;
-  reason: string;
-  images: string[];
+  reason: string | null;
+  /** Pending, Approved, Rejected, Received, … */
+  status: string;
+  note?: string | null;
+  inspectionResult?: string | null;
+  createdAt?: string;
+  /** Backend trả object; legacy list có thể là string URL */
+  images: ReturnExchangeImageDto[] | string[];
 }
 
 export interface ReturnExchangeHistoryDto {
@@ -37,14 +43,19 @@ export interface ReturnExchangeDto {
   id: string;
   orderId: string;
   customerId: string;
-  type: string; // 'Return' or 'Exchange'
+  /** Backend không có field riêng; form tạo có thể gửi type */
+  type?: string;
   status: string; // 'Pending', 'ApprovedBySales', 'ReceivedByOperation', 'Rejected', 'Completed'
-  totalRefundAmount: number | null;
-  reason: string;
-  images: string[];
+  totalRefundAmount?: number | null;
+  reason: string | null;
+  rejectionReason?: string | null;
+  images?: string[];
   createdAt: string;
+  reviewedBySalesAt?: string | null;
+  receivedByOperationAt?: string | null;
   resolvedAt: string | null;
   items: ReturnExchangeItemDto[];
+  histories?: ReturnExchangeHistoryDto[];
 }
 
 /** POST /api/ReturnExchange/review — Sales phê duyệt/từ chối */
@@ -83,7 +94,8 @@ export interface CreateReturnExchangeItemRequest {
   isExchanged: boolean;
   quantity: number;
   reason: string;
-  images: string[];
+  /** Khớp backend `ReturnItemRequest.ImageUrls` (JSON: imageUrls) */
+  imageUrls: string[];
 }
 
 export interface CreateReturnExchangeRequest {

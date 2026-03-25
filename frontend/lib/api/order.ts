@@ -48,6 +48,20 @@ export interface OrderDto {
   orderItems: OrderItemDto[];
 }
 
+/** Frames / lenses / combo — not service-only lines (serviceId only). */
+export function isOrderItemReturnEligible(item: OrderItemDto): boolean {
+  return !!(
+    item.productId ||
+    item.productVariantId ||
+    item.lensesVariantId ||
+    item.comboItemId
+  );
+}
+
+export function orderHasReturnEligibleItems(order: OrderDto): boolean {
+  return (order.orderItems ?? []).some(isOrderItemReturnEligible);
+}
+
 export interface CreateOrderRequest {
   cartId: string;
   selectedCartItemIds?: string[] | null;

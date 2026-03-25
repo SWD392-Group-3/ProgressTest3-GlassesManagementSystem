@@ -28,6 +28,7 @@ import {
   completeOrder,
   createMomoPayment,
   OrderDto,
+  orderHasReturnEligibleItems,
 } from "@/lib/api";
 import { useNotifications } from "@/lib/NotificationContext";
 import { checkCanFeedback } from "@/lib/api/feedback";
@@ -67,6 +68,8 @@ const STATUS_LABEL: Record<string, string> = {
   Delivered: "Delivered",
   Completed: "Completed",
   Cancelled: "Cancelled",
+  PartiallyReturned: "Partial return done",
+  Returned: "Return / exchange closed",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
@@ -77,6 +80,8 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   Delivered: <CheckCircle2 className="w-4 h-4" />,
   Completed: <CheckCircle2 className="w-4 h-4" />,
   Cancelled: <XCircle className="w-4 h-4" />,
+  PartiallyReturned: <RefreshCw className="w-4 h-4" />,
+  Returned: <Package className="w-4 h-4" />,
 };
 
 export default function OrderDetailPage() {
@@ -111,7 +116,11 @@ export default function OrderDetailPage() {
       setOrder(data);
 
       // Fetch which items can be reviewed if status is Delivered/Completed
-      if (data.status === "Delivered" || data.status === "Completed") {
+      if (
+        data.status === "Delivered" ||
+        data.status === "Completed" ||
+        data.status === "PartiallyReturned"
+      ) {
         const canReviewMap = await Promise.all(
           (data.orderItems ?? []).map(async (item) => {
             try {
@@ -226,13 +235,26 @@ export default function OrderDetailPage() {
   const canPay = order?.status === "Pending" && order?.paymentStatus !== "Paid";
   const canComplete = order?.status === "Delivered";
   const canReturn =
-    order?.status === "Completed" || order?.status === "Delivered";
+    !!order &&
+    order.status !== "Returned" &&
+    orderHasReturnEligibleItems(order) &&
+    (order.status === "Completed" ||
+      order.status === "Delivered" ||
+      order.status === "PartiallyReturned");
   const canReview =
-    order?.status === "Completed" || order?.status === "Delivered";
+    order?.status === "Completed" ||
+    order?.status === "Delivered" ||
+    order?.status === "PartiallyReturned";
   const isCancelled = order?.status === "Cancelled";
+  const isReturned = order?.status === "Returned";
+  const isPartiallyReturned = order?.status === "PartiallyReturned";
   const currentStepIndex = isCancelled
     ? -1
-    : STATUS_STEPS.indexOf(order?.status ?? "");
+    : isReturned
+      ? -1
+      : isPartiallyReturned
+        ? STATUS_STEPS.length - 1
+        : STATUS_STEPS.indexOf(order?.status ?? "");
 
   return (
     <>
@@ -292,7 +314,16 @@ export default function OrderDetailPage() {
           ) : order ? (
             <div className="space-y-6">
               {/* Progress / Status */}
-              {!isCancelled ? (
+              {isReturned ? (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl px-5 py-4 flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <p className="text-sm font-semibold text-emerald-800">
+                    Return or exchange for this order is complete. This order is
+                    closed for new return or exchange requests.
+                  </p>
+                </div>
+              ) : null}
+              {!isCancelled && !isReturned ? (
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E7EB]">
                   <div className="flex items-center justify-between">
                     {STATUS_STEPS.map((step, idx) => {

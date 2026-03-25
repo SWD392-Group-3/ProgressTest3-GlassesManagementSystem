@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using DataAccessLayer.Database;
 using DataAccessLayer.Database.Entities;
 using DataAccessLayer.Repositories.Interfaces;
@@ -46,6 +48,26 @@ namespace DataAccessLayer.Repositories.Implementations
                 .ThenInclude(pv => pv!.Product)
                 .Where(x => x.Id == id)
                 .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<IReadOnlyDictionary<Guid, int>> GetReceivedQuantityByOrderItemForCompletedReturnsAsync(
+            Guid orderId,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var rows = await (
+                from rei in _context.Set<ReturnExchangeItem>()
+                join re in _context.Set<ReturnExchange>() on rei.ReturnExchangeId equals re.Id
+                where
+                    re.OrderId == orderId
+                    && re.Status == "Completed"
+                    && rei.Status == "Received"
+                group rei by rei.OrderItemId
+                into g
+                select new { OrderItemId = g.Key, Qty = g.Sum(x => x.Quantity) }
+            ).ToListAsync(cancellationToken);
+
+            return rows.ToDictionary(x => x.OrderItemId, x => x.Qty);
         }
     }
 }
