@@ -140,10 +140,10 @@ namespace BusinessLogicLayer.Services.Implementations
         {
             var combos = await _dbContext.Combos
                 .Include(c => c.ComboItems)
-                    .ThenInclude(ci => ci.ProductVariant)
+                    .ThenInclude(ci => ci.ProductVariant!)
                         .ThenInclude(pv => pv.Product)
                 .Include(c => c.ComboItems)
-                    .ThenInclude(ci => ci.LensesVariant)
+                    .ThenInclude(ci => ci.LensesVariant!)
                         .ThenInclude(lv => lv.Product)
                 .ToListAsync();
                 
@@ -200,9 +200,9 @@ namespace BusinessLogicLayer.Services.Implementations
         public async Task<IEnumerable<ComboItemDto>> GetComboItemsAsync(Guid comboId)
         {
             var items = await _dbContext.ComboItem
-                .Include(ci => ci.ProductVariant)
+                .Include(ci => ci.ProductVariant!)
                     .ThenInclude(pv => pv.Product)
-                .Include(ci => ci.LensesVariant)
+                .Include(ci => ci.LensesVariant!)
                     .ThenInclude(lv => lv.Product)
                 .Where(ci => ci.ComboId == comboId)
                 .ToListAsync();
